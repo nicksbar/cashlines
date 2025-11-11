@@ -109,7 +109,6 @@ export async function GET(request: NextRequest) {
           // Payments TO the credit card (reverse flow)
           description: {
             contains: account.name,
-            mode: 'insensitive',
           },
           date: {
             gte: nextRange.start,

@@ -37,6 +37,7 @@ model Account {
   type     String // "checking", "savings", "credit_card", "cash", "other"
   isActive Boolean @default(true)
   notes    String?
+  creditLimit Float? // Optional: for credit cards and lines of credit
   
   incomes      Income[]
   transactions Transaction[]

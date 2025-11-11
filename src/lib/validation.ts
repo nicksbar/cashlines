@@ -19,6 +19,7 @@ export const accountCreateSchema = z.object({
   ]),
   isActive: z.boolean().default(true),
   notes: z.string().optional(),
+  creditLimit: z.number().positive('Credit limit must be positive').optional().nullable(),
 })
 
 export const accountUpdateSchema = z.object({
@@ -32,6 +33,7 @@ export const accountUpdateSchema = z.object({
   ]).optional(),
   isActive: z.boolean().optional(),
   notes: z.string().optional(),
+  creditLimit: z.number().positive('Credit limit must be positive').optional().nullable(),
 })
 
 export type AccountCreate = z.infer<typeof accountCreateSchema>

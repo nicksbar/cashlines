@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
         type: validated.type,
         isActive: validated.isActive,
         notes: validated.notes,
+        creditLimit: validated.creditLimit,
       },
     })
 
