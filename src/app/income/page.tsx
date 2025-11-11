@@ -172,8 +172,8 @@ export default function IncomePage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Income</h1>
-        <p className="text-slate-600 mt-2">Track where your money comes from with detailed deduction breakdown</p>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Income</h1>
+        <p className="text-slate-600 dark:text-slate-400 mt-2">Track income with full deduction breakdown</p>
       </div>
 
       <div className="flex justify-between items-center">
@@ -221,14 +221,14 @@ export default function IncomePage() {
         </div>
       )}
 
-      {showForm && (
+            {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>{editingId ? 'Edit Income' : 'Add Income'}</CardTitle>
+            <CardTitle className="text-slate-900 dark:text-slate-100">{editingId ? 'Edit Income' : 'Add Income'}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="date">Date</Label>
                   <Input
@@ -236,43 +236,46 @@ export default function IncomePage() {
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="source">Source</Label>
+                  <Label htmlFor="source">Income Source</Label>
                   <Input
                     id="source"
                     value={formData.source}
                     onChange={(e) => setFormData({ ...formData, source: e.target.value })}
                     placeholder="e.g., Salary, Freelance"
+                    className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     required
                   />
                 </div>
-                <div>
-                  <Label htmlFor="accountId">Account</Label>
-                  <select
-                    id="accountId"
-                    value={formData.accountId}
-                    onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Select...</option>
-                    {accounts.map((acc) => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
-              <div className="bg-slate-50 p-4 rounded-lg space-y-4 border border-slate-200">
-                <h3 className="font-semibold text-slate-900">Income Breakdown</h3>
+              <div>
+                <Label htmlFor="accountId">Account</Label>
+                <select
+                  id="accountId"
+                  value={formData.accountId}
+                  onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Select...</option>
+                  {accounts.map((acc) => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg space-y-4 border border-slate-200 dark:border-slate-700">
+                <h3 className="font-semibold text-slate-900 dark:text-slate-100">Income Breakdown</h3>
                 
                 <div>
-                  <Label htmlFor="grossAmount">Gross Amount (Pre-Tax)</Label>
+                  <Label htmlFor="grossAmount" className="dark:text-slate-100">Gross Amount (Pre-Tax)</Label>
                   <Input
                     id="grossAmount"
                     type="number"
@@ -280,13 +283,14 @@ export default function IncomePage() {
                     value={formData.grossAmount}
                     onChange={(e) => setFormData({ ...formData, grossAmount: e.target.value })}
                     placeholder="0.00"
+                    className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="taxes">Taxes</Label>
+                    <Label htmlFor="taxes" className="dark:text-slate-100">Taxes</Label>
                     <Input
                       id="taxes"
                       type="number"
@@ -294,11 +298,12 @@ export default function IncomePage() {
                       value={formData.taxes}
                       onChange={(e) => setFormData({ ...formData, taxes: e.target.value })}
                       placeholder="0.00"
+                      className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     />
-                    <p className="text-xs text-slate-500 mt-1">Fed, state, FICA</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Fed, state, FICA</p>
                   </div>
                   <div>
-                    <Label htmlFor="preTaxDeductions">Pre-Tax Deductions</Label>
+                    <Label htmlFor="preTaxDeductions" className="dark:text-slate-100">Pre-Tax Deductions</Label>
                     <Input
                       id="preTaxDeductions"
                       type="number"
@@ -306,13 +311,14 @@ export default function IncomePage() {
                       value={formData.preTaxDeductions}
                       onChange={(e) => setFormData({ ...formData, preTaxDeductions: e.target.value })}
                       placeholder="0.00"
+                      className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     />
-                    <p className="text-xs text-slate-500 mt-1">401k, health insurance</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">401k, health insurance</p>
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="postTaxDeductions">Post-Tax Deductions</Label>
+                  <Label htmlFor="postTaxDeductions" className="dark:text-slate-100">Post-Tax Deductions</Label>
                   <Input
                     id="postTaxDeductions"
                     type="number"
@@ -320,13 +326,14 @@ export default function IncomePage() {
                     value={formData.postTaxDeductions}
                     onChange={(e) => setFormData({ ...formData, postTaxDeductions: e.target.value })}
                     placeholder="0.00"
+                    className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Additional withdrawals after tax</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Additional withdrawals after tax</p>
                 </div>
 
-                <div className="bg-white p-3 rounded border border-blue-200">
-                  <p className="text-sm font-semibold text-blue-900">
-                    Net Amount: <span className="text-lg text-green-600">
+                <div className="bg-white dark:bg-slate-900 p-3 rounded border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                    Net Amount: <span className="text-lg text-green-600 dark:text-green-400">
                       {formatCurrency(
                         (parseFloat(formData.grossAmount) || 0) -
                         (parseFloat(formData.taxes) || 0) -
@@ -336,7 +343,7 @@ export default function IncomePage() {
                     </span>
                   </p>
                   {parseFloat(formData.grossAmount) > 0 && (
-                    <p className="text-xs text-slate-600 mt-2">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
                       Keep {(((parseFloat(formData.grossAmount) || 0) -
                         (parseFloat(formData.taxes) || 0) -
                         (parseFloat(formData.preTaxDeductions) || 0) -
@@ -347,28 +354,30 @@ export default function IncomePage() {
               </div>
 
               <div>
-                <Label htmlFor="notes">Notes</Label>
+                <Label htmlFor="notes" className="dark:text-slate-100">Notes</Label>
                 <Input
                   id="notes"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Optional notes"
+                  className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                 />
               </div>
 
               <div>
-                <Label htmlFor="tags">Tags (comma-separated)</Label>
+                <Label htmlFor="tags" className="dark:text-slate-100">Tags (comma-separated)</Label>
                 <Input
                   id="tags"
                   value={formData.tags}
                   onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                   placeholder="e.g., recurring, tax:w2"
+                  className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                 />
               </div>
 
               <div className="flex gap-2 pt-4">
                 <Button type="submit">{editingId ? 'Update Income' : 'Save Income'}</Button>
-                <Button type="button" variant="outline" onClick={handleCancel}>
+                <Button type="button" variant="outline" onClick={handleCancel} className="dark:border-slate-600 dark:text-slate-100">
                   Cancel
                 </Button>
               </div>
@@ -379,26 +388,26 @@ export default function IncomePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Income Entries</CardTitle>
-          <CardDescription>{income.length} entries</CardDescription>
+          <CardTitle className="text-slate-900 dark:text-slate-100">Income Entries</CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">{income.length} entries</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-slate-500">Loading...</p>
+            <p className="text-slate-500 dark:text-slate-400">Loading...</p>
           ) : income.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="text-left py-3 px-2 font-semibold">Date</th>
-                    <th className="text-left py-3 px-2 font-semibold">Source</th>
-                    <th className="text-left py-3 px-2 font-semibold">Account</th>
-                    <th className="text-right py-3 px-2 font-semibold">Gross</th>
-                    <th className="text-right py-3 px-2 font-semibold text-red-600">Taxes</th>
-                    <th className="text-right py-3 px-2 font-semibold text-orange-600">Deductions</th>
-                    <th className="text-right py-3 px-2 font-semibold text-green-600">Net</th>
-                    <th className="text-right py-3 px-2 font-semibold">Ratio</th>
-                    <th className="text-center py-3 px-2 font-semibold">Action</th>
+                  <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                    <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Date</th>
+                    <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Source</th>
+                    <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Account</th>
+                    <th className="text-right py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Gross</th>
+                    <th className="text-right py-3 px-2 font-semibold text-red-600 dark:text-red-400">Taxes</th>
+                    <th className="text-right py-3 px-2 font-semibold text-orange-600 dark:text-orange-400">Deductions</th>
+                    <th className="text-right py-3 px-2 font-semibold text-green-600 dark:text-green-400">Net</th>
+                    <th className="text-right py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Ratio</th>
+                    <th className="text-center py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -406,27 +415,27 @@ export default function IncomePage() {
                     const deductions = entry.preTaxDeductions + entry.postTaxDeductions
                     const ratio = entry.grossAmount > 0 ? ((entry.netAmount / entry.grossAmount) * 100) : 0
                     return (
-                      <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="py-3 px-2">{formatDate(entry.date)}</td>
-                        <td className="py-3 px-2 font-medium">{entry.source}</td>
-                        <td className="py-3 px-2 text-slate-600">{entry.account.name}</td>
-                        <td className="py-3 px-2 text-right font-semibold">{formatCurrency(entry.grossAmount)}</td>
-                        <td className="py-3 px-2 text-right text-red-600">{formatCurrency(entry.taxes)}</td>
-                        <td className="py-3 px-2 text-right text-orange-600">{formatCurrency(deductions)}</td>
-                        <td className="py-3 px-2 text-right font-semibold text-green-600">{formatCurrency(entry.netAmount)}</td>
-                        <td className="py-3 px-2 text-right text-slate-600 font-mono text-xs">{ratio.toFixed(1)}%</td>
+                      <tr key={entry.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                        <td className="py-3 px-2 text-slate-900 dark:text-slate-100">{formatDate(entry.date)}</td>
+                        <td className="py-3 px-2 font-medium text-slate-900 dark:text-slate-100">{entry.source}</td>
+                        <td className="py-3 px-2 text-slate-600 dark:text-slate-400">{entry.account.name}</td>
+                        <td className="py-3 px-2 text-right font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(entry.grossAmount)}</td>
+                        <td className="py-3 px-2 text-right text-red-600 dark:text-red-400">{formatCurrency(entry.taxes)}</td>
+                        <td className="py-3 px-2 text-right text-orange-600 dark:text-orange-400">{formatCurrency(deductions)}</td>
+                        <td className="py-3 px-2 text-right font-semibold text-green-600 dark:text-green-400">{formatCurrency(entry.netAmount)}</td>
+                        <td className="py-3 px-2 text-right text-slate-600 dark:text-slate-400 font-mono text-xs">{ratio.toFixed(1)}%</td>
                         <td className="py-3 px-2 text-center">
                           <div className="flex gap-1 justify-center">
                             <button
                               onClick={() => handleEdit(entry)}
-                              className="text-blue-600 hover:text-blue-800"
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                               title="Edit"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(entry.id)}
-                              className="text-red-600 hover:text-red-800"
+                              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                               title="Delete"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -436,20 +445,20 @@ export default function IncomePage() {
                       </tr>
                     )
                   })}
-                  <tr className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                    <td colSpan={3} className="py-3 px-2">TOTAL</td>
-                    <td className="py-3 px-2 text-right">{formatCurrency(totalGross)}</td>
-                    <td className="py-3 px-2 text-right text-red-600">{formatCurrency(totalTaxes)}</td>
-                    <td className="py-3 px-2 text-right text-orange-600">{formatCurrency(totalPreTaxDed + totalPostTaxDed)}</td>
-                    <td className="py-3 px-2 text-right text-green-600">{formatCurrency(totalIncome)}</td>
-                    <td className="py-3 px-2 text-right text-slate-900">{keepRatio.toFixed(1)}%</td>
+                  <tr className="bg-slate-100 dark:bg-slate-800 font-bold border-t-2 border-slate-300 dark:border-slate-700">
+                    <td colSpan={3} className="py-3 px-2 text-slate-900 dark:text-slate-100">TOTAL</td>
+                    <td className="py-3 px-2 text-right text-slate-900 dark:text-slate-100">{formatCurrency(totalGross)}</td>
+                    <td className="py-3 px-2 text-right text-red-600 dark:text-red-400">{formatCurrency(totalTaxes)}</td>
+                    <td className="py-3 px-2 text-right text-orange-600 dark:text-orange-400">{formatCurrency(totalPreTaxDed + totalPostTaxDed)}</td>
+                    <td className="py-3 px-2 text-right text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</td>
+                    <td className="py-3 px-2 text-right text-slate-900 dark:text-slate-100">{keepRatio.toFixed(1)}%</td>
                     <td></td>
                   </tr>
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-slate-500">No income entries yet. Create one to get started!</p>
+            <p className="text-slate-500 dark:text-slate-400">No income entries yet. Create one to get started!</p>
           )}
         </CardContent>
       </Card>

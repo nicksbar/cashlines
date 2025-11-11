@@ -163,12 +163,12 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Transactions</h1>
-        <p className="text-slate-600 mt-2">Track expenses and how money is routed</p>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Transactions</h1>
+        <p className="text-slate-600 dark:text-slate-400 mt-2">Track expenses and how money is routed</p>
       </div>
 
       <div className="flex justify-between items-center">
-        <div className="text-2xl font-bold text-red-600">
+        <div className="text-2xl font-bold text-red-600 dark:text-red-400">
           Total: {formatCurrency(totalExpense)}
         </div>
         <Button onClick={() => {
@@ -183,7 +183,7 @@ export default function TransactionsPage() {
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>{editingId ? 'Edit Transaction' : 'Add Transaction'}</CardTitle>
+            <CardTitle className="text-slate-900 dark:text-slate-100">{editingId ? 'Edit Transaction' : 'Add Transaction'}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -195,6 +195,7 @@ export default function TransactionsPage() {
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     required
                   />
                 </div>
@@ -207,6 +208,7 @@ export default function TransactionsPage() {
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     placeholder="0.00"
+                    className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     required
                   />
                 </div>
@@ -219,6 +221,7 @@ export default function TransactionsPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="e.g., Grocery Store, Gas"
+                  className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                   required
                 />
               </div>
@@ -230,7 +233,7 @@ export default function TransactionsPage() {
                     id="method"
                     value={formData.method}
                     onChange={(e) => setFormData({ ...formData, method: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cc">Credit Card</option>
                     <option value="cash">Cash</option>
@@ -244,7 +247,7 @@ export default function TransactionsPage() {
                     id="accountId"
                     value={formData.accountId}
                     onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
                     required
                   >
                     <option value="">Select account...</option>
@@ -264,6 +267,7 @@ export default function TransactionsPage() {
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Optional notes"
+                  className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                 />
               </div>
 
@@ -274,6 +278,7 @@ export default function TransactionsPage() {
                   value={formData.tags}
                   onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                   placeholder="e.g., groceries, recurring"
+                  className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                 />
               </div>
 
@@ -288,7 +293,7 @@ export default function TransactionsPage() {
                         newSplits[idx].type = e.target.value
                         setFormData({ ...formData, splits: newSplits })
                       }}
-                      className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="need">Need</option>
                       <option value="want">Want</option>
@@ -305,6 +310,7 @@ export default function TransactionsPage() {
                         setFormData({ ...formData, splits: newSplits })
                       }}
                       placeholder="Target name"
+                      className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     />
                     <Input
                       type="number"
@@ -316,7 +322,7 @@ export default function TransactionsPage() {
                         setFormData({ ...formData, splits: newSplits })
                       }}
                       placeholder="%"
-                      className="w-20"
+                      className="w-20 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     />
                   </div>
                 ))}
@@ -330,6 +336,7 @@ export default function TransactionsPage() {
                       splits: [...formData.splits, { type: 'need', target: '', percent: 0 }],
                     })
                   }
+                  className="dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-700"
                 >
                   + Add Split
                 </Button>
@@ -337,7 +344,7 @@ export default function TransactionsPage() {
 
               <div className="flex gap-2 pt-4">
                 <Button type="submit">{editingId ? 'Update Transaction' : 'Save Transaction'}</Button>
-                <Button type="button" variant="outline" onClick={handleCancel}>
+                <Button type="button" variant="outline" onClick={handleCancel} className="dark:border-slate-600 dark:text-slate-100">
                   Cancel
                 </Button>
               </div>
@@ -348,40 +355,40 @@ export default function TransactionsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Transactions</CardTitle>
-          <CardDescription>{transactions.length} entries</CardDescription>
+          <CardTitle className="text-slate-900 dark:text-slate-100">Transactions</CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">{transactions.length} entries</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-slate-500">Loading...</p>
+            <p className="text-slate-500 dark:text-slate-400">Loading...</p>
           ) : transactions.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="text-left py-2 px-2">Date</th>
-                    <th className="text-left py-2 px-2">Description</th>
-                    <th className="text-left py-2 px-2">Method</th>
-                    <th className="text-left py-2 px-2">Account</th>
-                    <th className="text-right py-2 px-2">Amount</th>
-                    <th className="text-left py-2 px-2">Routing</th>
-                    <th className="text-center py-2 px-2">Action</th>
+                  <tr className="border-b border-slate-200 dark:border-slate-700">
+                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Date</th>
+                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Description</th>
+                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Method</th>
+                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Account</th>
+                    <th className="text-right py-2 px-2 text-slate-900 dark:text-slate-100">Amount</th>
+                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Routing</th>
+                    <th className="text-center py-2 px-2 text-slate-900 dark:text-slate-100">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {transactions.map((tx) => (
-                    <tr key={tx.id} className="border-b border-slate-100 hover:bg-slate-50">
-                      <td className="py-3 px-2">{formatDate(tx.date)}</td>
-                      <td className="py-3 px-2 font-medium">{tx.description}</td>
-                      <td className="py-3 px-2 text-slate-600">{METHOD_LABELS[tx.method]}</td>
-                      <td className="py-3 px-2 text-slate-600">{tx.account.name}</td>
-                      <td className="py-3 px-2 text-right font-semibold text-red-600">
+                    <tr key={tx.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                      <td className="py-3 px-2 text-slate-900 dark:text-slate-100">{formatDate(tx.date)}</td>
+                      <td className="py-3 px-2 font-medium text-slate-900 dark:text-slate-100">{tx.description}</td>
+                      <td className="py-3 px-2 text-slate-600 dark:text-slate-400">{METHOD_LABELS[tx.method]}</td>
+                      <td className="py-3 px-2 text-slate-600 dark:text-slate-400">{tx.account.name}</td>
+                      <td className="py-3 px-2 text-right font-semibold text-red-600 dark:text-red-400">
                         {formatCurrency(tx.amount)}
                       </td>
                       <td className="py-3 px-2">
                         <div className="space-y-1">
                           {tx.splits.map((split) => (
-                            <div key={split.id} className="text-xs bg-slate-100 px-2 py-1 rounded">
+                            <div key={split.id} className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
                               <span className="font-medium">{split.type}</span>: {split.target}{' '}
                               {split.percent && `(${split.percent}%)`}
                             </div>
@@ -391,14 +398,14 @@ export default function TransactionsPage() {
                       <td className="py-3 px-2 text-center space-x-2 flex justify-center">
                         <button
                           onClick={() => handleEdit(tx)}
-                          className="text-blue-600 hover:text-blue-800"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                           title="Edit transaction"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(tx.id)}
-                          className="text-red-600 hover:text-red-800"
+                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                           title="Delete transaction"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -410,7 +417,7 @@ export default function TransactionsPage() {
               </table>
             </div>
           ) : (
-            <p className="text-slate-500">No transactions yet. Create one to get started!</p>
+            <p className="text-slate-500 dark:text-slate-400">No transactions yet. Create one to get started!</p>
           )}
         </CardContent>
       </Card>
