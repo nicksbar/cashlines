@@ -447,16 +447,16 @@ export default function ImportPage() {
       )}
 
       {/* Help */}
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-blue-50 dark:bg-blue-900 border-blue-200 dark:border-blue-800">
         <CardHeader>
-          <CardTitle className="text-base">💡 Tips</CardTitle>
+          <CardTitle className="text-base text-blue-900 dark:text-blue-100">💡 Tips</CardTitle>
         </CardHeader>
         <CardContent className="text-sm space-y-2">
-          <p>• <strong>Replicate recurring expenses:</strong> Export last month's transactions, change dates, and re-import</p>
-          <p>• <strong>Account matching:</strong> Account names must match exactly (e.g., "Checking", "Amex")</p>
-          <p>• <strong>Date format:</strong> Use YYYY-MM-DD format (2025-11-11)</p>
-          <p>• <strong>Methods:</strong> Use cc (credit card), cash, ach, or other</p>
-          <p>• <strong>Amounts:</strong> Decimal numbers only, no currency symbols</p>
+          <p className="text-blue-900 dark:text-blue-100">• <strong>Replicate recurring expenses:</strong> Export last month's transactions, change dates, and re-import</p>
+          <p className="text-blue-900 dark:text-blue-100">• <strong>Account matching:</strong> Account names must match exactly (e.g., "Checking", "Amex")</p>
+          <p className="text-blue-900 dark:text-blue-100">• <strong>Date format:</strong> Use YYYY-MM-DD format (2025-11-11)</p>
+          <p className="text-blue-900 dark:text-blue-100">• <strong>Methods:</strong> Use cc (credit card), cash, ach, or other</p>
+          <p className="text-blue-900 dark:text-blue-100">• <strong>Amounts:</strong> Decimal numbers only, no currency symbols</p>
         </CardContent>
       </Card>
     </div>
