@@ -70,10 +70,25 @@ App runs at [http://localhost:3000](http://localhost:3000) with persistent data 
   migrations/       - Database migrations
 ```
 
+## Why Cashlines?
+
+Traditional budgets fail. They provide constraints that break immediately under real-world pressure, creating nothing but friction.
+
+**Cashlines flips the script**: Instead of budgeting, it provides visibility. You'll understand:
+- Where your income actually goes
+- Your spending allocation ratios
+- Trends that reveal real patterns
+- Which spending habits matter most to you
+
+This data-driven approach transforms how you make financial decisions—replacing failed budget cycles with honest awareness.
+
+[**Learn more about the philosophy →**](./docs/ABOUT.md)
+
 ## Documentation
 
 Complete docs in `/docs/`:
 
+- **[About the Author](./docs/ABOUT.md)** - Why this exists
 - **[Getting Started](./docs/GETTING_STARTED.md)** - Setup instructions
 - **[Features & Usage](./docs/FEATURES.md)** - How to use each feature
 - **[API Reference](./docs/API.md)** - Complete endpoint documentation
