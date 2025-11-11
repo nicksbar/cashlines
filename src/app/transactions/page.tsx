@@ -7,7 +7,7 @@ import { Label } from '@/src/components/ui/label'
 import { useState, useEffect } from 'react'
 import { formatCurrency } from '@/src/lib/money'
 import { formatDate } from '@/src/lib/date'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Edit2 } from 'lucide-react'
 
 interface Split {
   id: string
@@ -44,6 +44,7 @@ export default function TransactionsPage() {
   const [accounts, setAccounts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     amount: '',
@@ -78,8 +79,11 @@ export default function TransactionsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const response = await fetch('/api/transactions', {
-        method: 'POST',
+      const url = editingId ? `/api/transactions/${editingId}` : '/api/transactions'
+      const method = editingId ? 'PATCH' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
@@ -100,12 +104,48 @@ export default function TransactionsPage() {
           tags: '',
           splits: [{ type: 'need', target: '', percent: 100 }],
         })
+        setEditingId(null)
         setShowForm(false)
         fetchData()
       }
     } catch (error) {
-      console.error('Error creating transaction:', error)
+      console.error('Error saving transaction:', error)
     }
+  }
+
+  const handleEdit = (tx: Transaction) => {
+    setEditingId(tx.id)
+    setFormData({
+      date: tx.date.split('T')[0],
+      amount: tx.amount.toString(),
+      description: tx.description,
+      method: tx.method,
+      accountId: tx.accountId,
+      notes: tx.notes || '',
+      tags: typeof tx.tags === 'string' ? JSON.parse(tx.tags).join(', ') : (tx.tags as any).join(', '),
+      splits: tx.splits.map(s => ({
+        type: s.type,
+        target: s.target,
+        amount: s.amount,
+        percent: s.percent,
+      })),
+    })
+    setShowForm(true)
+  }
+
+  const handleCancel = () => {
+    setEditingId(null)
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      amount: '',
+      description: '',
+      method: 'cc',
+      accountId: '',
+      notes: '',
+      tags: '',
+      splits: [{ type: 'need', target: '', percent: 100 }],
+    })
+    setShowForm(false)
   }
 
   const handleDelete = async (id: string) => {
@@ -131,7 +171,10 @@ export default function TransactionsPage() {
         <div className="text-2xl font-bold text-red-600">
           Total: {formatCurrency(totalExpense)}
         </div>
-        <Button onClick={() => setShowForm(!showForm)}>
+        <Button onClick={() => {
+          setEditingId(null)
+          setShowForm(!showForm)
+        }}>
           <Plus className="w-4 h-4 mr-2" />
           New Transaction
         </Button>
@@ -140,7 +183,7 @@ export default function TransactionsPage() {
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>Add Transaction</CardTitle>
+            <CardTitle>{editingId ? 'Edit Transaction' : 'Add Transaction'}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -293,8 +336,8 @@ export default function TransactionsPage() {
               </div>
 
               <div className="flex gap-2 pt-4">
-                <Button type="submit">Save Transaction</Button>
-                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+                <Button type="submit">{editingId ? 'Update Transaction' : 'Save Transaction'}</Button>
+                <Button type="button" variant="outline" onClick={handleCancel}>
                   Cancel
                 </Button>
               </div>
@@ -345,10 +388,18 @@ export default function TransactionsPage() {
                           ))}
                         </div>
                       </td>
-                      <td className="py-3 px-2 text-center">
+                      <td className="py-3 px-2 text-center space-x-2 flex justify-center">
+                        <button
+                          onClick={() => handleEdit(tx)}
+                          className="text-blue-600 hover:text-blue-800"
+                          title="Edit transaction"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleDelete(tx.id)}
                           className="text-red-600 hover:text-red-800"
+                          title="Delete transaction"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
