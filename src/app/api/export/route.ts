@@ -6,30 +6,48 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const type = searchParams.get('type') || 'all'
 
+    // TODO: Get actual user from session
+    const users = await prisma.user.findMany()
+    const userId = users[0]?.id
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'No user found' },
+        { status: 400 }
+      )
+    }
+
     let csvData = ''
 
     if (type === 'transactions' || type === 'all') {
       const transactions = await prisma.transaction.findMany({
+        where: { userId },
         orderBy: { date: 'desc' },
+        include: { account: true, splits: true },
       })
 
-      csvData += 'Type,Date,Description,Amount,Transaction Type,Routing,Category,Tax Related,Tax Category,Notes\n'
-      transactions.forEach(t => {
-        csvData += `Transaction,${t.date.toISOString()},${escapeCSV(t.description)},${t.amount},${t.type},${t.routing},${escapeCSV(t.category || '')},${t.isTaxRelated},${escapeCSV(t.taxCategory || '')},${escapeCSV(t.notes || '')}\n`
+      csvData += 'Type,Date,Description,Amount,Method,Account,Tags,Splits\n'
+      transactions.forEach((t: any) => {
+        const splitsStr = t.splits
+          .map((s: any) => `${s.type}:${s.target}:${s.amount || s.percent + '%'}`)
+          .join('|')
+        csvData += `Transaction,${t.date.toISOString()},${escapeCSV(t.description)},${t.amount},${t.method},${t.account.name},${escapeCSV(t.tags)},${escapeCSV(splitsStr)}\n`
       })
     }
 
     if (type === 'income' || type === 'all') {
-      const income = await prisma.income.findMany({
+      const incomes = await prisma.income.findMany({
+        where: { userId },
         orderBy: { date: 'desc' },
+        include: { account: true },
       })
 
       if (type === 'income') {
-        csvData += 'Type,Date,Description,Amount,Source,Tax Related,Tax Category,Notes\n'
+        csvData += 'Type,Date,Source,Amount,Account,Tags,Notes\n'
       }
 
-      income.forEach(i => {
-        csvData += `Income,${i.date.toISOString()},${escapeCSV(i.description)},${i.amount},${escapeCSV(i.source || '')},${i.isTaxRelated},${escapeCSV(i.taxCategory || '')},${escapeCSV(i.notes || '')}\n`
+      incomes.forEach((i: any) => {
+        csvData += `Income,${i.date.toISOString()},${escapeCSV(i.source || '')},${i.amount},${i.account.name},${escapeCSV(i.tags)},${escapeCSV(i.notes || '')}\n`
       })
     }
 
@@ -48,9 +66,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function escapeCSV(str: string): string {
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-    return `"${str.replace(/"/g, '""')}"`
+function escapeCSV(str: string | null | undefined): string {
+  if (!str) return ''
+  const strVal = String(str)
+  if (strVal.includes(',') || strVal.includes('"') || strVal.includes('\n')) {
+    return `"${strVal.replace(/"/g, '""')}"`
   }
-  return str
+  return strVal
 }

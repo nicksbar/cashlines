@@ -1,5 +1,6 @@
-// This is your Prisma schema file
-// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Cashlines: Personal Money Tracking
+// Tracks income, transactions, and money routing across accounts.
+// Single-user first, multi-user ready via User model.
 
 generator client {
   provider = "prisma-client-js"
@@ -10,36 +11,149 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Transaction {
-  id          String   @id @default(cuid())
-  description String
-  amount      Float
-  date        DateTime @default(now())
-  type        String   // EXPENSE or TRANSFER
-  routing     String   // CREDIT_CARD, CASH, SAVINGS, CHECKING
-  category    String?
-  isTaxRelated Boolean @default(false)
-  taxCategory String?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([date])
-  @@index([type])
-  @@index([routing])
+// User model for future multi-user support
+model User {
+  id    String @id @default(cuid())
+  name  String?
+  email String @unique
+  
+  accounts     Account[]
+  incomes      Income[]
+  transactions Transaction[]
+  rules        Rule[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model Income {
-  id          String   @id @default(cuid())
-  description String
-  amount      Float
-  date        DateTime @default(now())
-  source      String?
-  isTaxRelated Boolean @default(false)
-  taxCategory String?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// Account: Represents a funding source or destination (checking, savings, CC, cash, etc.)
+model Account {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name     String
+  type     String // "checking", "savings", "credit_card", "cash", "other"
+  isActive Boolean @default(true)
+  notes    String?
+  
+  incomes      Income[]
+  transactions Transaction[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([type])
+}
 
+// Income: Money flowing in (salary, freelance, transfers, etc.)
+model Income {
+  id        String @id @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  
+  date      DateTime
+  amount    Float
+  source    String // e.g., "Salary", "Freelance", "Refund"
+  notes     String?
+  tags      String // JSON array stored as string: ["tax:w2", "recurring"]
+  
+  rules Rule[] // Reference to rules that match this income for auto-splits
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([accountId])
   @@index([date])
+  @@index([source])
+}
+
+// Transaction: Money flowing out
+model Transaction {
+  id          String @id @default(cuid())
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  accountId   String
+  account     Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  
+  date        DateTime
+  amount      Float
+  description String
+  method      String // "cc", "cash", "ach", "other"
+  notes       String?
+  tags        String // JSON array: ["groceries", "recurring"]
+  
+  splits Split[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([accountId])
+  @@index([date])
+  @@index([method])
+}
+
+// Split: How a transaction is categorized/routed (need, want, debt, tax, savings, etc.)
+model Split {
+  id            String @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  
+  type      String  // "need", "want", "debt", "tax", "savings", "other"
+  target    String  // e.g., "Amex", "Emergency Fund", "Federal Tax"
+  amount    Float?  // absolute amount (if not percentage)
+  percent   Float?  // percentage of transaction amount (if not absolute)
+  notes     String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([transactionId])
+  @@index([type])
+}
+
+// Rule: Routing rules for auto-splitting income or transactions
+model Rule {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name   String
+  
+  // Match criteria
+  matchSource       String?  // regex pattern to match income source
+  matchDescription  String?  // regex pattern to match transaction description
+  matchAccountId    String?  // specific account ID
+  matchMethod       String?  // specific method: "cc", "cash", "ach", "other"
+  matchTags         String?  // JSON array of tags to match
+  
+  // Split configuration (JSON stored as string for flexibility)
+  splitConfig String // JSON: [{ type: "need", target: "...", percent: 50 }, ...]
+  
+  isActive Boolean @default(true)
+  notes    String?
+  
+  matchedIncomes Income[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([isActive])
+}
+
+// Optional: Tag model for future tag management UI
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  
+  createdAt DateTime @default(now())
 }

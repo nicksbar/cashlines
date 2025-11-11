@@ -1,12 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/src/components/ui/dialog'
 import { Button } from '@/src/components/ui/button'
 import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/components/ui/select'
-import { TRANSACTION_TYPES, ROUTING_TYPES, ROUTING_LABELS, TRANSACTION_TYPE_LABELS, TAX_CATEGORIES } from '@/src/lib/constants'
 
 interface TransactionFormProps {
   onClose: () => void
@@ -18,24 +15,26 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
     description: '',
     amount: '',
     date: new Date().toISOString().split('T')[0],
-    type: TRANSACTION_TYPES.EXPENSE as string,
-    routing: ROUTING_TYPES.CHECKING as string,
-    category: '',
-    isTaxRelated: false,
-    taxCategory: '',
+    accountId: '',
+    method: 'cc',
     notes: '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
     try {
       const response = await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
+          description: formData.description,
           amount: parseFloat(formData.amount),
+          date: formData.date,
+          accountId: formData.accountId || 'default',
+          method: formData.method,
+          notes: formData.notes,
+          tags: [],
+          splits: [],
         }),
       })
 
@@ -43,29 +42,27 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
         onSuccess()
       }
     } catch (error) {
-      console.error('Error creating transaction:', error)
+      console.error('Error:', error)
     }
   }
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Add Transaction</DialogTitle>
-        </DialogHeader>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h2 className="text-xl font-bold mb-4">Add Transaction</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Description *</Label>
             <Input
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Groceries, Gas, etc."
               required
             />
           </div>
-
           <div>
-            <Label htmlFor="amount">Amount</Label>
+            <Label htmlFor="amount">Amount *</Label>
             <Input
               id="amount"
               type="number"
@@ -75,9 +72,8 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
               required
             />
           </div>
-
           <div>
-            <Label htmlFor="date">Date</Label>
+            <Label htmlFor="date">Date *</Label>
             <Input
               id="date"
               type="date"
@@ -86,88 +82,36 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
               required
             />
           </div>
-
           <div>
-            <Label htmlFor="type">Type</Label>
-            <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(TRANSACTION_TYPE_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="method">Method</Label>
+            <select
+              id="method"
+              value={formData.method}
+              onChange={(e) => setFormData({ ...formData, method: e.target.value })}
+              className="w-full px-2 py-1 border rounded"
+            >
+              <option value="cc">Credit Card</option>
+              <option value="cash">Cash</option>
+              <option value="ach">ACH</option>
+              <option value="other">Other</option>
+            </select>
           </div>
-
           <div>
-            <Label htmlFor="routing">Routing</Label>
-            <Select value={formData.routing} onValueChange={(value) => setFormData({ ...formData, routing: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(ROUTING_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="category">Category (Optional)</Label>
-            <Input
-              id="category"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="isTaxRelated"
-              checked={formData.isTaxRelated}
-              onChange={(e) => setFormData({ ...formData, isTaxRelated: e.target.checked })}
-              className="rounded border-gray-300"
-            />
-            <Label htmlFor="isTaxRelated">Tax Related</Label>
-          </div>
-
-          {formData.isTaxRelated && (
-            <div>
-              <Label htmlFor="taxCategory">Tax Category</Label>
-              <Select value={formData.taxCategory} onValueChange={(value) => setFormData({ ...formData, taxCategory: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TAX_CATEGORIES.map((category) => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <div>
-            <Label htmlFor="notes">Notes (Optional)</Label>
+            <Label htmlFor="notes">Notes</Label>
             <Input
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             />
           </div>
-
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
             <Button type="submit">Add Transaction</Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   )
 }

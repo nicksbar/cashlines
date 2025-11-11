@@ -2,219 +2,218 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs'
 import { Button } from '@/src/components/ui/button'
-import { DollarSign, TrendingUp, TrendingDown, Download, Plus } from 'lucide-react'
-import { formatCurrency } from '@/src/lib/utils'
-import TransactionForm from '@/src/components/TransactionForm'
-import IncomeForm from '@/src/components/IncomeForm'
-import TransactionList from '@/src/components/TransactionList'
-import IncomeList from '@/src/components/IncomeList'
+import { Select } from '@/src/components/ui/select'
+import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
+import { formatCurrency } from '@/src/lib/money'
+import { formatMonth, getCurrentMonthYear, getMonthsInRange } from '@/src/lib/date'
 
-interface Transaction {
-  id: string
-  description: string
-  amount: number
-  date: string
-  type: string
-  routing: string
-  category: string | null
-  isTaxRelated: boolean
-  taxCategory: string | null
-  notes: string | null
+interface Summary {
+  month: number
+  year: number
+  totalIncome: number
+  totalExpense: number
+  byMethod: Record<string, number>
+  routingSummary: Record<string, Record<string, number>>
+  taxTotal: number
+  transactionCount: number
+  incomeCount: number
 }
 
-interface Income {
-  id: string
-  description: string
-  amount: number
-  date: string
-  source: string | null
-  isTaxRelated: boolean
-  taxCategory: string | null
-  notes: string | null
-}
-
-export default function Home() {
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [income, setIncome] = useState<Income[]>([])
-  const [showTransactionForm, setShowTransactionForm] = useState(false)
-  const [showIncomeForm, setShowIncomeForm] = useState(false)
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
+export default function Dashboard() {
+  const [summary, setSummary] = useState<Summary | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [month, setMonth] = useState(getCurrentMonthYear().month)
+  const [year, setYear] = useState(getCurrentMonthYear().year)
+  const months = getMonthsInRange(year - 1, 1, year, 12)
 
   useEffect(() => {
-    fetchTransactions()
-    fetchIncome()
-  }, [refreshTrigger])
+    fetchSummary()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month, year])
 
-  const fetchTransactions = async () => {
+  const fetchSummary = async () => {
     try {
-      const response = await fetch('/api/transactions')
+      setLoading(true)
+      const response = await fetch(`/api/reports/summary?month=${month}&year=${year}`)
+      if (!response.ok) throw new Error('Failed to fetch summary')
       const data = await response.json()
-      setTransactions(data)
+      setSummary(data)
     } catch (error) {
-      console.error('Error fetching transactions:', error)
+      console.error('Error fetching summary:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const fetchIncome = async () => {
-    try {
-      const response = await fetch('/api/income')
-      const data = await response.json()
-      setIncome(data)
-    } catch (error) {
-      console.error('Error fetching income:', error)
-    }
+  const monthOptions = months.map((m) => ({
+    label: formatMonth(m.year, m.month),
+    value: `${m.year}-${m.month}`,
+  }))
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <p className="text-slate-500">Loading...</p>
+      </div>
+    )
   }
 
-  const handleExport = async () => {
-    try {
-      const response = await fetch('/api/export?type=all')
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `cashlines-export-${new Date().toISOString().split('T')[0]}.csv`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    } catch (error) {
-      console.error('Error exporting data:', error)
-    }
+  if (!summary) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <p className="text-slate-500">No data available</p>
+      </div>
+    )
   }
-
-  const totalIncome = income.reduce((sum, i) => sum + i.amount, 0)
-  const totalExpenses = transactions
-    .filter(t => t.type === 'EXPENSE')
-    .reduce((sum, t) => sum + t.amount, 0)
-  const netBalance = totalIncome - totalExpenses
 
   return (
-    <main className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900">Cashlines</h1>
-            <p className="text-gray-600 mt-1">Track your money, not budgets</p>
-          </div>
-          <Button onClick={handleExport} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
-          </Button>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(totalIncome)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-              <TrendingDown className="h-4 w-4 text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {formatCurrency(totalExpenses)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Net Balance</CardTitle>
-              <DollarSign className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${netBalance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                {formatCurrency(netBalance)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue="transactions" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="income">Income</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="transactions" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Transactions</CardTitle>
-                    <CardDescription>Track expenses and transfers</CardDescription>
-                  </div>
-                  <Button onClick={() => setShowTransactionForm(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Transaction
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <TransactionList 
-                  transactions={transactions} 
-                  onRefresh={() => setRefreshTrigger(prev => prev + 1)}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="income" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Income</CardTitle>
-                    <CardDescription>Track income sources</CardDescription>
-                  </div>
-                  <Button onClick={() => setShowIncomeForm(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Income
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <IncomeList 
-                  income={income} 
-                  onRefresh={() => setRefreshTrigger(prev => prev + 1)}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {showTransactionForm && (
-          <TransactionForm
-            onClose={() => setShowTransactionForm(false)}
-            onSuccess={() => {
-              setShowTransactionForm(false)
-              setRefreshTrigger(prev => prev + 1)
-            }}
-          />
-        )}
-
-        {showIncomeForm && (
-          <IncomeForm
-            onClose={() => setShowIncomeForm(false)}
-            onSuccess={() => {
-              setShowIncomeForm(false)
-              setRefreshTrigger(prev => prev + 1)
-            }}
-          />
-        )}
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+        <p className="text-slate-600 mt-2">Track your money, not budgets</p>
       </div>
-    </main>
+
+      {/* Month Selector */}
+      <div className="flex gap-4 items-end">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Select Month
+          </label>
+          <select
+            value={`${year}-${month}`}
+            onChange={(e) => {
+              const [y, m] = e.target.value.split('-')
+              setYear(parseInt(y))
+              setMonth(parseInt(m))
+            }}
+            className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            {monthOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Income</CardTitle>
+            <ArrowDownLeft className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(summary.totalIncome)}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              {summary.incomeCount} entries
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+            <ArrowUpRight className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {formatCurrency(summary.totalExpense)}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              {summary.transactionCount} transactions
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Net Balance</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${summary.totalIncome - summary.totalExpense >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+              {formatCurrency(summary.totalIncome - summary.totalExpense)}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tax Total</CardTitle>
+            <TrendingUp className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">
+              {formatCurrency(summary.taxTotal)}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Method Breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Expenses by Method</CardTitle>
+          <CardDescription>How you spent money this month</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {Object.keys(summary.byMethod).length > 0 ? (
+            <div className="space-y-4">
+              {Object.entries(summary.byMethod).map(([method, amount]) => (
+                <div key={method} className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-600 capitalize">
+                    {method === 'cc' ? 'Credit Card' : method === 'ach' ? 'ACH Transfer' : method}
+                  </span>
+                  <span className="text-lg font-semibold text-slate-900">
+                    {formatCurrency(amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-500 text-sm">No transactions this month</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Routing Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Routing Summary</CardTitle>
+          <CardDescription>How money was categorized</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {Object.keys(summary.routingSummary).length > 0 ? (
+            <div className="space-y-6">
+              {Object.entries(summary.routingSummary).map(([type, targets]) => (
+                <div key={type}>
+                  <h4 className="text-sm font-semibold text-slate-900 capitalize mb-2">
+                    {type}
+                  </h4>
+                  <div className="space-y-2 ml-4">
+                    {Object.entries(targets).map(([target, amount]) => (
+                      <div key={target} className="flex justify-between text-sm">
+                        <span className="text-slate-600">{target}</span>
+                        <span className="font-medium text-slate-900">
+                          {formatCurrency(amount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-500 text-sm">No splits configured</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }

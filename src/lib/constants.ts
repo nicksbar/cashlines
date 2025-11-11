@@ -1,33 +1,57 @@
-export const TRANSACTION_TYPES = {
-  EXPENSE: 'EXPENSE',
-  TRANSFER: 'TRANSFER',
+// Account types
+export const ACCOUNT_TYPES = {
+  CHECKING: 'checking',
+  SAVINGS: 'savings',
+  CREDIT_CARD: 'credit_card',
+  CASH: 'cash',
+  OTHER: 'other',
 } as const
 
-export const ROUTING_TYPES = {
-  CREDIT_CARD: 'CREDIT_CARD',
-  CASH: 'CASH',
-  SAVINGS: 'SAVINGS',
-  CHECKING: 'CHECKING',
+export const ACCOUNT_TYPE_LABELS: Record<string, string> = {
+  checking: 'Checking',
+  savings: 'Savings',
+  credit_card: 'Credit Card',
+  cash: 'Cash',
+  other: 'Other',
+}
+
+// Transaction methods
+export const TRANSACTION_METHODS = {
+  CREDIT_CARD: 'cc',
+  CASH: 'cash',
+  ACH: 'ach',
+  OTHER: 'other',
 } as const
 
-export const ROUTING_LABELS: Record<string, string> = {
-  CREDIT_CARD: 'Credit Card',
-  CASH: 'Cash',
-  SAVINGS: 'Savings',
-  CHECKING: 'Checking',
+export const TRANSACTION_METHOD_LABELS: Record<string, string> = {
+  cc: 'Credit Card',
+  cash: 'Cash',
+  ach: 'ACH',
+  other: 'Other',
 }
 
-export const TRANSACTION_TYPE_LABELS: Record<string, string> = {
-  EXPENSE: 'Expense',
-  TRANSFER: 'Transfer',
+// Split types (how money is categorized)
+export const SPLIT_TYPES = {
+  NEED: 'need',
+  WANT: 'want',
+  DEBT: 'debt',
+  TAX: 'tax',
+  SAVINGS: 'savings',
+  OTHER: 'other',
+} as const
+
+export const SPLIT_TYPE_LABELS: Record<string, string> = {
+  need: 'Need',
+  want: 'Want',
+  debt: 'Debt',
+  tax: 'Tax',
+  savings: 'Savings',
+  other: 'Other',
 }
 
-export const TAX_CATEGORIES = [
-  'Business Expense',
-  'Medical',
-  'Charitable Donation',
-  'Education',
-  'Home Office',
-  'Investment',
-  'Other',
-] as const
+// Common tag prefixes for filtering
+export const TAG_PREFIXES = {
+  TAX: 'tax',
+  RECURRING: 'recurring',
+  CATEGORY: 'category',
+} as const
