@@ -288,8 +288,8 @@ export default function Dashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-600 mt-2">Track your money, not budgets</p>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Dashboard</h1>
+        <p className="text-slate-600 dark:text-slate-400 mt-2">{getRangeLabel()}</p>
       </div>
 
       {/* Date Range Selector */}

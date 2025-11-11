@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
       orderBy: { date: 'desc' },
       include: {
         account: true,
+        person: true,
       },
     })
 
@@ -125,6 +126,7 @@ export async function POST(request: NextRequest) {
     const income = await prisma.income.create({
       data: {
         userId: householdId,
+        personId: validated.personId,
         accountId: validated.accountId,
         date: validated.date,
         grossAmount: validated.grossAmount,
@@ -138,6 +140,7 @@ export async function POST(request: NextRequest) {
       },
       include: {
         account: true,
+        person: true,
       },
     })
 
