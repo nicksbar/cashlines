@@ -1,0 +1,120 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup database
+        run: npx prisma db push --skip-generate
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Create tarball
+        run: |
+          tar --exclude='.git' \
+              --exclude='.next' \
+              --exclude='node_modules' \
+              --exclude='coverage' \
+              --exclude='.env' \
+              --exclude='*.db' \
+              -czf cashlines-${{ github.ref_name }}.tar.gz .
+          echo "TARBALL_SIZE=$(ls -lh cashlines-${{ github.ref_name }}.tar.gz | awk '{print $5}')" >> $GITHUB_ENV
+
+      - name: Build Docker image
+        run: |
+          docker build -t cashlines:${{ github.ref_name }} .
+          docker save cashlines:${{ github.ref_name }} | gzip > cashlines-docker-${{ github.ref_name }}.tar.gz
+
+      - name: Create release notes
+        run: |
+          cat > RELEASE_NOTES.md << 'EOF'
+          # Cashlines ${{ github.ref_name }}
+
+          ## What's Changed
+
+          - See [commits](https://github.com/${{ github.repository }}/compare/$(git describe --tags --abbrev=0 HEAD^)...HEAD) for detailed changes
+
+          ## Installation
+
+          ### Docker (Recommended)
+
+          ```bash
+          docker load < cashlines-docker-${{ github.ref_name }}.tar.gz
+          docker run -p 3000:3000 -v cashlines-data:/app/data cashlines:${{ github.ref_name }}
+          ```
+
+          ### Source Code
+
+          ```bash
+          tar xzf cashlines-${{ github.ref_name }}.tar.gz
+          cd cashlines
+          npm install
+          npx prisma db push
+          npm run build
+          npm start
+          ```
+
+          ### Docker Compose
+
+          Update `docker-compose.yml` to use the new image:
+          ```yaml
+          image: cashlines:${{ github.ref_name }}
+          ```
+
+          ## Build Information
+
+          - **Node Version**: 20.x
+          - **Build Time**: ${{ github.event.head_commit.timestamp }}
+          - **Source Tarball Size**: ${{ env.TARBALL_SIZE }}
+
+          ## Verification
+
+          - ✅ Tests passed
+          - ✅ Production build successful
+          - ✅ Docker image built
+
+          For more information, see the [documentation](https://github.com/${{ github.repository }}/tree/main/docs).
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: RELEASE_NOTES.md
+          files: |
+            cashlines-${{ github.ref_name }}.tar.gz
+            cashlines-docker-${{ github.ref_name }}.tar.gz
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify release
+        run: |
+          echo "✅ Release ${{ github.ref_name }} created successfully"
+          echo "📦 Artifacts:"
+          echo "  - Source: cashlines-${{ github.ref_name }}.tar.gz"
+          echo "  - Docker: cashlines-docker-${{ github.ref_name }}.tar.gz"
