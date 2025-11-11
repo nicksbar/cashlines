@@ -143,7 +143,7 @@ export default function RulesPage() {
           <div>
             <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">What are routing rules?</h4>
             <p className="text-slate-700 dark:text-slate-400">
-              Rules automatically categorize transactions and income into allocation types (Need, Want, Debt, Tax, Savings). When you add transactions or income that match a rule's criteria, they're automatically split across your defined targets.
+              Rules automatically categorize transactions and income into allocation types (Need, Want, Debt, Tax, Savings). When you add transactions or income that match a rule&apos;s criteria, they&apos;re automatically split across your defined targets.
             </p>
           </div>
 
@@ -160,7 +160,7 @@ export default function RulesPage() {
           <div className="bg-white dark:bg-slate-800 p-3 rounded border border-slate-200 dark:border-slate-700">
             <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Example:</h4>
             <p className="text-slate-600 dark:text-slate-400 text-xs mb-2">
-              Create a rule called "Salary" that matches income from your employer. Set splits: 60% to Need/Housing, 20% to Want/Entertainment, 20% to Savings/Emergency.
+              Create a rule called &quot;Salary&quot; that matches income from your employer. Set splits: 60% to Need/Housing, 20% to Want/Entertainment, 20% to Savings/Emergency.
             </p>
             <p className="text-slate-600 dark:text-slate-400 text-xs">
               Every time you log salary income, it automatically splits this way. See on the Routes page how much goes where.

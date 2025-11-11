@@ -452,8 +452,8 @@ export default function ImportPage() {
           <CardTitle className="text-base text-blue-900 dark:text-blue-100">💡 Tips</CardTitle>
         </CardHeader>
         <CardContent className="text-sm space-y-2">
-          <p className="text-blue-900 dark:text-blue-100">• <strong>Replicate recurring expenses:</strong> Export last month's transactions, change dates, and re-import</p>
-          <p className="text-blue-900 dark:text-blue-100">• <strong>Account matching:</strong> Account names must match exactly (e.g., "Checking", "Amex")</p>
+          <p className="text-blue-900 dark:text-blue-100">• <strong>Replicate recurring expenses:</strong> Export last month&apos;s transactions, change dates, and re-import</p>
+          <p className="text-blue-900 dark:text-blue-100">• <strong>Account matching:</strong> Account names must match exactly (e.g., &quot;Checking&quot;, &quot;Amex&quot;)</p>
           <p className="text-blue-900 dark:text-blue-100">• <strong>Date format:</strong> Use YYYY-MM-DD format (2025-11-11)</p>
           <p className="text-blue-900 dark:text-blue-100">• <strong>Methods:</strong> Use cc (credit card), cash, ach, or other</p>
           <p className="text-blue-900 dark:text-blue-100">• <strong>Amounts:</strong> Decimal numbers only, no currency symbols</p>

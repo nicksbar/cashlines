@@ -21,6 +21,7 @@ model User {
   incomes      Income[]
   transactions Transaction[]
   rules        Rule[]
+  templates    Template[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -39,6 +40,7 @@ model Account {
   
   incomes      Income[]
   transactions Transaction[]
+  templates    Template[] @relation("TemplateAccount")
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -160,4 +162,48 @@ model Tag {
   name  String @unique
   
   createdAt DateTime @default(now())
+}
+
+// Template models for quick creation of common entries
+model Template {
+  id   String @id @default(cuid())
+  type String // "transaction" or "income"
+  
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Basic info
+  name        String
+  description String?
+  
+  // Transaction fields
+  amount          Float?    // for transactions or income gross
+  method          String?   // "cc", "cash", "ach", "other"
+  accountId       String?
+  account         Account?  @relation("TemplateAccount", fields: [accountId], references: [id], onDelete: SetNull)
+  
+  // Income fields
+  grossAmount      Float?
+  federalTaxes     Float?
+  stateTaxes       Float?
+  socialSecurity   Float?
+  medicare         Float?
+  preDeductions    Float?
+  postDeductions   Float?
+  
+  // Shared template data (JSON strings for flexibility)
+  tags        String?       // JSON: ["tag1", "tag2"]
+  notes       String?       // Additional notes
+  
+  // Template metadata
+  isFavorite  Boolean @default(false)
+  usageCount  Int @default(0)
+  lastUsedAt  DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([type])
+  @@index([isFavorite])
 }

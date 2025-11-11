@@ -84,7 +84,7 @@ export default function RoutesPage() {
           <div>
             <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">What is this?</h4>
             <p className="text-slate-700 dark:text-slate-400">
-              This page shows where your money actually goes based on the routing rules you've created. When you add transactions and income, they're automatically routed based on matching rules.
+              This page shows where your money actually goes based on the routing rules you&apos;ve created. When you add transactions and income, they&apos;re automatically routed based on matching rules.
             </p>
           </div>
 

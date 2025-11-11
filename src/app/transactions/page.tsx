@@ -126,8 +126,7 @@ export default function TransactionsPage() {
       splits: tx.splits.map(s => ({
         type: s.type,
         target: s.target,
-        amount: s.amount,
-        percent: s.percent,
+        percent: s.percent || 0,
       })),
     })
     setShowForm(true)
