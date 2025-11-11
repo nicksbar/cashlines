@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/src/lib/db'
-import { accountCreateSchema, accountUpdateSchema } from '@/src/lib/validation'
-import { getErrorMessage } from '@/src/lib/utils'
+import { personCreateSchema, personUpdateSchema } from '@/src/lib/validation'
 
 /**
- * GET /api/accounts
- * Fetch all accounts for the current household
+ * GET /api/people
+ * Fetch all people for the current household
  * Requires: x-household-id header with the household ID
  */
 export async function GET(request: NextRequest) {
@@ -30,29 +29,27 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       )
     }
-    
-    const accounts = await prisma.account.findMany({
-      where: {
-        userId: householdId,
-      },
+
+    const people = await prisma.person.findMany({
+      where: { userId: householdId },
       orderBy: {
         createdAt: 'asc',
       },
     })
 
-    return NextResponse.json(accounts)
+    return NextResponse.json(people)
   } catch (error) {
-    console.error('Error fetching accounts:', error)
+    console.error('Error fetching people:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch accounts' },
+      { error: 'Failed to fetch people' },
       { status: 500 }
     )
   }
 }
 
 /**
- * POST /api/accounts
- * Create a new account
+ * POST /api/people
+ * Create a new person
  * Requires: x-household-id header with the household ID
  */
 export async function POST(request: NextRequest) {
@@ -79,31 +76,28 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const validated = accountCreateSchema.parse(body)
+    const validated = personCreateSchema.parse(body)
 
-    const account = await prisma.account.create({
+    const person = await prisma.person.create({
       data: {
         userId: householdId,
         name: validated.name,
-        type: validated.type,
-        personId: validated.personId || undefined,
-        isActive: validated.isActive,
-        notes: validated.notes,
-        creditLimit: validated.creditLimit,
+        role: validated.role,
+        color: validated.color,
       },
     })
 
-    return NextResponse.json(account, { status: 201 })
+    return NextResponse.json(person, { status: 201 })
   } catch (error) {
     if (error instanceof Error && error.message.includes('unique constraint')) {
       return NextResponse.json(
-        { error: 'Account with this name already exists' },
+        { error: 'Person with this name already exists for this user' },
         { status: 400 }
       )
     }
-    console.error('Error creating account:', error)
+    console.error('Error creating person:', error)
     return NextResponse.json(
-      { error: 'Failed to create account' },
+      { error: 'Failed to create person' },
       { status: 500 }
     )
   }

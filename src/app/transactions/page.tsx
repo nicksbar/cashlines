@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
 import { formatCurrency } from '@/src/lib/money'
 import { formatDate } from '@/src/lib/date'
 import { Plus, Trash2, Edit2, Download } from 'lucide-react'
+import { useUser } from '@/src/lib/UserContext'
 
 interface Split {
   id: string
@@ -26,8 +27,14 @@ interface Transaction {
   accountId: string
   notes?: string
   tags: string
+  personId?: string
   account: {
     name: string
+  }
+  person?: {
+    id: string
+    name: string
+    color?: string
   }
   splits: Split[]
 }
@@ -40,8 +47,10 @@ const METHOD_LABELS: Record<string, string> = {
 }
 
 export default function TransactionsPage() {
+  const { currentHousehold } = useUser()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [accounts, setAccounts] = useState<any[]>([])
+  const [people, setPeople] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -51,24 +60,32 @@ export default function TransactionsPage() {
     description: '',
     method: 'cc',
     accountId: '',
+    personId: '',
     notes: '',
     tags: '',
     splits: [{ type: 'need', target: '', percent: 100 }],
   })
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    if (currentHousehold) {
+      fetchData()
+    }
+  }, [currentHousehold?.id])
 
   const fetchData = async () => {
+    if (!currentHousehold) return
+
     try {
       setLoading(true)
-      const [txRes, accountsRes] = await Promise.all([
-        fetch('/api/transactions'),
-        fetch('/api/accounts'),
+      const headers = { 'x-household-id': currentHousehold.id }
+      const [txRes, accountsRes, peopleRes] = await Promise.all([
+        fetch('/api/transactions', { headers }),
+        fetch('/api/accounts', { headers }),
+        fetch('/api/people', { headers }),
       ])
       if (txRes.ok) setTransactions(await txRes.json())
       if (accountsRes.ok) setAccounts(await accountsRes.json())
+      if (peopleRes.ok) setPeople(await peopleRes.json())
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -78,17 +95,23 @@ export default function TransactionsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!currentHousehold) return
+
     try {
       const url = editingId ? `/api/transactions/${editingId}` : '/api/transactions'
       const method = editingId ? 'PATCH' : 'POST'
       
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-household-id': currentHousehold.id,
+        },
         body: JSON.stringify({
           ...formData,
           amount: parseFloat(formData.amount),
           date: new Date(formData.date),
+          personId: formData.personId || null,
           tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
           splits: formData.splits.filter(s => s.target),
         }),
@@ -100,6 +123,7 @@ export default function TransactionsPage() {
           description: '',
           method: 'cc',
           accountId: '',
+          personId: '',
           notes: '',
           tags: '',
           splits: [{ type: 'need', target: '', percent: 100 }],
@@ -121,6 +145,7 @@ export default function TransactionsPage() {
       description: tx.description,
       method: tx.method,
       accountId: tx.accountId,
+      personId: tx.personId || '',
       notes: tx.notes || '',
       tags: typeof tx.tags === 'string' ? JSON.parse(tx.tags).join(', ') : (tx.tags as any).join(', '),
       splits: tx.splits.map(s => ({
@@ -140,6 +165,7 @@ export default function TransactionsPage() {
       description: '',
       method: 'cc',
       accountId: '',
+      personId: '',
       notes: '',
       tags: '',
       splits: [{ type: 'need', target: '', percent: 100 }],
@@ -320,6 +346,23 @@ export default function TransactionsPage() {
               </div>
 
               <div>
+                <Label htmlFor="personId">Person</Label>
+                <select
+                  id="personId"
+                  value={formData.personId}
+                  onChange={(e) => setFormData({ ...formData, personId: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Unassigned</option>
+                  {people.map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <Label htmlFor="notes">Notes</Label>
                 <Input
                   id="notes"
@@ -438,6 +481,7 @@ export default function TransactionsPage() {
                     <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Description</th>
                     <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Method</th>
                     <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Account</th>
+                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Person</th>
                     <th className="text-right py-2 px-2 text-slate-900 dark:text-slate-100">Amount</th>
                     <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Routing</th>
                     <th className="text-center py-2 px-2 text-slate-900 dark:text-slate-100">Action</th>
@@ -450,6 +494,19 @@ export default function TransactionsPage() {
                       <td className="py-3 px-2 font-medium text-slate-900 dark:text-slate-100">{tx.description}</td>
                       <td className="py-3 px-2 text-slate-600 dark:text-slate-400">{METHOD_LABELS[tx.method]}</td>
                       <td className="py-3 px-2 text-slate-600 dark:text-slate-400">{tx.account.name}</td>
+                      <td className="py-3 px-2">
+                        {tx.person ? (
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: tx.person.color || '#4ECDC4' }}
+                            />
+                            <span className="text-slate-900 dark:text-slate-100">{tx.person.name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-500 dark:text-slate-400 text-sm">—</span>
+                        )}
+                      </td>
                       <td className="py-3 px-2 text-right font-semibold text-red-600 dark:text-red-400">
                         {formatCurrency(tx.amount)}
                       </td>

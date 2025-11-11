@@ -1,10 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/src/components/ui/button'
 import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
 import { recordTemplateUsage } from '@/src/lib/templates'
+
+interface Person {
+  id: string
+  name: string
+  role?: string
+  color?: string
+}
 
 interface TransactionFormProps {
   onClose: () => void
@@ -15,6 +22,7 @@ interface TransactionFormProps {
     accountId?: string
     method?: string
     notes?: string
+    personId?: string
     templateId?: string
   }
 }
@@ -25,11 +33,28 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
     amount: initialData?.amount || '',
     date: new Date().toISOString().split('T')[0],
     accountId: initialData?.accountId || '',
+    personId: initialData?.personId || '',
     method: initialData?.method || 'cc',
     notes: initialData?.notes || '',
   })
 
   const [templateId, setTemplateId] = useState(initialData?.templateId || '')
+  const [people, setPeople] = useState<Person[]>([])
+
+  useEffect(() => {
+    const fetchPeople = async () => {
+      try {
+        const response = await fetch('/api/people')
+        if (response.ok) {
+          const data = await response.json()
+          setPeople(data)
+        }
+      } catch (error) {
+        console.error('Error fetching people:', error)
+      }
+    }
+    fetchPeople()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +67,7 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
           amount: parseFloat(formData.amount),
           date: formData.date,
           accountId: formData.accountId || 'default',
+          personId: formData.personId || null,
           method: formData.method,
           notes: formData.notes,
           tags: [],
@@ -63,7 +89,7 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-slate-900 rounded-lg p-6 max-w-md w-full mx-4">
+      <div className="bg-white dark:bg-slate-900 rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-slate-100">Add Transaction</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -112,6 +138,22 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
               <option value="cash">Cash</option>
               <option value="ach">ACH</option>
               <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="person" className="text-slate-900 dark:text-slate-100">Person</Label>
+            <select
+              id="person"
+              value={formData.personId}
+              onChange={(e) => setFormData({ ...formData, personId: e.target.value })}
+              className="w-full h-10 px-3 py-2 rounded-md border border-slate-300 bg-white text-slate-900 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+            >
+              <option value="">Unassigned</option>
+              {people.map((person) => (
+                <option key={person.id} value={person.id}>
+                  {person.name}
+                </option>
+              ))}
             </select>
           </div>
           <div>

@@ -7,6 +7,22 @@ export const userCreateSchema = z.object({
   name: z.string().optional(),
 })
 
+// Person schemas
+export const personCreateSchema = z.object({
+  name: z.string().min(1, 'Person name is required'),
+  role: z.string().optional(), // "primary", "spouse", "child", "dependent", "other"
+  color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid hex color').optional(),
+})
+
+export const personUpdateSchema = z.object({
+  name: z.string().min(1).optional(),
+  role: z.string().optional(),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid hex color').optional().nullable(),
+})
+
+export type PersonCreate = z.infer<typeof personCreateSchema>
+export type PersonUpdate = z.infer<typeof personUpdateSchema>
+
 // Account schemas
 export const accountCreateSchema = z.object({
   name: z.string().min(1, 'Account name is required'),
@@ -17,6 +33,7 @@ export const accountCreateSchema = z.object({
     ACCOUNT_TYPES.CASH,
     ACCOUNT_TYPES.OTHER,
   ]),
+  personId: z.string().nullable().optional(),
   isActive: z.boolean().default(true),
   notes: z.string().optional(),
   creditLimit: z.number().positive('Credit limit must be positive').optional().nullable(),
@@ -31,6 +48,7 @@ export const accountUpdateSchema = z.object({
     ACCOUNT_TYPES.CASH,
     ACCOUNT_TYPES.OTHER,
   ]).optional(),
+  personId: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
   notes: z.string().optional(),
   creditLimit: z.number().positive('Credit limit must be positive').optional().nullable(),
@@ -49,6 +67,7 @@ export const incomeCreateSchema = z.object({
   netAmount: z.number().positive('Net amount must be positive'),
   source: z.string().min(1, 'Source is required'),
   accountId: z.string().min(1, 'Account is required'),
+  personId: z.string().nullable().optional(),
   notes: z.string().optional(),
   tags: z.array(z.string()).default([]),
 })
@@ -62,6 +81,7 @@ export const incomeUpdateSchema = z.object({
   netAmount: z.number().positive().optional(),
   source: z.string().min(1).optional(),
   accountId: z.string().min(1).optional(),
+  personId: z.string().nullable().optional(),
   notes: z.string().optional(),
   tags: z.array(z.string()).optional(),
 })
@@ -93,6 +113,7 @@ export const transactionCreateSchema = z.object({
   amount: z.number().positive('Amount must be positive'),
   description: z.string().min(1, 'Description is required'),
   accountId: z.string().min(1, 'Account is required'),
+  personId: z.string().nullable().optional(),
   method: z.enum([
     TRANSACTION_METHODS.CREDIT_CARD,
     TRANSACTION_METHODS.CASH,
@@ -109,6 +130,7 @@ export const transactionUpdateSchema = z.object({
   amount: z.number().positive().optional(),
   description: z.string().min(1).optional(),
   accountId: z.string().min(1).optional(),
+  personId: z.string().nullable().optional(),
   method: z.enum([
     TRANSACTION_METHODS.CREDIT_CARD,
     TRANSACTION_METHODS.CASH,

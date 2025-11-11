@@ -67,6 +67,7 @@ export async function PATCH(
     if (body.description !== undefined) updateData.description = body.description
     if (body.method !== undefined) updateData.method = body.method
     if (body.accountId !== undefined) updateData.accountId = body.accountId
+    if (body.personId !== undefined) updateData.personId = body.personId
     if (body.notes !== undefined) updateData.notes = body.notes
     if (body.tags !== undefined) {
       updateData.tags = typeof body.tags === 'string' ? body.tags : JSON.stringify(body.tags)

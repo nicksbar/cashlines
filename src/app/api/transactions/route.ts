@@ -6,6 +6,7 @@ import { getMonthRange } from '@/src/lib/date'
 /**
  * GET /api/transactions
  * Fetch transactions with optional filters
+ * Requires: x-household-id header with the household ID
  * Query params:
  *   - month: number (1-12)
  *   - year: number
@@ -15,6 +16,27 @@ import { getMonthRange } from '@/src/lib/date'
  */
 export async function GET(request: NextRequest) {
   try {
+    const householdId = request.headers.get('x-household-id')
+    
+    if (!householdId) {
+      return NextResponse.json(
+        { error: 'Missing household ID' },
+        { status: 400 }
+      )
+    }
+
+    // Verify household exists
+    const user = await prisma.user.findUnique({
+      where: { id: householdId },
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Household not found' },
+        { status: 404 }
+      )
+    }
+
     const searchParams = request.nextUrl.searchParams
     const month = searchParams.get('month') ? parseInt(searchParams.get('month')!) : undefined
     const year = searchParams.get('year') ? parseInt(searchParams.get('year')!) : undefined
@@ -22,18 +44,7 @@ export async function GET(request: NextRequest) {
     const method = searchParams.get('method')
     const tagsStr = searchParams.get('tags')
 
-    // TODO: Get actual user from session
-    const users = await prisma.user.findMany()
-    const userId = users[0]?.id
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'No user found' },
-        { status: 400 }
-      )
-    }
-
-    const where: any = { userId }
+    const where: any = { userId: householdId }
 
     if (month && year) {
       const range = getMonthRange(year, month)
@@ -83,29 +94,40 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/transactions
  * Create a new transaction with optional splits
+ * Requires: x-household-id header with the household ID
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const validated = transactionCreateSchema.parse(body)
-
-    // TODO: Get actual user from session
-    const users = await prisma.user.findMany()
-    const userId = users[0]?.id
-
-    if (!userId) {
+    const householdId = request.headers.get('x-household-id')
+    
+    if (!householdId) {
       return NextResponse.json(
-        { error: 'No user found' },
+        { error: 'Missing household ID' },
         { status: 400 }
       )
     }
 
-    // Verify account belongs to user
+    // Verify household exists
+    const user = await prisma.user.findUnique({
+      where: { id: householdId },
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Household not found' },
+        { status: 404 }
+      )
+    }
+
+    const body = await request.json()
+    const validated = transactionCreateSchema.parse(body)
+
+    // Verify account belongs to household
     const account = await prisma.account.findUnique({
       where: { id: validated.accountId },
     })
 
-    if (!account || account.userId !== userId) {
+    if (!account || account.userId !== householdId) {
       return NextResponse.json(
         { error: 'Account not found or access denied' },
         { status: 404 }
@@ -114,8 +136,9 @@ export async function POST(request: NextRequest) {
 
     const transaction = await prisma.transaction.create({
       data: {
-        userId,
+        userId: householdId,
         accountId: validated.accountId,
+        personId: validated.personId,
         date: validated.date,
         amount: validated.amount,
         description: validated.description,

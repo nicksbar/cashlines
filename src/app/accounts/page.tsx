@@ -7,6 +7,7 @@ import { Label } from '@/src/components/ui/label'
 import { useState, useEffect } from 'react'
 import { Plus, Trash2, Edit2, Check, X } from 'lucide-react'
 import { formatCurrency } from '@/src/lib/money'
+import { useUser } from '@/src/lib/UserContext'
 
 const ACCOUNT_TYPES = [
   { value: 'checking', label: 'Checking' },
@@ -22,31 +23,47 @@ interface Account {
   type: string
   isActive: boolean
   notes?: string
+  personId?: string
+  person?: {
+    id: string
+    name: string
+    color?: string
+  }
 }
 
 export default function AccountsPage() {
+  const { currentHousehold } = useUser()
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [people, setPeople] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     type: 'checking',
+    personId: '',
     isActive: true,
     notes: '',
   })
 
   useEffect(() => {
-    fetchAccounts()
-  }, [])
+    if (currentHousehold) {
+      fetchData()
+    }
+  }, [currentHousehold?.id])
 
-  const fetchAccounts = async () => {
+  const fetchData = async () => {
+    if (!currentHousehold) return
+
     try {
       setLoading(true)
-      const response = await fetch('/api/accounts')
-      if (!response.ok) throw new Error('Failed to fetch')
-      const data = await response.json()
-      setAccounts(data)
+      const headers = { 'x-household-id': currentHousehold.id }
+      const [accountsRes, peopleRes] = await Promise.all([
+        fetch('/api/accounts', { headers }),
+        fetch('/api/people', { headers }),
+      ])
+      if (accountsRes.ok) setAccounts(await accountsRes.json())
+      if (peopleRes.ok) setPeople(await peopleRes.json())
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -56,22 +73,27 @@ export default function AccountsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!currentHousehold) return
+
     try {
       const method = editingId ? 'PATCH' : 'POST'
       const url = editingId ? `/api/accounts/${editingId}` : '/api/accounts'
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-household-id': currentHousehold.id,
+        },
         body: JSON.stringify(formData),
       })
 
       if (!response.ok) throw new Error('Failed to save account')
 
-      setFormData({ name: '', type: 'checking', isActive: true, notes: '' })
+      setFormData({ name: '', type: 'checking', personId: '', isActive: true, notes: '' })
       setShowForm(false)
       setEditingId(null)
-      fetchAccounts()
+      fetchData()
     } catch (error) {
       console.error('Error saving account:', error)
     }
@@ -81,6 +103,7 @@ export default function AccountsPage() {
     setFormData({
       name: account.name,
       type: account.type,
+      personId: account.personId || '',
       isActive: account.isActive,
       notes: account.notes || '',
     })
@@ -93,7 +116,7 @@ export default function AccountsPage() {
     try {
       const response = await fetch(`/api/accounts/${id}`, { method: 'DELETE' })
       if (!response.ok) throw new Error('Failed to delete')
-      fetchAccounts()
+      fetchData()
     } catch (error) {
       console.error('Error deleting account:', error)
     }
@@ -102,7 +125,7 @@ export default function AccountsPage() {
   const handleCancel = () => {
     setShowForm(false)
     setEditingId(null)
-    setFormData({ name: '', type: 'checking', isActive: true, notes: '' })
+    setFormData({ name: '', type: 'checking', personId: '', isActive: true, notes: '' })
   }
 
   return (
@@ -148,6 +171,23 @@ export default function AccountsPage() {
                   {ACCOUNT_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>
                       {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="personId">Person</Label>
+                <select
+                  id="personId"
+                  value={formData.personId}
+                  onChange={(e) => setFormData({ ...formData, personId: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Unassigned</option>
+                  {people.map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.name}
                     </option>
                   ))}
                 </select>
@@ -204,6 +244,15 @@ export default function AccountsPage() {
                     <CardDescription className="capitalize">
                       {ACCOUNT_TYPES.find((t) => t.value === account.type)?.label || account.type}
                     </CardDescription>
+                    {account.person && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: account.person.color || '#4ECDC4' }}
+                        />
+                        <span className="text-xs text-slate-600">{account.person.name}</span>
+                      </div>
+                    )}
                   </div>
                   <span
                     className={`px-2 py-1 rounded text-xs font-medium ${

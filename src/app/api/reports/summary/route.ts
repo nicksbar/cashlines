@@ -11,12 +11,34 @@ import { sumAmounts } from '@/src/lib/money'
  * - routing summary (sum of splits by type/target)
  * - tax-related totals
  *
+ * Requires: x-household-id header with the household ID
  * Query params:
  *   - month: number (1-12)
  *   - year: number
  */
 export async function GET(request: NextRequest) {
   try {
+    const householdId = request.headers.get('x-household-id')
+    
+    if (!householdId) {
+      return NextResponse.json(
+        { error: 'Missing household ID' },
+        { status: 400 }
+      )
+    }
+
+    // Verify household exists
+    const user = await prisma.user.findUnique({
+      where: { id: householdId },
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Household not found' },
+        { status: 404 }
+      )
+    }
+
     const searchParams = request.nextUrl.searchParams
     const month = searchParams.get('month') ? parseInt(searchParams.get('month')!) : undefined
     const year = searchParams.get('year') ? parseInt(searchParams.get('year')!) : undefined
@@ -28,23 +50,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // TODO: Get actual user from session
-    const users = await prisma.user.findMany()
-    const userId = users[0]?.id
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'No user found' },
-        { status: 400 }
-      )
-    }
-
     const range = getMonthRange(year, month)
 
     // Fetch income for the month
     const incomes = await prisma.income.findMany({
       where: {
-        userId,
+        userId: householdId,
         date: {
           gte: range.start,
           lte: range.end,
@@ -55,7 +66,7 @@ export async function GET(request: NextRequest) {
     // Fetch transactions for the month with splits
     const transactions = await prisma.transaction.findMany({
       where: {
-        userId,
+        userId: householdId,
         date: {
           gte: range.start,
           lte: range.end,

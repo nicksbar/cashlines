@@ -4,6 +4,8 @@ import "./globals.css"
 import { cn } from "@/src/lib/utils"
 import { ThemeProviderWrapper } from "@/src/components/ThemeProvider"
 import { ThemeToggle } from "@/src/components/ThemeToggle"
+import { UserProvider } from "@/src/lib/UserContext"
+import { HouseholdSelector } from "@/src/components/HouseholdSelector"
 
 export const metadata: Metadata = {
   title: "Cashlines - Money Tracking",
@@ -19,43 +21,48 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased dark:bg-slate-950">
         <ThemeProviderWrapper>
-          <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 transition-colors">
-            {/* Header / Navigation */}
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
-                  <Link href="/" className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                    💰 Cashlines
-                  </Link>
-                  <div className="flex items-center gap-6">
-                    <nav className="flex gap-6">
-                      <NavLink href="/">Dashboard</NavLink>
-                      <NavLink href="/accounts">Accounts</NavLink>
-                      <NavLink href="/income">Income</NavLink>
-                      <NavLink href="/transactions">Transactions</NavLink>
-                      <NavLink href="/routes">Routes</NavLink>
-                      <NavLink href="/rules">Rules</NavLink>
-                      <NavLink href="/templates">Templates</NavLink>
-                      <NavLink href="/import">Import</NavLink>
-                    </nav>
-                    <ThemeToggle />
+          <UserProvider>
+            <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 transition-colors">
+              {/* Header / Navigation */}
+              <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="flex justify-between items-center h-16">
+                    <Link href="/" className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                      💰 Cashlines
+                    </Link>
+                    <div className="flex items-center gap-6">
+                      <HouseholdSelector />
+                      <nav className="flex gap-6">
+                        <NavLink href="/">Dashboard</NavLink>
+                        <NavLink href="/people">People</NavLink>
+                        <NavLink href="/accounts">Accounts</NavLink>
+                        <NavLink href="/income">Income</NavLink>
+                        <NavLink href="/transactions">Transactions</NavLink>
+                        <NavLink href="/routes">Routes</NavLink>
+                        <NavLink href="/rules">Rules</NavLink>
+                        <NavLink href="/templates">Templates</NavLink>
+                        <NavLink href="/import">Import</NavLink>
+                        <NavLink href="/data-management">Data</NavLink>
+                      </nav>
+                      <ThemeToggle />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </header>
+              </header>
 
-            {/* Main Content */}
-            <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-              {children}
-            </main>
+              {/* Main Content */}
+              <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+                {children}
+              </main>
 
-            {/* Footer */}
-            <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 mt-12">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-                <p>Cashlines - Self-hosted Money Tracking © 2024</p>
-              </div>
-            </footer>
-          </div>
+              {/* Footer */}
+              <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 mt-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+                  <p>Cashlines - Self-hosted Money Tracking © 2024</p>
+                </div>
+              </footer>
+            </div>
+          </UserProvider>
         </ThemeProviderWrapper>
       </body>
     </html>

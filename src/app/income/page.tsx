@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
 import { formatCurrency } from '@/src/lib/money'
 import { formatDate } from '@/src/lib/date'
 import { Plus, Trash2, TrendingUp, Edit2, Download } from 'lucide-react'
+import { useUser } from '@/src/lib/UserContext'
 
 interface IncomeEntry {
   id: string
@@ -19,16 +20,24 @@ interface IncomeEntry {
   netAmount: number
   source: string
   accountId: string
+  personId?: string
   notes?: string
   tags: string
   account: {
     name: string
   }
+  person?: {
+    id: string
+    name: string
+    color?: string
+  }
 }
 
 export default function IncomePage() {
+  const { currentHousehold } = useUser()
   const [income, setIncome] = useState<IncomeEntry[]>([])
   const [accounts, setAccounts] = useState<any[]>([])
+  const [people, setPeople] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -36,6 +45,7 @@ export default function IncomePage() {
     date: new Date().toISOString().split('T')[0],
     source: '',
     accountId: '',
+    personId: '',
     grossAmount: '',
     taxes: '',
     preTaxDeductions: '',
@@ -46,18 +56,25 @@ export default function IncomePage() {
   })
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    if (currentHousehold) {
+      fetchData()
+    }
+  }, [currentHousehold?.id])
 
   const fetchData = async () => {
+    if (!currentHousehold) return
+
     try {
       setLoading(true)
-      const [incomeRes, accountsRes] = await Promise.all([
-        fetch('/api/income'),
-        fetch('/api/accounts'),
+      const headers = { 'x-household-id': currentHousehold.id }
+      const [incomeRes, accountsRes, peopleRes] = await Promise.all([
+        fetch('/api/income', { headers }),
+        fetch('/api/accounts', { headers }),
+        fetch('/api/people', { headers }),
       ])
       if (incomeRes.ok) setIncome(await incomeRes.json())
       if (accountsRes.ok) setAccounts(await accountsRes.json())
+      if (peopleRes.ok) setPeople(await peopleRes.json())
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -67,6 +84,8 @@ export default function IncomePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!currentHousehold) return
+
     try {
       const grossAmount = parseFloat(formData.grossAmount)
       const taxes = parseFloat(formData.taxes || '0')
@@ -79,11 +98,15 @@ export default function IncomePage() {
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-household-id': currentHousehold.id,
+        },
         body: JSON.stringify({
           date: new Date(formData.date),
           source: formData.source,
           accountId: formData.accountId,
+          personId: formData.personId || null,
           grossAmount,
           taxes,
           preTaxDeductions,
@@ -98,6 +121,7 @@ export default function IncomePage() {
           date: new Date().toISOString().split('T')[0],
           source: '',
           accountId: '',
+          personId: '',
           grossAmount: '',
           taxes: '',
           preTaxDeductions: '',
@@ -121,6 +145,7 @@ export default function IncomePage() {
       date,
       source: entry.source,
       accountId: entry.accountId,
+      personId: entry.personId || '',
       grossAmount: entry.grossAmount.toString(),
       taxes: entry.taxes.toString(),
       preTaxDeductions: entry.preTaxDeductions.toString(),
@@ -140,6 +165,7 @@ export default function IncomePage() {
       date: new Date().toISOString().split('T')[0],
       source: '',
       accountId: '',
+      personId: '',
       grossAmount: '',
       taxes: '',
       preTaxDeductions: '',
@@ -250,35 +276,35 @@ export default function IncomePage() {
       {/* Summary Statistics */}
       {!loading && income.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
+          <Card className="dark:bg-slate-800 dark:border-slate-700">
             <CardContent className="pt-6">
-              <div className="text-sm text-slate-600 mb-1">YTD Gross</div>
-              <div className="text-2xl font-bold text-slate-900">{formatCurrency(totalGross)}</div>
-              <div className="text-xs text-slate-500 mt-2">Avg: {formatCurrency(avgGross)}</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">YTD Gross</div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(totalGross)}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">Avg: {formatCurrency(avgGross)}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="dark:bg-slate-800 dark:border-slate-700">
             <CardContent className="pt-6">
-              <div className="text-sm text-slate-600 mb-1">YTD Taxes</div>
-              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalTaxes)}</div>
-              <div className="text-xs text-slate-500 mt-2">{((totalTaxes / totalGross) * 100).toFixed(1)}% of gross</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">YTD Taxes</div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalTaxes)}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">{((totalTaxes / totalGross) * 100).toFixed(1)}% of gross</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="dark:bg-slate-800 dark:border-slate-700">
             <CardContent className="pt-6">
-              <div className="text-sm text-slate-600 mb-1">YTD Deductions</div>
-              <div className="text-2xl font-bold text-orange-600">{formatCurrency(totalPreTaxDed + totalPostTaxDed)}</div>
-              <div className="text-xs text-slate-500 mt-2">{((( totalPreTaxDed + totalPostTaxDed) / totalGross) * 100).toFixed(1)}% of gross</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">YTD Deductions</div>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{formatCurrency(totalPreTaxDed + totalPostTaxDed)}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">{((( totalPreTaxDed + totalPostTaxDed) / totalGross) * 100).toFixed(1)}% of gross</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="dark:bg-slate-800 dark:border-slate-700">
             <CardContent className="pt-6">
-              <div className="text-sm text-slate-600 mb-1">YTD Net</div>
-              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</div>
-              <div className="text-xs text-slate-500 mt-2">You keep {keepRatio.toFixed(1)}%</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">YTD Net</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">You keep {keepRatio.toFixed(1)}%</div>
             </CardContent>
           </Card>
         </div>
@@ -329,6 +355,23 @@ export default function IncomePage() {
                   {accounts.map((acc) => (
                     <option key={acc.id} value={acc.id}>
                       {acc.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="personId">Person (Optional)</Label>
+                <select
+                  id="personId"
+                  value={formData.personId}
+                  onChange={(e) => setFormData({ ...formData, personId: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Unassigned</option>
+                  {people.map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.name}
                     </option>
                   ))}
                 </select>
@@ -473,6 +516,7 @@ export default function IncomePage() {
                   <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                     <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Date</th>
                     <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Source</th>
+                    <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Person</th>
                     <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Account</th>
                     <th className="text-right py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Gross</th>
                     <th className="text-right py-3 px-2 font-semibold text-red-600 dark:text-red-400">Taxes</th>
@@ -490,6 +534,19 @@ export default function IncomePage() {
                       <tr key={entry.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         <td className="py-3 px-2 text-slate-900 dark:text-slate-100">{formatDate(entry.date)}</td>
                         <td className="py-3 px-2 font-medium text-slate-900 dark:text-slate-100">{entry.source}</td>
+                        <td className="py-3 px-2">
+                          {entry.person ? (
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: entry.person.color || '#4ECDC4' }}
+                              />
+                              <span className="text-slate-900 dark:text-slate-100">{entry.person.name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-500 dark:text-slate-400 text-sm">—</span>
+                          )}
+                        </td>
                         <td className="py-3 px-2 text-slate-600 dark:text-slate-400">{entry.account.name}</td>
                         <td className="py-3 px-2 text-right font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(entry.grossAmount)}</td>
                         <td className="py-3 px-2 text-right text-red-600 dark:text-red-400">{formatCurrency(entry.taxes)}</td>
