@@ -337,21 +337,22 @@ export async function POST(request: NextRequest) {
 
         // Create sample transactions for each month
         const categories = [
-          { name: 'Mortgage', amount: 2200, type: 'need', target: 'Housing', date: 3 },
-          { name: 'Utilities', amount: 250, type: 'need', target: 'Utilities', date: 20, variance: 0.3 },
-          { name: 'Groceries', amount: 800, type: 'need', target: 'Food', date: 15, variance: 0.2 },
-          { name: 'Gas', amount: 400, type: 'need', target: 'Transport', date: 12, variance: 0.3 },
-          { name: 'Dining Out', amount: 300, type: 'want', target: 'Dining', date: 18, variance: 0.4 },
-          { name: 'Shopping', amount: 250, type: 'want', target: 'Shopping', date: 22, variance: 0.6 },
-          { name: 'Savings', amount: 2500, type: 'savings', target: 'Savings', date: 2 },
+          { name: 'Mortgage', amount: 2200, type: 'need', target: 'Housing', date: 3, person: 'sarah' },
+          { name: 'Utilities', amount: 250, type: 'need', target: 'Utilities', date: 20, variance: 0.3, person: 'sarah' },
+          { name: 'Groceries', amount: 800, type: 'need', target: 'Food', date: 15, variance: 0.2, person: 'sarah' },
+          { name: 'Gas', amount: 400, type: 'need', target: 'Transport', date: 12, variance: 0.3, person: 'mike' },
+          { name: 'Dining Out', amount: 300, type: 'want', target: 'Dining', date: 18, variance: 0.4, person: 'sarah' },
+          { name: 'Shopping', amount: 250, type: 'want', target: 'Shopping', date: 22, variance: 0.6, person: 'mike' },
+          { name: 'Savings', amount: 2500, type: 'savings', target: 'Savings', date: 2, person: 'sarah' },
         ]
 
         for (const cat of categories) {
           const amount = cat.variance ? variance(cat.amount, cat.variance) : cat.amount
+          const personId = cat.person === 'mike' ? mike.id : sarah.id
           const tx = await prisma.transaction.create({
             data: {
               userId: user.id,
-              personId: sarah.id,
+              personId: personId,
               accountId: creditCard.id,
               date: createDate(year, month, cat.date),
               amount,

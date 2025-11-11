@@ -35,6 +35,14 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: 'asc',
       },
+      include: {
+        _count: {
+          select: {
+            incomes: true,
+            transactions: true,
+          },
+        },
+      },
     })
 
     return NextResponse.json(people)
