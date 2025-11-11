@@ -1,0 +1,45 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  date        DateTime @default(now())
+  type        String   // EXPENSE or TRANSFER
+  routing     String   // CREDIT_CARD, CASH, SAVINGS, CHECKING
+  category    String?
+  isTaxRelated Boolean @default(false)
+  taxCategory String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([type])
+  @@index([routing])
+}
+
+model Income {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  date        DateTime @default(now())
+  source      String?
+  isTaxRelated Boolean @default(false)
+  taxCategory String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+}

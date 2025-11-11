@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  cashlines:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/dev.db
+    volumes:
+      - cashlines-data:/app/data
+    restart: unless-stopped
+
+  # Optional PostgreSQL configuration
+  # cashlines-postgres:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://cashlines:cashlines@postgres:5432/cashlines
+  #   depends_on:
+  #     - postgres
+  #   restart: unless-stopped
+  #
+  # postgres:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     - POSTGRES_USER=cashlines
+  #     - POSTGRES_PASSWORD=cashlines
+  #     - POSTGRES_DB=cashlines
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+volumes:
+  cashlines-data:
+  # postgres-data:
