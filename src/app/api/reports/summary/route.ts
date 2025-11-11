@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Calculate totals
-    const totalIncome = sumAmounts(incomes.map(i => i.amount))
+    const totalIncome = sumAmounts(incomes.map(i => i.netAmount))
     const totalExpense = sumAmounts(transactions.map(t => t.amount))
 
     // Group transactions by method
@@ -88,15 +88,8 @@ export async function GET(request: NextRequest) {
       })
     })
 
-    // Calculate tax totals (items tagged with tax or splits of type 'tax')
-    let taxTotal = 0
-    incomes.forEach(income => {
-      const tags = JSON.parse(income.tags || '[]') as string[]
-      if (tags.some(t => t.startsWith('tax:'))) {
-        taxTotal += income.amount
-      }
-    })
-
+    // Calculate tax totals (from income taxes + split items tagged as tax)
+    let taxTotal = sumAmounts(incomes.map(i => i.taxes))
     transactions.forEach(tx => {
       tx.splits.forEach(split => {
         if (split.type === 'tax') {

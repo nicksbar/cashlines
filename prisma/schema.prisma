@@ -57,11 +57,15 @@ model Income {
   accountId String
   account   Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
   
-  date      DateTime
-  amount    Float
-  source    String // e.g., "Salary", "Freelance", "Refund"
-  notes     String?
-  tags      String // JSON array stored as string: ["tax:w2", "recurring"]
+  date                 DateTime
+  grossAmount          Float    // Pre-tax amount
+  taxes                Float    // Total taxes withheld
+  preTaxDeductions     Float    // 401k, health insurance, etc.
+  postTaxDeductions    Float    // Additional post-tax deductions
+  netAmount            Float    // What actually deposits (gross - taxes - deductions)
+  source               String   // e.g., "Salary", "Freelance", "Refund"
+  notes                String?
+  tags                 String   // JSON array stored as string: ["tax:w2", "recurring"]
   
   rules Rule[] // Reference to rules that match this income for auto-splits
   

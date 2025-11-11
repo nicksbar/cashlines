@@ -40,7 +40,11 @@ export type AccountUpdate = z.infer<typeof accountUpdateSchema>
 // Income schemas
 export const incomeCreateSchema = z.object({
   date: z.coerce.date(),
-  amount: z.number().positive('Amount must be positive'),
+  grossAmount: z.number().positive('Gross amount must be positive'),
+  taxes: z.number().min(0, 'Taxes cannot be negative').default(0),
+  preTaxDeductions: z.number().min(0, 'Pre-tax deductions cannot be negative').default(0),
+  postTaxDeductions: z.number().min(0, 'Post-tax deductions cannot be negative').default(0),
+  netAmount: z.number().positive('Net amount must be positive'),
   source: z.string().min(1, 'Source is required'),
   accountId: z.string().min(1, 'Account is required'),
   notes: z.string().optional(),
@@ -49,7 +53,11 @@ export const incomeCreateSchema = z.object({
 
 export const incomeUpdateSchema = z.object({
   date: z.coerce.date().optional(),
-  amount: z.number().positive().optional(),
+  grossAmount: z.number().positive().optional(),
+  taxes: z.number().min(0).optional(),
+  preTaxDeductions: z.number().min(0).optional(),
+  postTaxDeductions: z.number().min(0).optional(),
+  netAmount: z.number().positive().optional(),
   source: z.string().min(1).optional(),
   accountId: z.string().min(1).optional(),
   notes: z.string().optional(),

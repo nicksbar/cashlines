@@ -78,7 +78,11 @@ async function main() {
       userId: user.id,
       accountId: checking.id,
       date: lastMonth,
-      amount: 5000,
+      grossAmount: 5000,
+      taxes: 1200,
+      preTaxDeductions: 400,
+      postTaxDeductions: 200,
+      netAmount: 3200,
       source: 'Salary',
       tags: JSON.stringify(['recurring', 'tax:w2']),
     },
@@ -89,13 +93,17 @@ async function main() {
       userId: user.id,
       accountId: checking.id,
       date: today,
-      amount: 500,
+      grossAmount: 500,
+      taxes: 75,
+      preTaxDeductions: 0,
+      postTaxDeductions: 0,
+      netAmount: 425,
       source: 'Freelance',
       tags: JSON.stringify(['irregular', 'tax:1099']),
     },
   })
 
-  console.log(`Created income entries: ${income1.amount} from ${income1.source}, ${income2.amount} from ${income2.source}`)
+  console.log(`Created income entries: ${income1.grossAmount} from ${income1.source}, ${income2.grossAmount} from ${income2.source}`)
 
   // Create sample transactions
   const tx1 = await prisma.transaction.create({

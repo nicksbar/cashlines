@@ -2,28 +2,455 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Button } from '@/src/components/ui/button'
+import { Input } from '@/src/components/ui/input'
+import { Label } from '@/src/components/ui/label'
+import { useState, useEffect } from 'react'
+import { formatCurrency } from '@/src/lib/money'
+import { formatDate } from '@/src/lib/date'
+import { Plus, Trash2, TrendingUp, Edit2 } from 'lucide-react'
+
+interface IncomeEntry {
+  id: string
+  date: string
+  grossAmount: number
+  taxes: number
+  preTaxDeductions: number
+  postTaxDeductions: number
+  netAmount: number
+  source: string
+  accountId: string
+  notes?: string
+  tags: string
+  account: {
+    name: string
+  }
+}
 
 export default function IncomePage() {
+  const [income, setIncome] = useState<IncomeEntry[]>([])
+  const [accounts, setAccounts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    source: '',
+    accountId: '',
+    grossAmount: '',
+    taxes: '',
+    preTaxDeductions: '',
+    postTaxDeductions: '',
+    netAmount: '',
+    notes: '',
+    tags: '',
+  })
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const [incomeRes, accountsRes] = await Promise.all([
+        fetch('/api/income'),
+        fetch('/api/accounts'),
+      ])
+      if (incomeRes.ok) setIncome(await incomeRes.json())
+      if (accountsRes.ok) setAccounts(await accountsRes.json())
+    } catch (error) {
+      console.error('Error fetching data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const grossAmount = parseFloat(formData.grossAmount)
+      const taxes = parseFloat(formData.taxes || '0')
+      const preTaxDeductions = parseFloat(formData.preTaxDeductions || '0')
+      const postTaxDeductions = parseFloat(formData.postTaxDeductions || '0')
+      const netAmount = grossAmount - taxes - preTaxDeductions - postTaxDeductions
+
+      const method = editingId ? 'PATCH' : 'POST'
+      const url = editingId ? `/api/income/${editingId}` : '/api/income'
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: new Date(formData.date),
+          source: formData.source,
+          accountId: formData.accountId,
+          grossAmount,
+          taxes,
+          preTaxDeductions,
+          postTaxDeductions,
+          netAmount,
+          notes: formData.notes,
+          tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+        }),
+      })
+      if (response.ok) {
+        setFormData({
+          date: new Date().toISOString().split('T')[0],
+          source: '',
+          accountId: '',
+          grossAmount: '',
+          taxes: '',
+          preTaxDeductions: '',
+          postTaxDeductions: '',
+          netAmount: '',
+          notes: '',
+          tags: '',
+        })
+        setShowForm(false)
+        setEditingId(null)
+        fetchData()
+      }
+    } catch (error) {
+      console.error('Error creating income:', error)
+    }
+  }
+
+  const handleEdit = (entry: IncomeEntry) => {
+    const date = entry.date.split('T')[0]
+    setFormData({
+      date,
+      source: entry.source,
+      accountId: entry.accountId,
+      grossAmount: entry.grossAmount.toString(),
+      taxes: entry.taxes.toString(),
+      preTaxDeductions: entry.preTaxDeductions.toString(),
+      postTaxDeductions: entry.postTaxDeductions.toString(),
+      netAmount: entry.netAmount.toString(),
+      notes: entry.notes || '',
+      tags: typeof entry.tags === 'string' ? JSON.parse(entry.tags || '[]').join(', ') : '',
+    })
+    setEditingId(entry.id)
+    setShowForm(true)
+  }
+
+  const handleCancel = () => {
+    setShowForm(false)
+    setEditingId(null)
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      source: '',
+      accountId: '',
+      grossAmount: '',
+      taxes: '',
+      preTaxDeductions: '',
+      postTaxDeductions: '',
+      netAmount: '',
+      notes: '',
+      tags: '',
+    })
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this income entry?')) return
+    try {
+      const response = await fetch(`/api/income/${id}`, { method: 'DELETE' })
+      if (response.ok) fetchData()
+    } catch (error) {
+      console.error('Error deleting income:', error)
+    }
+  }
+
+  const totalIncome = income.reduce((sum, i) => sum + i.netAmount, 0)
+  const totalGross = income.reduce((sum, i) => sum + i.grossAmount, 0)
+  const totalTaxes = income.reduce((sum, i) => sum + i.taxes, 0)
+  const totalPreTaxDed = income.reduce((sum, i) => sum + i.preTaxDeductions, 0)
+  const totalPostTaxDed = income.reduce((sum, i) => sum + i.postTaxDeductions, 0)
+  const keepRatio = totalGross > 0 ? (totalIncome / totalGross) * 100 : 0
+  const avgGross = income.length > 0 ? totalGross / income.length : 0
+  const avgNet = income.length > 0 ? totalIncome / income.length : 0
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Income</h1>
-        <p className="text-slate-600 mt-2">Track all income sources</p>
+        <p className="text-slate-600 mt-2">Track where your money comes from with detailed deduction breakdown</p>
       </div>
 
-      <div className="flex justify-end">
-        <Button>
-          + New Income
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Summary</h2>
+        <Button onClick={() => setShowForm(!showForm)}>
+          <Plus className="w-4 h-4 mr-2" />
+          New Income
         </Button>
       </div>
 
+      {/* Summary Statistics */}
+      {!loading && income.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-sm text-slate-600 mb-1">YTD Gross</div>
+              <div className="text-2xl font-bold text-slate-900">{formatCurrency(totalGross)}</div>
+              <div className="text-xs text-slate-500 mt-2">Avg: {formatCurrency(avgGross)}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-sm text-slate-600 mb-1">YTD Taxes</div>
+              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalTaxes)}</div>
+              <div className="text-xs text-slate-500 mt-2">{((totalTaxes / totalGross) * 100).toFixed(1)}% of gross</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-sm text-slate-600 mb-1">YTD Deductions</div>
+              <div className="text-2xl font-bold text-orange-600">{formatCurrency(totalPreTaxDed + totalPostTaxDed)}</div>
+              <div className="text-xs text-slate-500 mt-2">{((( totalPreTaxDed + totalPostTaxDed) / totalGross) * 100).toFixed(1)}% of gross</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-sm text-slate-600 mb-1">YTD Net</div>
+              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</div>
+              <div className="text-xs text-slate-500 mt-2">You keep {keepRatio.toFixed(1)}%</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {showForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{editingId ? 'Edit Income' : 'Add Income'}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="date">Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="source">Source</Label>
+                  <Input
+                    id="source"
+                    value={formData.source}
+                    onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                    placeholder="e.g., Salary, Freelance"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="accountId">Account</Label>
+                  <select
+                    id="accountId"
+                    value={formData.accountId}
+                    onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select...</option>
+                    {accounts.map((acc) => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-4 rounded-lg space-y-4 border border-slate-200">
+                <h3 className="font-semibold text-slate-900">Income Breakdown</h3>
+                
+                <div>
+                  <Label htmlFor="grossAmount">Gross Amount (Pre-Tax)</Label>
+                  <Input
+                    id="grossAmount"
+                    type="number"
+                    step="0.01"
+                    value={formData.grossAmount}
+                    onChange={(e) => setFormData({ ...formData, grossAmount: e.target.value })}
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="taxes">Taxes</Label>
+                    <Input
+                      id="taxes"
+                      type="number"
+                      step="0.01"
+                      value={formData.taxes}
+                      onChange={(e) => setFormData({ ...formData, taxes: e.target.value })}
+                      placeholder="0.00"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">Fed, state, FICA</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="preTaxDeductions">Pre-Tax Deductions</Label>
+                    <Input
+                      id="preTaxDeductions"
+                      type="number"
+                      step="0.01"
+                      value={formData.preTaxDeductions}
+                      onChange={(e) => setFormData({ ...formData, preTaxDeductions: e.target.value })}
+                      placeholder="0.00"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">401k, health insurance</p>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="postTaxDeductions">Post-Tax Deductions</Label>
+                  <Input
+                    id="postTaxDeductions"
+                    type="number"
+                    step="0.01"
+                    value={formData.postTaxDeductions}
+                    onChange={(e) => setFormData({ ...formData, postTaxDeductions: e.target.value })}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Additional withdrawals after tax</p>
+                </div>
+
+                <div className="bg-white p-3 rounded border border-blue-200">
+                  <p className="text-sm font-semibold text-blue-900">
+                    Net Amount: <span className="text-lg text-green-600">
+                      {formatCurrency(
+                        (parseFloat(formData.grossAmount) || 0) -
+                        (parseFloat(formData.taxes) || 0) -
+                        (parseFloat(formData.preTaxDeductions) || 0) -
+                        (parseFloat(formData.postTaxDeductions) || 0)
+                      )}
+                    </span>
+                  </p>
+                  {parseFloat(formData.grossAmount) > 0 && (
+                    <p className="text-xs text-slate-600 mt-2">
+                      Keep {(((parseFloat(formData.grossAmount) || 0) -
+                        (parseFloat(formData.taxes) || 0) -
+                        (parseFloat(formData.preTaxDeductions) || 0) -
+                        (parseFloat(formData.postTaxDeductions) || 0)) / (parseFloat(formData.grossAmount) || 1) * 100).toFixed(1)}% of gross
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="notes">Notes</Label>
+                <Input
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Optional notes"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="tags">Tags (comma-separated)</Label>
+                <Input
+                  id="tags"
+                  value={formData.tags}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  placeholder="e.g., recurring, tax:w2"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button type="submit">{editingId ? 'Update Income' : 'Save Income'}</Button>
+                <Button type="button" variant="outline" onClick={handleCancel}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
-          <CardTitle>Income List</CardTitle>
-          <CardDescription>Coming soon...</CardDescription>
+          <CardTitle>Income Entries</CardTitle>
+          <CardDescription>{income.length} entries</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-slate-600">Income tracking features will be available soon.</p>
+          {loading ? (
+            <p className="text-slate-500">Loading...</p>
+          ) : income.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="text-left py-3 px-2 font-semibold">Date</th>
+                    <th className="text-left py-3 px-2 font-semibold">Source</th>
+                    <th className="text-left py-3 px-2 font-semibold">Account</th>
+                    <th className="text-right py-3 px-2 font-semibold">Gross</th>
+                    <th className="text-right py-3 px-2 font-semibold text-red-600">Taxes</th>
+                    <th className="text-right py-3 px-2 font-semibold text-orange-600">Deductions</th>
+                    <th className="text-right py-3 px-2 font-semibold text-green-600">Net</th>
+                    <th className="text-right py-3 px-2 font-semibold">Ratio</th>
+                    <th className="text-center py-3 px-2 font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {income.map((entry) => {
+                    const deductions = entry.preTaxDeductions + entry.postTaxDeductions
+                    const ratio = entry.grossAmount > 0 ? ((entry.netAmount / entry.grossAmount) * 100) : 0
+                    return (
+                      <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="py-3 px-2">{formatDate(entry.date)}</td>
+                        <td className="py-3 px-2 font-medium">{entry.source}</td>
+                        <td className="py-3 px-2 text-slate-600">{entry.account.name}</td>
+                        <td className="py-3 px-2 text-right font-semibold">{formatCurrency(entry.grossAmount)}</td>
+                        <td className="py-3 px-2 text-right text-red-600">{formatCurrency(entry.taxes)}</td>
+                        <td className="py-3 px-2 text-right text-orange-600">{formatCurrency(deductions)}</td>
+                        <td className="py-3 px-2 text-right font-semibold text-green-600">{formatCurrency(entry.netAmount)}</td>
+                        <td className="py-3 px-2 text-right text-slate-600 font-mono text-xs">{ratio.toFixed(1)}%</td>
+                        <td className="py-3 px-2 text-center">
+                          <div className="flex gap-1 justify-center">
+                            <button
+                              onClick={() => handleEdit(entry)}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Edit"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(entry.id)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                  <tr className="bg-slate-100 font-bold border-t-2 border-slate-300">
+                    <td colSpan={3} className="py-3 px-2">TOTAL</td>
+                    <td className="py-3 px-2 text-right">{formatCurrency(totalGross)}</td>
+                    <td className="py-3 px-2 text-right text-red-600">{formatCurrency(totalTaxes)}</td>
+                    <td className="py-3 px-2 text-right text-orange-600">{formatCurrency(totalPreTaxDed + totalPostTaxDed)}</td>
+                    <td className="py-3 px-2 text-right text-green-600">{formatCurrency(totalIncome)}</td>
+                    <td className="py-3 px-2 text-right text-slate-900">{keepRatio.toFixed(1)}%</td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-slate-500">No income entries yet. Create one to get started!</p>
+          )}
         </CardContent>
       </Card>
     </div>
