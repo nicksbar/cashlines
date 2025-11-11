@@ -371,8 +371,52 @@ Get contextual help while using the application.
 2. Check Routes page for spending patterns
 3. Use Rules to ensure consistent categorization
 4. Compare month-to-month trends
-5. Export data for external analysis
+5. Monitor SBNL to catch untracked spending
+6. Export data for external analysis
+
+## Spent But Not Listed (SBNL)
+
+The SBNL metric reveals the gap between your tracked expenses and actual spending.
+
+### What is SBNL?
+
+SBNL (Spent But Not Listed) = Total CC Payment - Tracked Expenses
+
+It shows you how much you're spending beyond what you've explicitly logged.
+
+### Why This Matters
+
+You can't track every purchase perfectly. SBNL:
+- Reveals untracked discretionary spending
+- Shows which months had budget leakage
+- Identifies spending pattern changes
+- Proves actual spending vs. tracked spending
+
+### Example
+
+**November tracked:** $1,200 in expenses  
+**December CC payment:** $1,850  
+**SBNL:** $650 (35% of payment)
+
+You spent $650 more than what you logged—possibly impulse purchases, cash spending, or forgotten transactions.
+
+### Using SBNL
+
+1. **Monitor Monthly**: Check SBNL each month
+2. **Identify Patterns**: Look for consistent gaps
+3. **Review Statements**: Match untracked amounts to CC statements
+4. **Add Categories**: Create new expense categories for SBNL items
+5. **Adjust Tracking**: Tighten tracking if SBNL is consistently high
+
+### SBNL Interpretation
+
+- **< 5%**: Excellent tracking
+- **5-15%**: Good tracking, minor gaps are normal
+- **15-25%**: Moderate gaps, review spending categories
+- **> 25%**: Significant untracked spending, consider tighter tracking
+
+For detailed information, see [SBNL Guide](./SBNL.md).
 
 ---
 
-For detailed technical information, see [Architecture](./ARCHITECTURE.md) and [API Reference](./API.md).
+For detailed technical information, see [SBNL Guide](./SBNL.md), [Architecture](./ARCHITECTURE.md), and [API Reference](./API.md).

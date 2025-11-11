@@ -6,12 +6,14 @@ This directory contains the complete Cashlines documentation.
 
 - **[Getting Started](./GETTING_STARTED.md)** - Setup instructions for local development
 - **[Features & Usage](./FEATURES.md)** - Detailed feature documentation
+- **[Spent But Not Listed (SBNL)](./SBNL.md)** - Untracked spending analysis
 - **[Architecture](./ARCHITECTURE.md)** - Technical architecture and design
 - **[API Reference](./API.md)** - Complete API endpoint documentation
 - **[Deployment](./DEPLOYMENT.md)** - Docker, LXC, and container deployment
 - **[Templates System](./TEMPLATES.md)** - Template system for quick entry creation
 - **[Theme System](./THEMES.md)** - Light/dark/auto theme support
 - **[Help System](./HELP_SYSTEM.md)** - Contextual help and tooltips
+- **[Branch Security](./BRANCH_SECURITY.md)** - Branch protection and governance
 
 ## For Agents & Contributors
 
