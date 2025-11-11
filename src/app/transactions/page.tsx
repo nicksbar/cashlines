@@ -7,7 +7,7 @@ import { Label } from '@/src/components/ui/label'
 import { useState, useEffect } from 'react'
 import { formatCurrency } from '@/src/lib/money'
 import { formatDate } from '@/src/lib/date'
-import { Plus, Trash2, Edit2 } from 'lucide-react'
+import { Plus, Trash2, Edit2, Download } from 'lucide-react'
 
 interface Split {
   id: string
@@ -160,6 +160,24 @@ export default function TransactionsPage() {
 
   const totalExpense = transactions.reduce((sum, t) => sum + t.amount, 0)
 
+  const exportTransactions = async () => {
+    try {
+      const response = await fetch('/api/export?type=transactions')
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`
+        a.click()
+        window.URL.revokeObjectURL(url)
+      }
+    } catch (error) {
+      console.error('Error exporting transactions:', error)
+      alert('Failed to export transactions')
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -171,13 +189,19 @@ export default function TransactionsPage() {
         <div className="text-2xl font-bold text-red-600 dark:text-red-400">
           Total: {formatCurrency(totalExpense)}
         </div>
-        <Button onClick={() => {
-          setEditingId(null)
-          setShowForm(!showForm)
-        }}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Transaction
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={exportTransactions} variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          <Button onClick={() => {
+            setEditingId(null)
+            setShowForm(!showForm)
+          }}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Transaction
+          </Button>
+        </div>
       </div>
 
       {showForm && (

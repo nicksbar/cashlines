@@ -7,7 +7,7 @@ import { Label } from '@/src/components/ui/label'
 import { useState, useEffect } from 'react'
 import { formatCurrency } from '@/src/lib/money'
 import { formatDate } from '@/src/lib/date'
-import { Plus, Trash2, TrendingUp, Edit2 } from 'lucide-react'
+import { Plus, Trash2, TrendingUp, Edit2, Download } from 'lucide-react'
 
 interface IncomeEntry {
   id: string
@@ -169,6 +169,24 @@ export default function IncomePage() {
   const avgGross = income.length > 0 ? totalGross / income.length : 0
   const avgNet = income.length > 0 ? totalIncome / income.length : 0
 
+  const exportIncome = async () => {
+    try {
+      const response = await fetch('/api/export?type=income')
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `income-${new Date().toISOString().split('T')[0]}.csv`
+        a.click()
+        window.URL.revokeObjectURL(url)
+      }
+    } catch (error) {
+      console.error('Error exporting income:', error)
+      alert('Failed to export income')
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -177,11 +195,17 @@ export default function IncomePage() {
       </div>
 
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Summary</h2>
-        <Button onClick={() => setShowForm(!showForm)}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Income
-        </Button>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Summary</h2>
+        <div className="flex gap-2">
+          <Button onClick={exportIncome} variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          <Button onClick={() => setShowForm(!showForm)}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Income
+          </Button>
+        </div>
       </div>
 
       {/* Summary Statistics */}
