@@ -1,0 +1,33 @@
+# CODEOWNERS
+
+# Global code owners
+* @nicksbar
+
+# Documentation
+/docs/ @nicksbar
+/README.md @nicksbar
+.github/ @nicksbar
+
+# Database schema and migrations
+/prisma/schema.prisma @nicksbar
+/prisma/migrations/ @nicksbar
+
+# API endpoints
+/src/app/api/ @nicksbar
+
+# UI and components
+/src/components/ @nicksbar
+/src/app/ @nicksbar
+
+# Tests
+/src/__tests__/ @nicksbar
+/src/lib/__tests__/ @nicksbar
+/src/app/__tests__/ @nicksbar
+
+# Configuration
+package.json @nicksbar
+tsconfig.json @nicksbar
+jest.config.ts @nicksbar
+next.config.js @nicksbar
+tailwind.config.ts @nicksbar
+.github/workflows/ @nicksbar
