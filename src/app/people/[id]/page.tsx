@@ -6,6 +6,7 @@ import { formatCurrency } from '@/src/lib/money'
 import { formatDate } from '@/src/lib/date'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { useUser } from '@/src/lib/UserContext'
 
 interface Person {
   id: string
@@ -39,27 +40,33 @@ interface Transaction {
 }
 
 export default function PersonDashboard({ params }: { params: { id: string } }) {
+  const { currentHousehold } = useUser()
   const [person, setPerson] = useState<Person | null>(null)
   const [income, setIncome] = useState<Income[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchData()
-  }, [params.id])
+    if (currentHousehold) {
+      fetchData()
+    }
+  }, [params.id, currentHousehold?.id])
 
   const fetchData = async () => {
+    if (!currentHousehold) return
+    
     try {
       setLoading(true)
-      
+      const headers = { 'x-household-id': currentHousehold.id }
+
       // Fetch person details
-      const personRes = await fetch(`/api/people/${params.id}`)
+      const personRes = await fetch(`/api/people/${params.id}`, { headers })
       if (personRes.ok) {
         setPerson(await personRes.json())
       }
 
       // Fetch all income entries and filter by personId
-      const incomeRes = await fetch('/api/income')
+      const incomeRes = await fetch('/api/income', { headers })
       if (incomeRes.ok) {
         const allIncome = await incomeRes.json()
         const personIncome = allIncome.filter((entry: any) => entry.personId === params.id)
@@ -67,7 +74,7 @@ export default function PersonDashboard({ params }: { params: { id: string } }) 
       }
 
       // Fetch all transactions and filter by personId
-      const txRes = await fetch('/api/transactions')
+      const txRes = await fetch('/api/transactions', { headers })
       if (txRes.ok) {
         const allTransactions = await txRes.json()
         const personTx = allTransactions.filter((entry: any) => entry.personId === params.id)

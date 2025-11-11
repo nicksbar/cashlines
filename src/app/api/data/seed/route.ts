@@ -143,6 +143,7 @@ export async function POST(request: NextRequest) {
       const transaction = await prisma.transaction.create({
         data: {
           userId: user.id,
+          personId: sarah.id,
           accountId: creditCard.id,
           date: new Date(),
           amount: 125.50,
@@ -350,6 +351,7 @@ export async function POST(request: NextRequest) {
           const tx = await prisma.transaction.create({
             data: {
               userId: user.id,
+              personId: sarah.id,
               accountId: creditCard.id,
               date: createDate(year, month, cat.date),
               amount,

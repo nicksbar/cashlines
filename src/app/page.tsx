@@ -175,10 +175,14 @@ export default function Dashboard() {
         const peopleData = await peopleRes.json()
         setPeople(peopleData)
 
-        // Fetch all income and transactions to calculate per-person metrics
+        // Build query params for date filtering
+        const rangeMonths = getDateRangeMonths(dateRange)
+        const queryParams = rangeMonths.map(m => `month=${m.month}&year=${m.year}`).join('&')
+
+        // Fetch all income and transactions with date filtering
         const [incomeRes, txRes] = await Promise.all([
-          fetch('/api/income', { headers }),
-          fetch('/api/transactions', { headers }),
+          fetch(`/api/income?${queryParams}`, { headers }),
+          fetch(`/api/transactions?${queryParams}`, { headers }),
         ])
 
         const incomeData = incomeRes.ok ? await incomeRes.json() : []
