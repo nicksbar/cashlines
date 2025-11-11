@@ -35,6 +35,7 @@ export default function RootLayout({
                       <NavLink href="/transactions">Transactions</NavLink>
                       <NavLink href="/routes">Routes</NavLink>
                       <NavLink href="/rules">Rules</NavLink>
+                      <NavLink href="/templates">Templates</NavLink>
                       <NavLink href="/import">Import</NavLink>
                     </nav>
                     <ThemeToggle />
