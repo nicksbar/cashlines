@@ -4,20 +4,30 @@ import { useState } from 'react'
 import { Button } from '@/src/components/ui/button'
 import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
+import { recordTemplateUsage } from '@/src/lib/templates'
 
 interface IncomeFormProps {
   onClose: () => void
   onSuccess: () => void
+  initialData?: {
+    source?: string
+    amount?: string
+    accountId?: string
+    notes?: string
+    templateId?: string
+  }
 }
 
-export default function IncomeForm({ onClose, onSuccess }: IncomeFormProps) {
+export default function IncomeForm({ onClose, onSuccess, initialData }: IncomeFormProps) {
   const [formData, setFormData] = useState({
-    source: '',
-    amount: '',
+    source: initialData?.source || '',
+    amount: initialData?.amount || '',
     date: new Date().toISOString().split('T')[0],
-    accountId: '',
-    notes: '',
+    accountId: initialData?.accountId || '',
+    notes: initialData?.notes || '',
   })
+
+  const [templateId, setTemplateId] = useState(initialData?.templateId || '')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,6 +46,10 @@ export default function IncomeForm({ onClose, onSuccess }: IncomeFormProps) {
       })
 
       if (response.ok) {
+        // Record template usage if a template was used
+        if (templateId) {
+          recordTemplateUsage(templateId, 'income')
+        }
         onSuccess()
       }
     } catch (error) {
@@ -45,21 +59,22 @@ export default function IncomeForm({ onClose, onSuccess }: IncomeFormProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h2 className="text-xl font-bold mb-4">Add Income</h2>
+      <div className="bg-white dark:bg-slate-900 rounded-lg p-6 max-w-md w-full mx-4">
+        <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-slate-100">Add Income</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="source">Source *</Label>
+            <Label htmlFor="source" className="text-slate-900 dark:text-slate-100">Source *</Label>
             <Input
               id="source"
               value={formData.source}
               onChange={(e) => setFormData({ ...formData, source: e.target.value })}
               placeholder="Salary, Freelance, etc."
               required
+              className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />
           </div>
           <div>
-            <Label htmlFor="amount">Amount *</Label>
+            <Label htmlFor="amount" className="text-slate-900 dark:text-slate-100">Amount *</Label>
             <Input
               id="amount"
               type="number"
@@ -67,24 +82,27 @@ export default function IncomeForm({ onClose, onSuccess }: IncomeFormProps) {
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               required
+              className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />
           </div>
           <div>
-            <Label htmlFor="date">Date *</Label>
+            <Label htmlFor="date" className="text-slate-900 dark:text-slate-100">Date *</Label>
             <Input
               id="date"
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               required
+              className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />
           </div>
           <div>
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes" className="text-slate-900 dark:text-slate-100">Notes</Label>
             <Input
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />
           </div>
           <div className="flex justify-end gap-2">

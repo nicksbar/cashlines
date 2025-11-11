@@ -4,21 +4,32 @@ import { useState } from 'react'
 import { Button } from '@/src/components/ui/button'
 import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
+import { recordTemplateUsage } from '@/src/lib/templates'
 
 interface TransactionFormProps {
   onClose: () => void
   onSuccess: () => void
+  initialData?: {
+    description?: string
+    amount?: string
+    accountId?: string
+    method?: string
+    notes?: string
+    templateId?: string
+  }
 }
 
-export default function TransactionForm({ onClose, onSuccess }: TransactionFormProps) {
+export default function TransactionForm({ onClose, onSuccess, initialData }: TransactionFormProps) {
   const [formData, setFormData] = useState({
-    description: '',
-    amount: '',
+    description: initialData?.description || '',
+    amount: initialData?.amount || '',
     date: new Date().toISOString().split('T')[0],
-    accountId: '',
-    method: 'cc',
-    notes: '',
+    accountId: initialData?.accountId || '',
+    method: initialData?.method || 'cc',
+    notes: initialData?.notes || '',
   })
+
+  const [templateId, setTemplateId] = useState(initialData?.templateId || '')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,6 +50,10 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
       })
 
       if (response.ok) {
+        // Record template usage if a template was used
+        if (templateId) {
+          recordTemplateUsage(templateId, 'transaction')
+        }
         onSuccess()
       }
     } catch (error) {
@@ -48,21 +63,22 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h2 className="text-xl font-bold mb-4">Add Transaction</h2>
+      <div className="bg-white dark:bg-slate-900 rounded-lg p-6 max-w-md w-full mx-4">
+        <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-slate-100">Add Transaction</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="description">Description *</Label>
+            <Label htmlFor="description" className="text-slate-900 dark:text-slate-100">Description *</Label>
             <Input
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Groceries, Gas, etc."
               required
+              className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />
           </div>
           <div>
-            <Label htmlFor="amount">Amount *</Label>
+            <Label htmlFor="amount" className="text-slate-900 dark:text-slate-100">Amount *</Label>
             <Input
               id="amount"
               type="number"
@@ -70,25 +86,27 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               required
+              className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />
           </div>
           <div>
-            <Label htmlFor="date">Date *</Label>
+            <Label htmlFor="date" className="text-slate-900 dark:text-slate-100">Date *</Label>
             <Input
               id="date"
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               required
+              className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />
           </div>
           <div>
-            <Label htmlFor="method">Method</Label>
+            <Label htmlFor="method" className="text-slate-900 dark:text-slate-100">Method</Label>
             <select
               id="method"
               value={formData.method}
               onChange={(e) => setFormData({ ...formData, method: e.target.value })}
-              className="w-full px-2 py-1 border rounded"
+              className="w-full px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             >
               <option value="cc">Credit Card</option>
               <option value="cash">Cash</option>
@@ -97,11 +115,12 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
             </select>
           </div>
           <div>
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes" className="text-slate-900 dark:text-slate-100">Notes</Label>
             <Input
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />
           </div>
           <div className="flex justify-end gap-2">
@@ -115,3 +134,4 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
     </div>
   )
 }
+

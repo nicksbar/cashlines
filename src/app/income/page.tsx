@@ -187,6 +187,45 @@ export default function IncomePage() {
     }
   }
 
+  const saveAsTemplate = async () => {
+    if (!formData.source || !formData.grossAmount) {
+      alert('Please fill in source and gross amount')
+      return
+    }
+
+    const templateName = prompt('Template name (e.g., "Biweekly Salary"):')
+    if (!templateName) return
+
+    try {
+      const response = await fetch('/api/templates/income', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: templateName,
+          description: formData.source,
+          grossAmount: parseFloat(formData.grossAmount),
+          federalTaxes: parseFloat(formData.taxes) || 0,
+          stateTaxes: 0,
+          socialSecurity: 0,
+          medicare: 0,
+          preDeductions: parseFloat(formData.preTaxDeductions) || 0,
+          postDeductions: parseFloat(formData.postTaxDeductions) || 0,
+          notes: formData.notes,
+        }),
+      })
+
+      if (response.ok) {
+        alert('Template saved successfully!')
+        handleCancel()
+      } else {
+        alert('Failed to save template')
+      }
+    } catch (error) {
+      console.error('Error saving template:', error)
+      alert('Error saving template')
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -404,6 +443,15 @@ export default function IncomePage() {
                 <Button type="button" variant="outline" onClick={handleCancel} className="dark:border-slate-600 dark:text-slate-100">
                   Cancel
                 </Button>
+                {!editingId && (
+                  <Button
+                    type="button"
+                    onClick={saveAsTemplate}
+                    className="ml-auto bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 text-white"
+                  >
+                    💾 Save as Template
+                  </Button>
+                )}
               </div>
             </form>
           </CardContent>

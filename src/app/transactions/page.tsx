@@ -177,6 +177,42 @@ export default function TransactionsPage() {
     }
   }
 
+  const saveAsTemplate = async () => {
+    if (!formData.description || !formData.amount) {
+      alert('Please fill in description and amount')
+      return
+    }
+
+    const templateName = prompt('Template name (e.g., "Rent", "Grocery Run"):')
+    if (!templateName) return
+
+    try {
+      const response = await fetch('/api/templates/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: templateName,
+          description: formData.description,
+          amount: parseFloat(formData.amount),
+          method: formData.method,
+          accountId: formData.accountId,
+          notes: formData.notes,
+          tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+        }),
+      })
+
+      if (response.ok) {
+        alert('Template saved successfully!')
+        handleCancel()
+      } else {
+        alert('Failed to save template')
+      }
+    } catch (error) {
+      console.error('Error saving template:', error)
+      alert('Error saving template')
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -370,6 +406,15 @@ export default function TransactionsPage() {
                 <Button type="button" variant="outline" onClick={handleCancel} className="dark:border-slate-600 dark:text-slate-100">
                   Cancel
                 </Button>
+                {!editingId && (
+                  <Button
+                    type="button"
+                    onClick={saveAsTemplate}
+                    className="ml-auto bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 text-white"
+                  >
+                    💾 Save as Template
+                  </Button>
+                )}
               </div>
             </form>
           </CardContent>
