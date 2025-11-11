@@ -119,7 +119,7 @@ export default function Dashboard() {
       {/* Month Selector */}
       <div className="flex gap-4 items-end">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
             Select Month
           </label>
           <select
@@ -129,7 +129,7 @@ export default function Dashboard() {
               setYear(parseInt(y))
               setMonth(parseInt(m))
             }}
-            className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             {monthOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -142,71 +142,71 @@ export default function Dashboard() {
 
       {/* Summary Cards - Main Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-            <ArrowDownLeft className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Total Income</CardTitle>
+            <ArrowDownLeft className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               {formatCurrency(summary.totalIncome)}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {summary.incomeCount} entries · Avg: {formatCurrency(avgIncome)}
             </p>
             {prevSummary && incomeChange !== 0 && (
-              <p className={`text-xs mt-1 font-semibold ${incomeChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className={`text-xs mt-1 font-semibold ${incomeChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {incomeChange >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(incomeChange))} ({incomeChangePercent.toFixed(1)}%)
               </p>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-red-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-            <ArrowUpRight className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Total Expenses</CardTitle>
+            <ArrowUpRight className="h-4 w-4 text-red-600 dark:text-red-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
               {formatCurrency(summary.totalExpense)}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {summary.transactionCount} txns · Avg: {formatCurrency(avgTransaction)}
             </p>
             {prevSummary && expenseChange !== 0 && (
-              <p className={`text-xs mt-1 font-semibold ${expenseChange <= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className={`text-xs mt-1 font-semibold ${expenseChange <= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {expenseChange >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(expenseChange))} ({expenseChangePercent.toFixed(1)}%)
               </p>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Balance</CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Net Balance</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${netBalance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+            <div className={`text-2xl font-bold ${netBalance >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
               {formatCurrency(netBalance)}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {savingsRate.toFixed(1)}% savings rate
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Expense Ratio</CardTitle>
-            <Percent className="h-4 w-4 text-orange-600" />
+            <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Expense Ratio</CardTitle>
+            <Percent className="h-4 w-4 text-orange-600 dark:text-orange-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
               {expenseRatio.toFixed(1)}%
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Tax: {taxRate.toFixed(1)}%
             </p>
           </CardContent>
@@ -216,8 +216,8 @@ export default function Dashboard() {
       {/* Payment Method Breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle>Payment Method Breakdown</CardTitle>
-          <CardDescription>Expenses by payment method and compared to total</CardDescription>
+          <CardTitle className="text-slate-900 dark:text-slate-100">Payment Method Breakdown</CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">Expenses by payment method and compared to total</CardDescription>
         </CardHeader>
         <CardContent>
           {methodEntries.length > 0 ? (
@@ -228,12 +228,12 @@ export default function Dashboard() {
                 return (
                   <div key={method}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-slate-700">{label}</span>
-                      <span className="text-sm font-semibold text-slate-900">
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
+                      <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                         {formatCurrency(amount)} ({percent.toFixed(1)}%)
                       </span>
                     </div>
-                    <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full ${
                           method === 'cc' ? 'bg-blue-500' : method === 'cash' ? 'bg-green-500' : 'bg-purple-500'
@@ -246,7 +246,7 @@ export default function Dashboard() {
               })}
             </div>
           ) : (
-            <p className="text-slate-500 text-sm">No transactions this month</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">No transactions this month</p>
           )}
         </CardContent>
       </Card>
@@ -254,8 +254,8 @@ export default function Dashboard() {
       {/* Routing Summary with Details */}
       <Card>
         <CardHeader>
-          <CardTitle>Money Allocation Summary</CardTitle>
-          <CardDescription>How expenses were categorized and allocated</CardDescription>
+          <CardTitle className="text-slate-900 dark:text-slate-100">Money Allocation Summary</CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">How expenses were categorized and allocated</CardDescription>
         </CardHeader>
         <CardContent>
           {Object.keys(allocationsByType).length > 0 ? (
@@ -268,19 +268,19 @@ export default function Dashboard() {
                   return (
                     <div key={type}>
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-sm font-semibold text-slate-900 capitalize">
+                        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 capitalize">
                           {type}
                         </h4>
                         <div className="text-right">
-                          <div className="font-semibold text-slate-900">
+                          <div className="font-semibold text-slate-900 dark:text-slate-100">
                             {formatCurrency(total)}
                           </div>
-                          <div className="text-xs text-slate-500">
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
                             {percent.toFixed(1)}% of expenses
                           </div>
                         </div>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2 mb-3">
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-3">
                         <div
                           className={`h-2 rounded-full ${
                             type === 'need' ? 'bg-blue-500' :
@@ -297,7 +297,7 @@ export default function Dashboard() {
                         {Object.entries(targets)
                           .sort(([, a], [, b]) => b - a)
                           .map(([target, amount]) => (
-                            <div key={target} className="flex justify-between text-xs text-slate-600">
+                            <div key={target} className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
                               <span>{target}</span>
                               <span className="font-medium">{formatCurrency(amount)}</span>
                             </div>
@@ -308,7 +308,7 @@ export default function Dashboard() {
                 })}
             </div>
           ) : (
-            <p className="text-slate-500 text-sm">No allocations configured</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">No allocations configured</p>
           )}
         </CardContent>
       </Card>
@@ -316,44 +316,44 @@ export default function Dashboard() {
       {/* Key Ratios Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Key Financial Ratios</CardTitle>
-          <CardDescription>Important metrics for money tracking</CardDescription>
+          <CardTitle className="text-slate-900 dark:text-slate-100">Key Financial Ratios</CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">Important metrics for money tracking</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-slate-600">Savings Rate</p>
-              <p className="text-2xl font-bold text-slate-900">{savingsRate.toFixed(1)}%</p>
-              <p className="text-xs text-slate-500">Income after expenses</p>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Savings Rate</p>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">{savingsRate.toFixed(1)}%</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Income after expenses</p>
             </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-slate-600">Expense Ratio</p>
-              <p className="text-2xl font-bold text-slate-900">{expenseRatio.toFixed(1)}%</p>
-              <p className="text-xs text-slate-500">Expenses vs income</p>
+            <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Expense Ratio</p>
+              <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{expenseRatio.toFixed(1)}%</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Expenses vs income</p>
             </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-slate-600">Tax Rate</p>
-              <p className="text-2xl font-bold text-slate-900">{taxRate.toFixed(1)}%</p>
-              <p className="text-xs text-slate-500">Taxes vs gross income</p>
+            <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Tax Rate</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{taxRate.toFixed(1)}%</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Taxes vs gross income</p>
             </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-slate-600">CC vs Total Spend</p>
-              <p className="text-2xl font-bold text-slate-900">
+            <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">CC vs Total Spend</p>
+              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                 {summary.totalExpense > 0 ? ((ccExpense / summary.totalExpense) * 100).toFixed(1) : '0'}%
               </p>
-              <p className="text-xs text-slate-500">{formatCurrency(ccExpense)} on credit card</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{formatCurrency(ccExpense)} on credit card</p>
             </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-slate-600">Cash vs Total Spend</p>
-              <p className="text-2xl font-bold text-slate-900">
+            <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Cash vs Total Spend</p>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                 {summary.totalExpense > 0 ? ((cashExpense / summary.totalExpense) * 100).toFixed(1) : '0'}%
               </p>
-              <p className="text-xs text-slate-500">{formatCurrency(cashExpense)} in cash</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{formatCurrency(cashExpense)} in cash</p>
             </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-slate-600">Transaction Frequency</p>
-              <p className="text-2xl font-bold text-slate-900">{summary.transactionCount}</p>
-              <p className="text-xs text-slate-500">transactions this month</p>
+            <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Transaction Frequency</p>
+              <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{summary.transactionCount}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">transactions this month</p>
             </div>
           </div>
         </CardContent>
