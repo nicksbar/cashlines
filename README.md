@@ -4,7 +4,7 @@
 
 **Purpose**: Understand your money flow. Track income from multiple sources, split expenses across categories (Need/Want/Debt/Tax/Savings), create routing rules for automation, and analyze monthly reports—all privately on your own hardware.
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#) [![Tests](https://img.shields.io/badge/tests-318%2F318-brightgreen)](#) [![License](https://img.shields.io/badge/license-MIT-blue)](#license)
+[![CI Status](https://github.com/nicksbar/cashlines/actions/workflows/test.yml/badge.svg?branch=development)](https://github.com/nicksbar/cashlines/actions/workflows/test.yml) [![Tests](https://img.shields.io/badge/tests-318%2F318-brightgreen)](#) [![License](https://img.shields.io/badge/license-MIT-blue)](#license)
 
 ## Features
 

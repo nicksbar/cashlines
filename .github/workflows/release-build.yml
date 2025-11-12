@@ -12,6 +12,9 @@ jobs:
     permissions:
       contents: write
       packages: write
+    
+    env:
+      DATABASE_URL: "file:./prisma/dev.db"
 
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +29,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Initialize database schema
+        run: npx prisma db push --skip-generate
 
       - name: Generate Prisma client
         run: npx prisma generate
@@ -89,13 +95,19 @@ jobs:
 
       - name: Create tarball
         run: |
+          mkdir -p /tmp/cashlines-build
           tar --exclude='.git' \
               --exclude='.next' \
               --exclude='node_modules' \
               --exclude='coverage' \
               --exclude='.env' \
               --exclude='*.db' \
-              -czf cashlines-${{ steps.version.outputs.tag }}.tar.gz .
+              --exclude='.github' \
+              --exclude='.vscode' \
+              -czf /tmp/cashlines-build/cashlines-${{ steps.version.outputs.tag }}.tar.gz \
+              --transform='s,^.,cashlines,' .
+          mv /tmp/cashlines-build/cashlines-${{ steps.version.outputs.tag }}.tar.gz .
+          rm -rf /tmp/cashlines-build
           echo "✅ Tarball created"
 
       - name: Commit and tag (main only)
