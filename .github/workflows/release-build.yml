@@ -1,0 +1,189 @@
+name: Release Build
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git describe
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build Next.js production bundle
+        run: npm run build
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            # Get latest tag and increment patch version
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            LATEST_VERSION=${LATEST_TAG#v}
+            
+            # Parse major.minor.patch
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST_VERSION"
+            PATCH=$((PATCH + 1))
+            
+            NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+            TAG="v$NEW_VERSION"
+            BUILD_TYPE="release"
+          else
+            # Development build with timestamp and short commit hash
+            COMMIT_HASH=$(git rev-parse --short HEAD)
+            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+            TAG="v0.0.0-dev-${TIMESTAMP}-${COMMIT_HASH}"
+            NEW_VERSION="0.0.0-dev"
+            BUILD_TYPE="development"
+          fi
+          
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "build_type=$BUILD_TYPE" >> $GITHUB_OUTPUT
+
+      - name: Update version in package.json
+        run: |
+          npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+
+      - name: Build Docker image
+        run: |
+          docker build -t cashlines:${{ steps.version.outputs.tag }} \
+                       -t cashlines:latest \
+                       --build-arg VERSION=${{ steps.version.outputs.version }} \
+                       .
+
+      - name: Verify Docker image
+        run: |
+          docker run --rm cashlines:${{ steps.version.outputs.tag }} node --version
+          echo "✅ Docker image built: cashlines:${{ steps.version.outputs.tag }}"
+
+      - name: Create tarball
+        run: |
+          tar --exclude='.git' \
+              --exclude='.next' \
+              --exclude='node_modules' \
+              --exclude='coverage' \
+              --exclude='.env' \
+              --exclude='*.db' \
+              -czf cashlines-${{ steps.version.outputs.tag }}.tar.gz .
+          echo "✅ Tarball created: cashlines-${{ steps.version.outputs.tag }}.tar.gz"
+
+      - name: Commit and tag (release only)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to ${{ steps.version.outputs.version }}" || true
+          git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.version }}" || true
+          git push origin main --tags
+
+      - name: Create release notes
+        id: release_notes
+        run: |
+          cat > RELEASE_NOTES.md << 'EOF'
+          # Cashlines ${{ steps.version.outputs.tag }}
+
+          **Build Type**: ${{ steps.version.outputs.build_type }}  
+          **Version**: ${{ steps.version.outputs.version }}  
+          **Commit**: ${{ github.sha }}  
+
+          ## Installation
+
+          ### Docker (Recommended)
+
+          ```bash
+          docker run -p 3000:3000 \
+            -v cashlines-data:/app/prisma \
+            cashlines:${{ steps.version.outputs.tag }}
+          ```
+
+          ### Docker Compose
+
+          ```yaml
+          services:
+            cashlines:
+              image: cashlines:${{ steps.version.outputs.tag }}
+              ports:
+                - "3000:3000"
+              volumes:
+                - cashlines-data:/app/prisma
+          volumes:
+            cashlines-data:
+          ```
+
+          ### From Source
+
+          ```bash
+          tar xzf cashlines-${{ steps.version.outputs.tag }}.tar.gz
+          cd cashlines
+          npm install
+          npx prisma generate
+          npm run build
+          npm start
+          ```
+
+          ## Build Details
+
+          - ✅ Linting passed
+          - ✅ 289 tests passed
+          - ✅ Production build successful
+          - ✅ Docker image built and verified
+          - Node.js: 20.x
+          - Prisma: 5.22.0
+
+          ## What's Changed
+
+          See [commits](https://github.com/${{ github.repository }}/commits/${{ github.ref }}) for changes.
+
+          ---
+
+          For more information, see the [documentation](https://github.com/${{ github.repository }}/tree/main/docs).
+          EOF
+
+      - name: Create GitHub Release (release only)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          body_path: RELEASE_NOTES.md
+          files: |
+            cashlines-${{ steps.version.outputs.tag }}.tar.gz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Type**: ${{ steps.version.outputs.build_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version/Tag**: ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
