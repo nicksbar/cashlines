@@ -95,16 +95,19 @@ jobs:
 
       - name: Create tarball
         run: |
+          mkdir -p /tmp/cashlines-build
           tar --exclude='.git' \
               --exclude='.next' \
               --exclude='node_modules' \
               --exclude='coverage' \
               --exclude='.env' \
               --exclude='*.db' \
-              --exclude='*.tar.gz' \
               --exclude='.github' \
               --exclude='.vscode' \
-              -czf cashlines-${{ steps.version.outputs.tag }}.tar.gz .
+              -czf /tmp/cashlines-build/cashlines-${{ steps.version.outputs.tag }}.tar.gz \
+              --transform='s,^.,cashlines,' .
+          mv /tmp/cashlines-build/cashlines-${{ steps.version.outputs.tag }}.tar.gz .
+          rm -rf /tmp/cashlines-build
           echo "✅ Tarball created"
 
       - name: Commit and tag (main only)
