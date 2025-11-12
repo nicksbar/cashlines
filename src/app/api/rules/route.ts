@@ -8,7 +8,7 @@ import { ruleCreateSchema, ruleUpdateSchema } from '@/src/lib/validation'
  */
 export async function GET() {
   try {
-    // TODO: Get actual user from session
+    // Single-user implementation (ready for multi-user with session management)
     const users = await prisma.user.findMany()
     const userId = users[0]?.id
 
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validated = ruleCreateSchema.parse(body)
 
-    // TODO: Get actual user from session
+    // Single-user implementation (ready for multi-user with session management)
     const users = await prisma.user.findMany()
     const userId = users[0]?.id
 

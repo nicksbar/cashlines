@@ -41,13 +41,12 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json(template);
+    return NextResponse.json(template)
   } catch (error) {
-    console.error("Error updating template:", error);
     return NextResponse.json(
-      { error: "Failed to update template" },
+      { error: 'Failed to update template' },
       { status: 500 }
-    );
+    )
   }
 }
 
@@ -62,12 +61,11 @@ export async function DELETE(
       },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting template:", error);
     return NextResponse.json(
-      { error: "Failed to delete template" },
+      { error: 'Failed to delete template' },
       { status: 500 }
-    );
+    )
   }
 }
