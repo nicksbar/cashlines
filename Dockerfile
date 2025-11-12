@@ -29,6 +29,8 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
+RUN apk add --no-cache libc6-compat dumb-init
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
@@ -41,9 +43,17 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+
+# Create entrypoint script to run migrations before starting the app
+RUN mkdir -p /app/scripts
+RUN echo '#!/bin/sh\nset -e\necho "Running database migrations..."\nnode_modules/.bin/prisma db push --skip-generate || true\necho "Starting Cashlines..."\nexec node server.js' > /app/scripts/entrypoint.sh
+RUN chmod +x /app/scripts/entrypoint.sh
+RUN chown nextjs:nodejs /app/scripts/entrypoint.sh
 
 USER nextjs
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["/app/scripts/entrypoint.sh"]
