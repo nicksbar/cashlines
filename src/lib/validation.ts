@@ -182,3 +182,26 @@ export const ruleUpdateSchema = z.object({
 
 export type RuleCreate = z.infer<typeof ruleCreateSchema>
 export type RuleUpdate = z.infer<typeof ruleUpdateSchema>
+
+// Recurring Expense schemas
+export const recurringExpenseSchema = z.object({
+  accountId: z.string().optional().nullable(),
+  description: z.string().min(1, 'Description is required'),
+  amount: z.number().positive('Amount must be positive'),
+  frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+  dueDay: z.number().min(1).max(31).optional().nullable(), // Day of month for monthly expenses
+  notes: z.string().optional(),
+})
+
+export const recurringExpenseUpdateSchema = z.object({
+  accountId: z.string().optional().nullable(),
+  description: z.string().min(1).optional(),
+  amount: z.number().positive().optional(),
+  frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']).optional(),
+  dueDay: z.number().min(1).max(31).optional().nullable(),
+  isActive: z.boolean().optional(),
+  notes: z.string().optional(),
+})
+
+export type RecurringExpenseCreate = z.infer<typeof recurringExpenseSchema>
+export type RecurringExpenseUpdate = z.infer<typeof recurringExpenseUpdateSchema>

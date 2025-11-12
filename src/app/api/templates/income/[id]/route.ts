@@ -42,13 +42,12 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json(template);
+    return NextResponse.json(template)
   } catch (error) {
-    console.error("Error updating income template:", error);
     return NextResponse.json(
-      { error: "Failed to update income template" },
+      { error: 'Failed to update income template' },
       { status: 500 }
-    );
+    )
   }
 }
 
@@ -63,12 +62,11 @@ export async function DELETE(
       },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting income template:", error);
     return NextResponse.json(
-      { error: "Failed to delete income template" },
+      { error: 'Failed to delete income template' },
       { status: 500 }
-    );
+    )
   }
 }

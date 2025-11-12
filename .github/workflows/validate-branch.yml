@@ -1,0 +1,25 @@
+name: Validate Branch Name
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  validate-branch-name:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check branch name format
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          
+          # Only allow main, development, and branches/ prefix
+          if [[ "$BRANCH_NAME" =~ ^branches/ ]] || [ "$BRANCH_NAME" = "main" ] || [ "$BRANCH_NAME" = "development" ]; then
+            echo "✅ Branch name '$BRANCH_NAME' is valid"
+          else
+            echo "❌ Invalid branch name: '$BRANCH_NAME'"
+            echo ""
+            echo "Use: branches/your-feature-name"
+            exit 1
+          fi
+

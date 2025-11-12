@@ -7,8 +7,9 @@ import { Label } from '@/src/components/ui/label'
 import { useState, useEffect } from 'react'
 import { formatCurrency } from '@/src/lib/money'
 import { formatDate } from '@/src/lib/date'
-import { Plus, Trash2, Edit2, Download } from 'lucide-react'
+import { Plus, Trash2, Edit2, Download, Zap } from 'lucide-react'
 import { useUser } from '@/src/lib/UserContext'
+import { QuickExpenseEntry } from '@/src/components/QuickExpenseEntry'
 
 interface Split {
   id: string
@@ -53,7 +54,9 @@ export default function TransactionsPage() {
   const [people, setPeople] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [expenseType, setExpenseType] = useState<'one-off' | 'recurring'>('one-off')
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [showQuickEntry, setShowQuickEntry] = useState(false)
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     amount: '',
@@ -242,8 +245,8 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Transactions</h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-2">Track expenses and how money is routed</p>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Expenses</h1>
+        <p className="text-slate-600 dark:text-slate-400 mt-2">Track one-off expenses and manage recurring bills</p>
       </div>
 
       <div className="flex justify-between items-center">
@@ -255,12 +258,30 @@ export default function TransactionsPage() {
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
-          <Button onClick={() => {
-            setEditingId(null)
-            setShowForm(!showForm)
-          }}>
+          <Button 
+            onClick={() => setShowQuickEntry(true)}
+            className="bg-amber-600 hover:bg-amber-700"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            Quick Log
+          </Button>
+          <Button 
+            onClick={() => {
+              setEditingId(null)
+              setShowForm(!showForm)
+              setExpenseType('one-off')
+            }}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
             <Plus className="w-4 h-4 mr-2" />
-            New Transaction
+            Add Expense
+          </Button>
+          <Button 
+            onClick={() => window.location.href = '/recurring-expenses'}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Recurring Bills
           </Button>
         </div>
       </div>
@@ -546,6 +567,12 @@ export default function TransactionsPage() {
           )}
         </CardContent>
       </Card>
+
+      <QuickExpenseEntry
+        isOpen={showQuickEntry}
+        onClose={() => setShowQuickEntry(false)}
+        householdId={currentHousehold?.id}
+      />
     </div>
   )
 }

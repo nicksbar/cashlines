@@ -590,6 +590,107 @@ async function main() {
 
   console.log(`✓ Created savings (~$2,500/month, 20% of income)`)
 
+  // Create recurring expenses (monthly bills)
+  await prisma.recurringExpense.create({
+    data: {
+      userId: user.id,
+      accountId: amex.id,
+      description: 'Mortgage Payment',
+      amount: 2400,
+      frequency: 'monthly',
+      dueDay: 1,
+      nextDueDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
+      isActive: true,
+      notes: 'Primary residence - fixed rate 6.5%',
+    },
+  })
+
+  await prisma.recurringExpense.create({
+    data: {
+      userId: user.id,
+      accountId: amex.id,
+      description: 'Car Insurance',
+      amount: 185,
+      frequency: 'monthly',
+      dueDay: 15,
+      nextDueDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 15),
+      isActive: true,
+      notes: 'Two vehicles - Progressive',
+    },
+  })
+
+  await prisma.recurringExpense.create({
+    data: {
+      userId: user.id,
+      accountId: amex.id,
+      description: 'Internet & Phone',
+      amount: 125,
+      frequency: 'monthly',
+      dueDay: 10,
+      nextDueDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 10),
+      isActive: true,
+      notes: 'Verizon Fios + mobile',
+    },
+  })
+
+  await prisma.recurringExpense.create({
+    data: {
+      userId: user.id,
+      accountId: checking.id,
+      description: 'Electric & Gas',
+      amount: 175,
+      frequency: 'monthly',
+      dueDay: 5,
+      nextDueDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 5),
+      isActive: true,
+      notes: 'Seasonal variation ~$100-250',
+    },
+  })
+
+  await prisma.recurringExpense.create({
+    data: {
+      userId: user.id,
+      accountId: amex.id,
+      description: 'Streaming Services',
+      amount: 45,
+      frequency: 'monthly',
+      dueDay: 20,
+      nextDueDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 20),
+      isActive: true,
+      notes: 'Netflix, Disney+, Hulu',
+    },
+  })
+
+  await prisma.recurringExpense.create({
+    data: {
+      userId: user.id,
+      accountId: checking.id,
+      description: 'Gym Membership',
+      amount: 79,
+      frequency: 'monthly',
+      dueDay: 1,
+      nextDueDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
+      isActive: true,
+      notes: 'Family membership',
+    },
+  })
+
+  await prisma.recurringExpense.create({
+    data: {
+      userId: user.id,
+      accountId: amex.id,
+      description: 'Car Payment (Sarah)',
+      amount: 425,
+      frequency: 'monthly',
+      dueDay: 10,
+      nextDueDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 10),
+      isActive: true,
+      notes: '3 years remaining',
+    },
+  })
+
+  console.log(`✓ Created 7 recurring expenses (~$3,434/month forecast)`)
+
   // Create routing rule for salary splitting
   const rule = await prisma.rule.create({
     data: {
@@ -623,6 +724,8 @@ async function main() {
      - Health/Childcare: $600/month
      - Wants: $1,380/month (dining, entertainment, shopping)
      - Savings: $2,500/month
+   • 7 recurring expenses (~$3,434/month forecast):
+     - Mortgage, car payment, insurance, utilities, internet, streaming, gym
    • Multiple accounts and credit cards
    • Income from multiple sources
    • Automated routing rules for salary splitting

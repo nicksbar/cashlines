@@ -20,13 +20,14 @@ model User {
   // Data protection: prevents accidental data loss when working with real data
   isProduction Boolean @default(false) // Set to true to prevent resets via UI
   
-  accounts     Account[]
-  incomes      Income[]
-  transactions Transaction[]
-  rules        Rule[]
-  templates    Template[]
-  people       Person[]
-  settings     Setting?
+  accounts           Account[]
+  incomes            Income[]
+  transactions       Transaction[]
+  rules              Rule[]
+  templates          Template[]
+  people             Person[]
+  settings           Setting?
+  recurringExpenses  RecurringExpense[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -68,9 +69,10 @@ model Account {
   notes    String?
   creditLimit Float? // Optional: for credit cards and lines of credit
   
-  incomes      Income[]
-  transactions Transaction[]
-  templates    Template[] @relation("TemplateAccount")
+  incomes           Income[]
+  transactions      Transaction[]
+  templates         Template[] @relation("TemplateAccount")
+  recurringExpenses RecurringExpense[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -280,4 +282,30 @@ model Setting {
   
   @@unique([userId])
   @@index([userId])
+}
+
+// RecurringExpense: Track fixed/recurring bills and expenses
+model RecurringExpense {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  
+  description    String   // e.g., "T-Mobile Bill", "Rent", "Insurance"
+  amount         Float    // Monthly/recurring amount
+  frequency      String   // "daily", "weekly", "monthly", "yearly"
+  dueDay         Int?     // Day of month for monthly expenses (1-31)
+  nextDueDate    DateTime // Next expected charge date
+  isActive       Boolean @default(true)
+  notes          String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([accountId])
+  @@index([isActive])
+  @@index([nextDueDate])
 }

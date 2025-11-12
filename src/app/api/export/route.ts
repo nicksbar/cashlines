@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const type = searchParams.get('type') || 'all'
 
-    // TODO: Get actual user from session
+    // Single-user implementation (ready for multi-user with session management)
     const users = await prisma.user.findMany()
     const userId = users[0]?.id
 

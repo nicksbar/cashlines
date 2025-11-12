@@ -4,20 +4,38 @@
 
 **Purpose**: Understand your money flow. Track income from multiple sources, split expenses across categories (Need/Want/Debt/Tax/Savings), create routing rules for automation, and analyze monthly reports—all privately on your own hardware.
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#) [![Tests](https://img.shields.io/badge/tests-114%2F114-brightgreen)](#) [![License](https://img.shields.io/badge/license-MIT-blue)](#license)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#) [![Tests](https://img.shields.io/badge/tests-318%2F318-brightgreen)](#) [![License](https://img.shields.io/badge/license-MIT-blue)](#license)
 
 ## Features
 
 - **Dashboard** - Monthly income, expenses, and money routing overview
+- **Expenses** - Track spending with flexible split allocation across categories
+- **Recurring Expenses** - Forecast fixed bills and quickly log payments with quick-entry
 - **Income Tracking** - Record income with automatic tax and deduction calculations
 - **Accounts** - Manage multiple accounts (checking, savings, credit card, cash, custom)
-- **Transactions** - Track expenses with flexible split allocation across categories
 - **Money Routing** - Auto-split money across Need/Want/Debt/Tax/Savings
 - **Routing Rules** - Create rules to automatically allocate transactions by pattern
 - **Templates** - Save and reuse common entry patterns for quick creation
 - **Reports** - Monthly summaries with spending breakdowns
 - **Theme Support** - Light/dark/auto themes with persistent preferences
 - **Self-Hosted** - Full privacy and control, no external services or tracking
+
+## Screenshots
+
+### Dashboard - Monthly Overview
+![Dashboard](./docs/screenshots/dashboard.png)
+
+### Expenses - Track Spending
+![Expenses](./docs/screenshots/expenses.png)
+
+### Quick Entry - Log Recurring Bills in Seconds
+![Quick Entry Modal](./docs/screenshots/quick-entry.png)
+
+### Recurring Expenses - Manage Bills
+![Recurring Expenses](./docs/screenshots/recurring-expenses.png)
+
+### Money Routes - Visualize Allocation
+![Money Routes](./docs/screenshots/money-routes.png)
 
 ## Quick Start
 
@@ -33,6 +51,13 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+**First steps:**
+1. Create an account (checking, savings, credit card, etc.)
+2. Add your monthly income
+3. Add credit card statement as a single transaction
+4. Split the transaction across spending categories
+5. Watch the patterns emerge
 
 ### Docker
 
@@ -84,6 +109,51 @@ This data-driven approach transforms how you make financial decisions—replacin
 
 [**Learn more about the philosophy →**](./docs/ABOUT.md)
 
+## How to Use Cashlines (The Right Way)
+
+**Cashlines is NOT a transaction logger.** Don't track every coffee purchase or small expense—that's the road to burnout and useless data.
+
+### ✅ The Recommended Approach: Credit Card + Income
+
+**Track at the statement level, not the line-item level:**
+
+1. **Record income** as it arrives (salary, side gigs, transfers)
+2. **Record credit card statements** as a single transaction (e.g., "$1,247 to Amex")
+   - The CC statement shows you what was actually spent last month
+   - Split it across Need/Want/Debt/Savings based on your habits
+3. **Record direct expenses** for things not on credit cards (rent, groceries if cash, etc.)
+4. **Watch the monthly cycle**:
+   - Month 1: Income comes in → split and allocate
+   - Month 2: CC statement arrives → you see what was actually spent
+   - The CC payment closes the loop: income spent = next month's CC bill
+
+**Why this works:**
+- You track the full income picture
+- You see actual spending via CC statements (not guesses)
+- The CC payment next month validates your spending data
+- Minimal data entry (statement-level, not line-item)
+- No guilt tracking every small purchase
+
+### ✅ If You Don't Have a Credit Card
+
+You can still use Cashlines effectively:
+
+1. **Record income** as received
+2. **Record major expenses** (rent, utilities, groceries, etc.)
+3. **Categorize with splitting** to see allocation patterns
+4. **Review monthly** to understand your spending trends
+
+You'll see spending ratios and patterns, just without the CC statement validation.
+
+### ❌ Don't Do This
+
+- **Don't** track every individual transaction (coffee, gas station, etc.)
+- **Don't** aim for 100% expense tracking accuracy
+- **Don't** use it like a traditional expense ledger
+- **Don't** categorize line items by store name ("Walmart", "Starbucks", "Target")
+
+If you're tempted to do the above, you're using the wrong tool. Cashlines isn't for that.
+
 ## Documentation
 
 Complete docs in `/docs/`:
@@ -98,7 +168,7 @@ Complete docs in `/docs/`:
 ## Status
 
 ✅ **MVP complete**: 8 features fully implemented  
-✅ **114 tests passing** (100% success rate)  
+✅ **318 tests passing** (100% success rate)  
 ✅ **Production-ready**: Builds successfully with zero errors  
 ✅ **Dark mode**: Full light/dark/auto theme support  
 ✅ **Self-hosted**: Docker and LXC deployment ready
