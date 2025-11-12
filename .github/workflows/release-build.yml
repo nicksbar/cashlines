@@ -101,6 +101,9 @@ jobs:
               --exclude='coverage' \
               --exclude='.env' \
               --exclude='*.db' \
+              --exclude='*.tar.gz' \
+              --exclude='.github' \
+              --exclude='.vscode' \
               -czf cashlines-${{ steps.version.outputs.tag }}.tar.gz .
           echo "✅ Tarball created"
 
