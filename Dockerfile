@@ -47,11 +47,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
-# Create entrypoint script to run migrations before starting the app
+# Copy entrypoint script
 RUN mkdir -p /app/scripts
-RUN echo '#!/bin/sh\nset -e\necho "Running database migrations..."\nnode_modules/.bin/prisma db push --skip-generate || true\necho "Starting Cashlines..."\nexec node server.js' > /app/scripts/entrypoint.sh
+COPY --chown=nextjs:nodejs scripts/entrypoint.sh /app/scripts/entrypoint.sh
 RUN chmod +x /app/scripts/entrypoint.sh
-RUN chown nextjs:nodejs /app/scripts/entrypoint.sh
 
 USER nextjs
 
