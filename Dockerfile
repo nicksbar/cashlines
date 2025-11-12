@@ -36,6 +36,10 @@ RUN apk add --no-cache libc6-compat openssl dumb-init
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Create data directory for database
+RUN mkdir -p /app/data
+RUN chown nextjs:nodejs /app/data
+
 # Set the correct permission for prerender cache
 RUN mkdir -p .next
 RUN chown nextjs:nodejs .next
