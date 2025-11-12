@@ -439,7 +439,7 @@ export default function PersonDashboard({ params }: { params: { id: string } }) 
       <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Jump to related sections to manage this person's data</CardDescription>
+          <CardDescription>Jump to related sections to manage this person&apos;s data</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
