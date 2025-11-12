@@ -224,32 +224,96 @@ export default function DataManagementPage() {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Button
-                onClick={() => handleSeed('household')}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                disabled={loading}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                {loading ? 'Loading...' : 'Load Household Scenario'}
-              </Button>
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Button
+                  onClick={() => handleSeed('household')}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={loading}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  {loading ? 'Loading...' : 'Load Household Scenario'}
+                </Button>
+                <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                  One month of realistic expenses (~$5,400)
+                </p>
+              </div>
 
-              <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-                One month of realistic expenses (~$5,400)
+              <div className="space-y-2">
+                <Button
+                  onClick={() => handleSeed('year')}
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                  disabled={loading}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  {loading ? 'Loading...' : 'Load Full Year of Data'}
+                </Button>
+                <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                  12 months with 50+ income & 600+ transactions
+                </p>
+              </div>
+
+              <hr className="my-2 border-slate-300 dark:border-slate-600" />
+
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mt-4 mb-3">
+                Realistic Scenarios (Essential Expenses Only)
               </p>
 
-              <Button
-                onClick={() => handleSeed('year')}
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white"
-                disabled={loading}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                {loading ? 'Loading...' : 'Load Full Year of Data'}
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  onClick={() => handleSeed('single-no-cc')}
+                  className="w-full bg-slate-600 hover:bg-slate-700 text-white text-sm"
+                  disabled={loading}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Single, No CC
+                </Button>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Simple W2 salary, tight budget, essential expenses only
+                </p>
+              </div>
 
-              <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-                12 months with 50+ income & 600+ transactions
-              </p>
+              <div className="space-y-2">
+                <Button
+                  onClick={() => handleSeed('business-owner')}
+                  className="w-full bg-slate-600 hover:bg-slate-700 text-white text-sm"
+                  disabled={loading}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Business Owner
+                </Button>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Self-employed with quarterly tax payments
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Button
+                  onClick={() => handleSeed('working-teens')}
+                  className="w-full bg-slate-600 hover:bg-slate-700 text-white text-sm"
+                  disabled={loading}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Working Teens + Gig Income
+                </Button>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Family with variable gig income streams
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Button
+                  onClick={() => handleSeed('complex-family')}
+                  className="w-full bg-slate-600 hover:bg-slate-700 text-white text-sm"
+                  disabled={loading}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Complex Family
+                </Button>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Multiple properties, business income, bonuses
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
