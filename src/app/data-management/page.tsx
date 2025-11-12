@@ -107,9 +107,20 @@ export default function DataManagementPage() {
           text: data.error || 'Failed to load test data',
         })
       } else {
+        const items = data.itemsCreated
+        let message = 'Test data loaded! Created: '
+        const parts = []
+        if (items.people) parts.push(`${items.people} people`)
+        if (items.accounts) parts.push(`${items.accounts} accounts`)
+        if (items.income) parts.push(`${items.income} income entries`)
+        if (items.transactions) parts.push(`${items.transactions} transactions`)
+        if (items.recurringExpenses) parts.push(`${items.recurringExpenses} recurring expenses`)
+        if (items.months) parts.push(`${items.months} months`)
+        message += parts.join(', ') + '.'
+        
         setMessage({
           type: 'success',
-          text: `Test data loaded! Created: ${data.itemsCreated.people} people, ${data.itemsCreated.accounts} accounts, ${data.itemsCreated.income} income entries, ${data.itemsCreated.transactions} transactions.`,
+          text: message,
         })
       }
     } catch (error) {
@@ -349,7 +360,7 @@ export default function DataManagementPage() {
                 Income
               </Link>
               <Link href="/transactions" className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-sm rounded-md border">
-                Transactions
+                Expenses
               </Link>
               <Link href="/people" className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-sm rounded-md border">
                 People
@@ -359,6 +370,9 @@ export default function DataManagementPage() {
               </Link>
               <Link href="/templates" className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-sm rounded-md border">
                 Templates
+              </Link>
+              <Link href="/recurring-expenses" className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-sm rounded-md border">
+                Recurring Expenses
               </Link>
               <Link href="/settings" className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-sm rounded-md border">
                 Settings

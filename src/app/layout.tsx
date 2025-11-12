@@ -37,7 +37,7 @@ export default function RootLayout({
                         <NavLink href="/people">People</NavLink>
                         <NavLink href="/accounts">Accounts</NavLink>
                         <NavLink href="/income">Income</NavLink>
-                        <NavLink href="/transactions">Transactions</NavLink>
+                        <NavLink href="/transactions">Expenses</NavLink>
                         <NavLink href="/routes">Routes</NavLink>
                         <NavLink href="/rules">Rules</NavLink>
                         <NavLink href="/templates">Templates</NavLink>

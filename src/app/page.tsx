@@ -9,6 +9,7 @@ import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownLeft, Perc
 import { formatCurrency } from '@/src/lib/money'
 import { formatMonth, getCurrentMonthYear, getMonthsInRange } from '@/src/lib/date'
 import { useUser } from '@/src/lib/UserContext'
+import { RecurringExpensesForecast } from '@/src/components/RecurringExpensesForecast'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface Summary {
@@ -432,7 +433,7 @@ export default function Dashboard() {
       </div>
 
       {/* Summary Cards - Main Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Total Income</CardTitle>
@@ -502,6 +503,8 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
+
+        <RecurringExpensesForecast actualCCSpending={ccExpense} />
       </div>
 
       {/* Payment Method Breakdown - as Gauge Cards */}

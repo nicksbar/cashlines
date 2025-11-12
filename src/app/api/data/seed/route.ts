@@ -171,6 +171,44 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      // Create recurring expenses
+      const today = new Date()
+      const nextMonth = new Date(today)
+      nextMonth.setMonth(nextMonth.getMonth() + 1)
+      nextMonth.setDate(15)
+
+      await prisma.recurringExpense.create({
+        data: {
+          userId: user.id,
+          accountId: creditCard.id,
+          description: 'T-Mobile Bill',
+          amount: 85.99,
+          frequency: 'monthly',
+          dueDay: 15,
+          nextDueDate: nextMonth,
+          isActive: true,
+          notes: 'Monthly mobile phone service',
+        },
+      })
+
+      const nextInsurance = new Date(today)
+      nextInsurance.setMonth(nextInsurance.getMonth() + 1)
+      nextInsurance.setDate(1)
+
+      await prisma.recurringExpense.create({
+        data: {
+          userId: user.id,
+          accountId: checking.id,
+          description: 'Auto Insurance',
+          amount: 145.00,
+          frequency: 'monthly',
+          dueDay: 1,
+          nextDueDate: nextInsurance,
+          isActive: true,
+          notes: 'Full coverage for 2 vehicles',
+        },
+      })
+
       return NextResponse.json({
         success: true,
         message: 'Household test data loaded successfully',
@@ -179,6 +217,7 @@ export async function POST(request: NextRequest) {
           accounts: 2,
           income: 1,
           transactions: 1,
+          recurringExpenses: 2,
         },
       })
     }
@@ -383,12 +422,69 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Create recurring expenses
+      const today = new Date()
+      const nextMonthMortgage = new Date(today)
+      nextMonthMortgage.setMonth(nextMonthMortgage.getMonth() + 1)
+      nextMonthMortgage.setDate(1)
+
+      await prisma.recurringExpense.create({
+        data: {
+          userId: user.id,
+          accountId: checking.id,
+          description: 'Mortgage Payment',
+          amount: 2200,
+          frequency: 'monthly',
+          dueDay: 1,
+          nextDueDate: nextMonthMortgage,
+          isActive: true,
+          notes: 'Monthly mortgage payment',
+        },
+      })
+
+      const nextMonthAuto = new Date(today)
+      nextMonthAuto.setMonth(nextMonthAuto.getMonth() + 1)
+      nextMonthAuto.setDate(15)
+
+      await prisma.recurringExpense.create({
+        data: {
+          userId: user.id,
+          accountId: creditCard.id,
+          description: 'Auto Insurance',
+          amount: 165.00,
+          frequency: 'monthly',
+          dueDay: 15,
+          nextDueDate: nextMonthAuto,
+          isActive: true,
+          notes: 'Full coverage for 2 vehicles',
+        },
+      })
+
+      const nextMonthPhone = new Date(today)
+      nextMonthPhone.setMonth(nextMonthPhone.getMonth() + 1)
+      nextMonthPhone.setDate(20)
+
+      await prisma.recurringExpense.create({
+        data: {
+          userId: user.id,
+          accountId: creditCard.id,
+          description: 'T-Mobile Bill',
+          amount: 95.99,
+          frequency: 'monthly',
+          dueDay: 20,
+          nextDueDate: nextMonthPhone,
+          isActive: true,
+          notes: 'Monthly phone service (2 lines)',
+        },
+      })
+
       return NextResponse.json({
         success: true,
         message: 'Year of test data loaded successfully',
         itemsCreated: {
           income: incomeCount,
           transactions: transactionCount,
+          recurringExpenses: 3,
           months: 12,
         },
       })
