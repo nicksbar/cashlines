@@ -113,7 +113,7 @@ Complete docs in `/docs/`:
 
 ## License
 
-MIT - Use freely for personal or commercial use.
+[MIT License](./LICENSE) - Use freely for personal or commercial use, modify, fork, and distribute. Just keep the copyright notice.
 
 ---
 

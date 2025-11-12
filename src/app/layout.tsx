@@ -58,8 +58,18 @@ export default function RootLayout({
 
               {/* Footer */}
               <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 mt-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-                  <p>Cashlines - Self-hosted Money Tracking © 2024</p>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                  <div className="text-center text-sm text-slate-500 dark:text-slate-400 space-y-2">
+                    <p>Cashlines - Self-hosted Money Tracking © 2025 Nicholas Barwig</p>
+                    <div className="flex justify-center gap-4 text-xs">
+                      <Link href="https://github.com/nicksbar/cashlines" target="_blank" rel="noopener noreferrer" className="hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                        GitHub
+                      </Link>
+                      <a href="/LICENSE" className="hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                        MIT License
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </footer>
             </div>

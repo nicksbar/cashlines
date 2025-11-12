@@ -1,6 +1,9 @@
 {
   "name": "cashlines",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Self-hosted personal money tracking application. Track income, expenses, and money flow with automatic routing rules.",
+  "author": "Nicholas Barwig",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "next dev",
