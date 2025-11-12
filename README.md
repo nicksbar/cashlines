@@ -4,20 +4,38 @@
 
 **Purpose**: Understand your money flow. Track income from multiple sources, split expenses across categories (Need/Want/Debt/Tax/Savings), create routing rules for automation, and analyze monthly reports—all privately on your own hardware.
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#) [![Tests](https://img.shields.io/badge/tests-289%2F289-brightgreen)](#) [![License](https://img.shields.io/badge/license-MIT-blue)](#license)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#) [![Tests](https://img.shields.io/badge/tests-318%2F318-brightgreen)](#) [![License](https://img.shields.io/badge/license-MIT-blue)](#license)
 
 ## Features
 
 - **Dashboard** - Monthly income, expenses, and money routing overview
+- **Expenses** - Track spending with flexible split allocation across categories
+- **Recurring Expenses** - Forecast fixed bills and quickly log payments with quick-entry
 - **Income Tracking** - Record income with automatic tax and deduction calculations
 - **Accounts** - Manage multiple accounts (checking, savings, credit card, cash, custom)
-- **Transactions** - Track expenses with flexible split allocation across categories
 - **Money Routing** - Auto-split money across Need/Want/Debt/Tax/Savings
 - **Routing Rules** - Create rules to automatically allocate transactions by pattern
 - **Templates** - Save and reuse common entry patterns for quick creation
 - **Reports** - Monthly summaries with spending breakdowns
 - **Theme Support** - Light/dark/auto themes with persistent preferences
 - **Self-Hosted** - Full privacy and control, no external services or tracking
+
+## Screenshots
+
+### Dashboard - Monthly Overview
+![Dashboard](./docs/screenshots/dashboard.png)
+
+### Expenses - Track Spending
+![Expenses](./docs/screenshots/expenses.png)
+
+### Quick Entry - Log Recurring Bills in Seconds
+![Quick Entry Modal](./docs/screenshots/quick-entry.png)
+
+### Recurring Expenses - Manage Bills
+![Recurring Expenses](./docs/screenshots/recurring-expenses.png)
+
+### Money Routes - Visualize Allocation
+![Money Routes](./docs/screenshots/money-routes.png)
 
 ## Quick Start
 
@@ -150,7 +168,7 @@ Complete docs in `/docs/`:
 ## Status
 
 ✅ **MVP complete**: 8 features fully implemented  
-✅ **289 tests passing** (100% success rate)  
+✅ **318 tests passing** (100% success rate)  
 ✅ **Production-ready**: Builds successfully with zero errors  
 ✅ **Dark mode**: Full light/dark/auto theme support  
 ✅ **Self-hosted**: Docker and LXC deployment ready
