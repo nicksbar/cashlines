@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - develop
+      - development
 
 jobs:
   build:
@@ -36,12 +36,12 @@ jobs:
       - name: Build Next.js production bundle
         run: npm run build
 
-      - name: Determine version
+      - name: Determine version and tag
         id: version
         run: |
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            # Get latest tag and increment patch version
-            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            # Production release: auto-increment patch version
+            LATEST_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0 2>/dev/null || echo "v0.0.0")
             LATEST_VERSION=${LATEST_TAG#v}
             
             # Parse major.minor.patch
@@ -51,34 +51,41 @@ jobs:
             NEW_VERSION="$MAJOR.$MINOR.$PATCH"
             TAG="v$NEW_VERSION"
             BUILD_TYPE="release"
+            PRERELEASE="false"
           else
-            # Development build with timestamp and short commit hash
+            # Development: create prerelease tag with timestamp
             COMMIT_HASH=$(git rev-parse --short HEAD)
-            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-            TAG="v0.0.0-dev-${TIMESTAMP}-${COMMIT_HASH}"
-            NEW_VERSION="0.0.0-dev"
+            TIMESTAMP=$(date +%Y%m%d.%H%M%S)
+            TAG="v0.1.0-dev.${TIMESTAMP}.${COMMIT_HASH}"
+            NEW_VERSION="0.1.0-dev"
             BUILD_TYPE="development"
+            PRERELEASE="true"
           fi
           
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "build_type=$BUILD_TYPE" >> $GITHUB_OUTPUT
+          echo "prerelease=$PRERELEASE" >> $GITHUB_OUTPUT
+          echo "commit_hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Update version in package.json
+      - name: Update package.json version
         run: |
           npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+          cat package.json | grep '"version"'
 
       - name: Build Docker image
         run: |
-          docker build -t cashlines:${{ steps.version.outputs.tag }} \
-                       -t cashlines:latest \
-                       --build-arg VERSION=${{ steps.version.outputs.version }} \
-                       .
+          docker build \
+            -t cashlines:${{ steps.version.outputs.tag }} \
+            -t cashlines:latest \
+            --build-arg VERSION=${{ steps.version.outputs.version }} \
+            .
+          echo "✅ Docker image built: cashlines:${{ steps.version.outputs.tag }}"
 
       - name: Verify Docker image
         run: |
           docker run --rm cashlines:${{ steps.version.outputs.tag }} node --version
-          echo "✅ Docker image built: cashlines:${{ steps.version.outputs.tag }}"
+          echo "✅ Docker image verified"
 
       - name: Create tarball
         run: |
@@ -89,15 +96,15 @@ jobs:
               --exclude='.env' \
               --exclude='*.db' \
               -czf cashlines-${{ steps.version.outputs.tag }}.tar.gz .
-          echo "✅ Tarball created: cashlines-${{ steps.version.outputs.tag }}.tar.gz"
+          echo "✅ Tarball created"
 
-      - name: Commit and tag (release only)
+      - name: Commit and tag (main only)
         if: github.ref == 'refs/heads/main'
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add package.json package-lock.json
-          git commit -m "chore: bump version to ${{ steps.version.outputs.version }}" || true
+          git commit -m "chore: release version ${{ steps.version.outputs.version }}" || true
           git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.version }}" || true
           git push origin main --tags
 
@@ -109,7 +116,8 @@ jobs:
 
           **Build Type**: ${{ steps.version.outputs.build_type }}  
           **Version**: ${{ steps.version.outputs.version }}  
-          **Commit**: ${{ github.sha }}  
+          **Commit**: ${{ steps.version.outputs.commit_hash }}  
+          **Timestamp**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
 
           ## Installation
 
@@ -124,6 +132,7 @@ jobs:
           ### Docker Compose
 
           ```yaml
+          version: '3.8'
           services:
             cashlines:
               image: cashlines:${{ steps.version.outputs.tag }}
@@ -146,26 +155,19 @@ jobs:
           npm start
           ```
 
-          ## Build Details
+          ## Build Verification
 
           - ✅ Linting passed
           - ✅ 289 tests passed
           - ✅ Production build successful
           - ✅ Docker image built and verified
-          - Node.js: 20.x
-          - Prisma: 5.22.0
-
-          ## What's Changed
-
-          See [commits](https://github.com/${{ github.repository }}/commits/${{ github.ref }}) for changes.
-
-          ---
+          - **Node.js**: 20.x
+          - **Prisma**: 5.22.0
 
           For more information, see the [documentation](https://github.com/${{ github.repository }}/tree/main/docs).
           EOF
 
-      - name: Create GitHub Release (release only)
-        if: github.ref == 'refs/heads/main'
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.tag }}
@@ -173,17 +175,18 @@ jobs:
           files: |
             cashlines-${{ steps.version.outputs.tag }}.tar.gz
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.version.outputs.prerelease }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build summary
+      - name: Build Summary
         run: |
-          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Branch**: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
           echo "**Type**: ${{ steps.version.outputs.build_type }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Version/Tag**: ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag**: ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ steps.version.outputs.commit_hash }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
