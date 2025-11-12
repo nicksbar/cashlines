@@ -6,9 +6,44 @@ import { ChevronDown, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 export function HouseholdSelector() {
-  const { currentHousehold, households, selectHousehold, createHousehold } = useUser()
+  const { currentHousehold, households, selectHousehold, createHousehold, loading } = useUser()
   const [showDropdown, setShowDropdown] = useState(false)
   const [creating, setCreating] = useState(false)
+
+  if (loading) {
+    return (
+      <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+        Loading...
+      </div>
+    )
+  }
+
+  // Show create household button if none exist
+  if (households.length === 0) {
+    return (
+      <Button
+        onClick={async () => {
+          const name = prompt('Enter household name (e.g., "My Family", "Personal"):')
+          if (name) {
+            setCreating(true)
+            try {
+              const household = await createHousehold(name)
+              selectHousehold(household.id)
+            } catch (error) {
+              alert('Failed to create household')
+            } finally {
+              setCreating(false)
+            }
+          }
+        }}
+        disabled={creating}
+        className="flex items-center gap-2"
+      >
+        <Plus className="h-4 w-4" />
+        {creating ? 'Creating...' : 'Create Household'}
+      </Button>
+    )
+  }
 
   if (!currentHousehold) {
     return null

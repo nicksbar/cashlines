@@ -246,6 +246,47 @@ export default function Dashboard() {
     )
   }
 
+  // Show onboarding if no household selected
+  if (!currentHousehold) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Welcome to Cashlines</h1>
+          <p className="text-slate-600 dark:text-slate-400 mt-2">Let's get you started tracking your money</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Get Started</CardTitle>
+            <CardDescription>Create your first household to begin tracking income and expenses</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <h3 className="font-medium text-slate-900 dark:text-slate-100">What's a household?</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                A household is your budget scope. You might have:
+              </p>
+              <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1 ml-4">
+                <li>• <strong>Personal</strong> - Just tracking your own money</li>
+                <li>• <strong>Family</strong> - Shared household finances</li>
+                <li>• <strong>Business</strong> - Side gig or freelance income</li>
+              </ul>
+            </div>
+
+            <div className="pt-4">
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                Use the "Create Household" button at the top to get started.
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-500">
+                Once created, you can add accounts, income, and track expenses.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   if (!summary) {
     return (
       <div className="flex items-center justify-center h-96">
