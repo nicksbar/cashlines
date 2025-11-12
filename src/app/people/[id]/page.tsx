@@ -1,6 +1,7 @@
 'use client'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Button } from '@/src/components/ui/button'
 import { useState, useEffect } from 'react'
 import { formatCurrency } from '@/src/lib/money'
 import { formatDate } from '@/src/lib/date'
@@ -433,6 +434,48 @@ export default function PersonDashboard({ params }: { params: { id: string } }) 
           </CardContent>
         </Card>
       )}
+
+      {/* Quick Actions */}
+      <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Jump to related sections to manage this person's data</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/income">
+              <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+                Add Income
+              </Button>
+            </Link>
+            <Link href="/transactions">
+              <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+                Add Transaction
+              </Button>
+            </Link>
+            <Link href="/accounts">
+              <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+                Manage Accounts
+              </Button>
+            </Link>
+            <Link href="/rules">
+              <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+                View Rules
+              </Button>
+            </Link>
+            <Link href="/templates">
+              <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+                Manage Templates
+              </Button>
+            </Link>
+            <Link href="/settings">
+              <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+                Settings
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

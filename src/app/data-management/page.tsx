@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Button } from '@/src/components/ui/button'
 import { AlertCircle, Trash2, RefreshCw, Zap } from 'lucide-react'
@@ -324,7 +325,7 @@ export default function DataManagementPage() {
         <CardHeader>
           <CardTitle className="text-slate-900 dark:text-slate-100">How It Works</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+  <CardContent className="space-y-3 text-sm text-slate-700 dark:text-slate-300">
           <div>
             <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">Initial Setup</h4>
             <p>When you first start using Cashlines, load test data to explore features without worrying about real data.</p>
@@ -336,6 +337,33 @@ export default function DataManagementPage() {
           <div>
             <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">Production Protection</h4>
             <p>Once you&apos;ve marked your account as production, reset and load features are automatically disabled to protect your real data.</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">Quick Manage Links</h4>
+            <p className="mb-2">Jump straight to areas where you can edit or add data:</p>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/accounts" className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-sm rounded-md border">
+                Accounts
+              </Link>
+              <Link href="/income" className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-sm rounded-md border">
+                Income
+              </Link>
+              <Link href="/transactions" className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-sm rounded-md border">
+                Transactions
+              </Link>
+              <Link href="/people" className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-sm rounded-md border">
+                People
+              </Link>
+              <Link href="/rules" className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-sm rounded-md border">
+                Rules
+              </Link>
+              <Link href="/templates" className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-sm rounded-md border">
+                Templates
+              </Link>
+              <Link href="/settings" className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-sm rounded-md border">
+                Settings
+              </Link>
+            </div>
           </div>
         </CardContent>
       </Card>

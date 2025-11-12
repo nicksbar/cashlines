@@ -334,6 +334,48 @@ export default function PeoplePage() {
             ))
           )}
         </div>
+
+        {/* Quick Links Section */}
+        <Card className="mt-8 p-6 dark:bg-slate-800 dark:border-slate-700 bg-slate-50">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+            Related Areas
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+            Jump to other sections to manage income, transactions, and accounts:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/income">
+              <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+                Income
+              </Button>
+            </Link>
+            <Link href="/transactions">
+              <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+                Transactions
+              </Button>
+            </Link>
+            <Link href="/accounts">
+              <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+                Accounts
+              </Button>
+            </Link>
+            <Link href="/rules">
+              <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+                Rules
+              </Button>
+            </Link>
+            <Link href="/templates">
+              <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+                Templates
+              </Button>
+            </Link>
+            <Link href="/settings">
+              <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+                Settings
+              </Button>
+            </Link>
+          </div>
+        </Card>
       </div>
     </div>
   )
