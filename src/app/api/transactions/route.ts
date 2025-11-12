@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
       orderBy: { date: 'desc' },
       include: {
         account: true,
+        person: true,
         splits: true,
       },
     })

@@ -26,6 +26,7 @@ model User {
   rules        Rule[]
   templates    Template[]
   people       Person[]
+  settings     Setting?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -243,4 +244,40 @@ model Template {
   @@index([userId])
   @@index([type])
   @@index([isFavorite])
+}
+
+// Settings: User goals, targets, and budget settings
+model Setting {
+  id    String @id @default(cuid())
+  userId String
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Budget targets
+  monthlyIncomeTarget      Float?  // Goal monthly income
+  monthlyExpenseTarget     Float?  // Target max expenses
+  savingsTarget            Float?  // Monthly savings goal
+  savingsRate              Float?  // Target savings rate (0-100%)
+  
+  // Allocation targets (50/30/20 rule)
+  needPercent              Float @default(50)   // Target % for needs
+  wantPercent              Float @default(30)   // Target % for wants
+  savingsPercent           Float @default(20)   // Target % for savings
+  
+  // Thresholds and alerts
+  lowBalanceThreshold      Float?  // Alert if checking < this
+  highCreditCardThreshold  Float?  // Alert if CC balance > this
+  
+  // Categories and tracking
+  trackedCategories        String  // JSON: ["Housing", "Food", "Transport"]
+  excludeFromBudget        String  // JSON: ["Transfer", "Internal"]
+  
+  // Preferences
+  currency                 String @default("USD")
+  fiscalYearStart          Int @default(1)    // Month 1-12
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId])
+  @@index([userId])
 }

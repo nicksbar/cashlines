@@ -42,6 +42,7 @@ export default function RootLayout({
                         <NavLink href="/rules">Rules</NavLink>
                         <NavLink href="/templates">Templates</NavLink>
                         <NavLink href="/import">Import</NavLink>
+                        <NavLink href="/settings">Settings</NavLink>
                         <NavLink href="/data-management">Data</NavLink>
                       </nav>
                       <ThemeToggle />
