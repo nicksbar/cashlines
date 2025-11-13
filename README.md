@@ -162,16 +162,19 @@ Complete docs in `/docs/`:
 - **[Getting Started](./docs/GETTING_STARTED.md)** - Setup instructions
 - **[Features & Usage](./docs/FEATURES.md)** - How to use each feature
 - **[API Reference](./docs/API.md)** - Complete endpoint documentation
+- **[Development Guide](./docs/DEVELOPMENT.md)** - Developer setup and workflows
 - **[Deployment](./docs/DEPLOYMENT.md)** - Docker, LXC, production setups
 - **[Agent Instructions](./AGENTS.md)** - Development guidelines
+- **[Session Notes](./SESSION_NOTES.md)** - Latest improvements and roadmap
 
 ## Status
 
-✅ **MVP complete**: 8 features fully implemented  
-✅ **318 tests passing** (100% success rate)  
-✅ **Production-ready**: Builds successfully with zero errors  
+✅ **MVP complete**: 12 core features fully implemented  
+✅ **399 tests passing** (100% success rate)  
+✅ **Production-ready**: Builds successfully with zero TypeScript errors  
 ✅ **Dark mode**: Full light/dark/auto theme support  
-✅ **Self-hosted**: Docker and LXC deployment ready
+✅ **Self-hosted**: Docker and LXC deployment ready  
+✅ **Well-documented**: Complete dev guide and session notes
 
 ## Privacy & Security
 

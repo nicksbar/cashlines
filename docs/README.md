@@ -18,7 +18,9 @@ This directory contains the complete Cashlines documentation.
 ## For Agents & Contributors
 
 - **[Agent Instructions](../AGENTS.md)** - For GitHub Copilot agents and automated development
-- **[Contributing](./CONTRIBUTING.md)** - How to contribute to Cashlines
+- **[Development Guide](./DEVELOPMENT.md)** - Complete developer guide for contributing
+- **[Project Overview](./PROJECT_OVERVIEW.md)** - Full implementation summary
+- **[Session Notes](../SESSION_NOTES.md)** - Latest session work and improvements
 
 ## Project Overview
 
