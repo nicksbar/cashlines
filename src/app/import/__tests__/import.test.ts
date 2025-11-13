@@ -175,12 +175,21 @@ describe('CSV Import Workflow', () => {
 
   describe('Recurring Expense Replication', () => {
     it('should allow date modification for next month', () => {
-      const lastMonth = '2025-10-11'
-      const nextMonth = new Date('2025-10-11')
-      nextMonth.setMonth(nextMonth.getMonth() + 1)
-
+      // JavaScript setMonth behavior: when setting month on a date,
+      // if the target month has fewer days, it "overflows" to the next month
+      // e.g., Oct 31 + 1 month = Mar 3 (Feb 31 doesn't exist, so adds days)
+      // To properly add a month, we should use a date arithmetic approach
+      const date = new Date('2025-10-11T12:00:00Z')
+      const month = date.getMonth()
+      const day = date.getDate()
+      const year = date.getFullYear()
+      
+      // Safe month addition: construct new date with same day
+      const nextMonth = new Date(year, month + 1, day)
+      
       expect(nextMonth.getDate()).toBe(11)
       expect(nextMonth.getMonth()).toBe(10) // November
+      expect(nextMonth.getFullYear()).toBe(2025)
     })
 
     it('should preserve amount and description for recurring expenses', () => {

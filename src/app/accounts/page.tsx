@@ -14,6 +14,8 @@ const ACCOUNT_TYPES = [
   { value: 'savings', label: 'Savings' },
   { value: 'credit_card', label: 'Credit Card' },
   { value: 'cash', label: 'Cash' },
+  { value: 'investment', label: 'Investment' },
+  { value: 'loan', label: 'Loan' },
   { value: 'other', label: 'Other' },
 ]
 
@@ -23,6 +25,20 @@ interface Account {
   type: string
   isActive: boolean
   notes?: string
+  creditLimit?: number | null
+  interestRate?: number | null
+  cashBackPercent?: number | null
+  pointsPerDollar?: number | null
+  annualFee?: number | null
+  rewardsProgram?: string | null
+  interestRateApy?: number | null
+  monthlyFee?: number | null
+  minimumBalance?: number | null
+  isFdic?: boolean | null
+  location?: string | null
+  currentBalance?: number | null
+  accountNumber?: string | null
+  principalBalance?: number | null
   personId?: string
   person?: {
     id: string
@@ -44,6 +60,24 @@ export default function AccountsPage() {
     personId: '',
     isActive: true,
     notes: '',
+    // Credit card fields
+    creditLimit: '',
+    interestRate: '',
+    cashBackPercent: '',
+    pointsPerDollar: '',
+    annualFee: '',
+    rewardsProgram: '',
+    // Savings/Checking fields
+    interestRateApy: '',
+    monthlyFee: '',
+    minimumBalance: '',
+    isFdic: false,
+    // Cash/General fields
+    location: '',
+    currentBalance: '',
+    accountNumber: '',
+    // Loan/Investment fields
+    principalBalance: '',
   })
 
   useEffect(() => {
@@ -79,18 +113,49 @@ export default function AccountsPage() {
       const method = editingId ? 'PATCH' : 'POST'
       const url = editingId ? `/api/accounts/${editingId}` : '/api/accounts'
 
+      // Build payload, converting empty strings to null for numeric fields
+      const payload: any = {
+        name: formData.name,
+        type: formData.type,
+        personId: formData.personId || null,
+        isActive: formData.isActive,
+        notes: formData.notes,
+      }
+
+      // Add optional numeric fields only if they have values
+      if (formData.creditLimit) payload.creditLimit = parseFloat(formData.creditLimit)
+      if (formData.interestRate) payload.interestRate = parseFloat(formData.interestRate)
+      if (formData.cashBackPercent) payload.cashBackPercent = parseFloat(formData.cashBackPercent)
+      if (formData.pointsPerDollar) payload.pointsPerDollar = parseFloat(formData.pointsPerDollar)
+      if (formData.annualFee) payload.annualFee = parseFloat(formData.annualFee)
+      if (formData.rewardsProgram) payload.rewardsProgram = formData.rewardsProgram
+      if (formData.interestRateApy) payload.interestRateApy = parseFloat(formData.interestRateApy)
+      if (formData.monthlyFee) payload.monthlyFee = parseFloat(formData.monthlyFee)
+      if (formData.minimumBalance) payload.minimumBalance = parseFloat(formData.minimumBalance)
+      payload.isFdic = formData.isFdic || null
+      if (formData.location) payload.location = formData.location
+      if (formData.currentBalance) payload.currentBalance = parseFloat(formData.currentBalance)
+      if (formData.accountNumber) payload.accountNumber = formData.accountNumber
+      if (formData.principalBalance) payload.principalBalance = parseFloat(formData.principalBalance)
+
       const response = await fetch(url, {
         method,
         headers: { 
           'Content-Type': 'application/json',
           'x-household-id': currentHousehold.id,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) throw new Error('Failed to save account')
 
-      setFormData({ name: '', type: 'checking', personId: '', isActive: true, notes: '' })
+      setFormData({ 
+        name: '', type: 'checking', personId: '', isActive: true, notes: '', 
+        creditLimit: '', interestRate: '', cashBackPercent: '', pointsPerDollar: '',
+        annualFee: '', rewardsProgram: '', interestRateApy: '', monthlyFee: '',
+        minimumBalance: '', isFdic: false, location: '', currentBalance: '',
+        accountNumber: '', principalBalance: ''
+      })
       setShowForm(false)
       setEditingId(null)
       fetchData()
@@ -106,6 +171,20 @@ export default function AccountsPage() {
       personId: account.personId || '',
       isActive: account.isActive,
       notes: account.notes || '',
+      creditLimit: account.creditLimit ? account.creditLimit.toString() : '',
+      interestRate: account.interestRate ? account.interestRate.toString() : '',
+      cashBackPercent: account.cashBackPercent ? account.cashBackPercent.toString() : '',
+      pointsPerDollar: account.pointsPerDollar ? account.pointsPerDollar.toString() : '',
+      annualFee: account.annualFee ? account.annualFee.toString() : '',
+      rewardsProgram: account.rewardsProgram || '',
+      interestRateApy: account.interestRateApy ? account.interestRateApy.toString() : '',
+      monthlyFee: account.monthlyFee ? account.monthlyFee.toString() : '',
+      minimumBalance: account.minimumBalance ? account.minimumBalance.toString() : '',
+      isFdic: account.isFdic || false,
+      location: account.location || '',
+      currentBalance: account.currentBalance ? account.currentBalance.toString() : '',
+      accountNumber: account.accountNumber || '',
+      principalBalance: account.principalBalance ? account.principalBalance.toString() : '',
     })
     setEditingId(account.id)
     setShowForm(true)
@@ -125,7 +204,13 @@ export default function AccountsPage() {
   const handleCancel = () => {
     setShowForm(false)
     setEditingId(null)
-    setFormData({ name: '', type: 'checking', personId: '', isActive: true, notes: '' })
+    setFormData({ 
+      name: '', type: 'checking', personId: '', isActive: true, notes: '', 
+      creditLimit: '', interestRate: '', cashBackPercent: '', pointsPerDollar: '',
+      annualFee: '', rewardsProgram: '', interestRateApy: '', monthlyFee: '',
+      minimumBalance: '', isFdic: false, location: '', currentBalance: '',
+      accountNumber: '', principalBalance: ''
+    })
   }
 
   return (
@@ -203,6 +288,256 @@ export default function AccountsPage() {
                 />
               </div>
 
+              {/* Credit Card Fields */}
+              {formData.type === 'credit_card' && (
+                <div className="space-y-4 pt-4 border-t border-slate-200">
+                  <h3 className="font-medium text-slate-900">Credit Card Details</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="creditLimit">Credit Limit ($)</Label>
+                      <Input
+                        id="creditLimit"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.creditLimit}
+                        onChange={(e) => setFormData({ ...formData, creditLimit: e.target.value })}
+                        placeholder="e.g., 5000"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="interestRate">APR (%)</Label>
+                      <Input
+                        id="interestRate"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={formData.interestRate}
+                        onChange={(e) => setFormData({ ...formData, interestRate: e.target.value })}
+                        placeholder="e.g., 18.99"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="cashBackPercent">Cash Back (%)</Label>
+                      <Input
+                        id="cashBackPercent"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={formData.cashBackPercent}
+                        onChange={(e) => setFormData({ ...formData, cashBackPercent: e.target.value })}
+                        placeholder="e.g., 1.5"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="pointsPerDollar">Points per Dollar</Label>
+                      <Input
+                        id="pointsPerDollar"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={formData.pointsPerDollar}
+                        onChange={(e) => setFormData({ ...formData, pointsPerDollar: e.target.value })}
+                        placeholder="e.g., 2"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="annualFee">Annual Fee ($)</Label>
+                      <Input
+                        id="annualFee"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.annualFee}
+                        onChange={(e) => setFormData({ ...formData, annualFee: e.target.value })}
+                        placeholder="e.g., 95"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="rewardsProgram">Rewards Program</Label>
+                      <Input
+                        id="rewardsProgram"
+                        value={formData.rewardsProgram}
+                        onChange={(e) => setFormData({ ...formData, rewardsProgram: e.target.value })}
+                        placeholder="e.g., Chase Ultimate Rewards"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Savings/Checking Account Fields */}
+              {(formData.type === 'savings' || formData.type === 'checking') && (
+                <div className="space-y-4 pt-4 border-t border-slate-200">
+                  <h3 className="font-medium text-slate-900">
+                    {formData.type === 'savings' ? 'Savings Account' : 'Checking Account'} Details
+                  </h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="interestRateApy">APY (%)</Label>
+                      <Input
+                        id="interestRateApy"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={formData.interestRateApy}
+                        onChange={(e) => setFormData({ ...formData, interestRateApy: e.target.value })}
+                        placeholder="e.g., 4.5"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="monthlyFee">Monthly Fee ($)</Label>
+                      <Input
+                        id="monthlyFee"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.monthlyFee}
+                        onChange={(e) => setFormData({ ...formData, monthlyFee: e.target.value })}
+                        placeholder="e.g., 0"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="minimumBalance">Minimum Balance ($)</Label>
+                      <Input
+                        id="minimumBalance"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.minimumBalance}
+                        onChange={(e) => setFormData({ ...formData, minimumBalance: e.target.value })}
+                        placeholder="e.g., 500"
+                      />
+                    </div>
+
+                    <div className="flex items-end">
+                      <div className="flex items-center space-x-2 w-full">
+                        <input
+                          id="isFdic"
+                          type="checkbox"
+                          checked={formData.isFdic}
+                          onChange={(e) => setFormData({ ...formData, isFdic: e.target.checked })}
+                          className="w-4 h-4 rounded border-slate-300"
+                        />
+                        <Label htmlFor="isFdic" className="font-normal cursor-pointer mb-0">
+                          FDIC Insured
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Cash Account Fields */}
+              {formData.type === 'cash' && (
+                <div className="space-y-4 pt-4 border-t border-slate-200">
+                  <h3 className="font-medium text-slate-900">Cash Details</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="location">Location</Label>
+                      <Input
+                        id="location"
+                        value={formData.location}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                        placeholder="e.g., Wallet, Safe, Drawer"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="currentBalance">Current Balance ($)</Label>
+                      <Input
+                        id="currentBalance"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.currentBalance}
+                        onChange={(e) => setFormData({ ...formData, currentBalance: e.target.value })}
+                        placeholder="e.g., 100"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Investment/Loan Account Fields */}
+              {(formData.type === 'investment' || formData.type === 'loan') && (
+                <div className="space-y-4 pt-4 border-t border-slate-200">
+                  <h3 className="font-medium text-slate-900">
+                    {formData.type === 'investment' ? 'Investment Account' : 'Loan'} Details
+                  </h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="currentBalance">Current Balance ($)</Label>
+                      <Input
+                        id="currentBalance"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.currentBalance}
+                        onChange={(e) => setFormData({ ...formData, currentBalance: e.target.value })}
+                        placeholder="e.g., 10000"
+                      />
+                    </div>
+
+                    {formData.type === 'loan' && (
+                      <div>
+                        <Label htmlFor="principalBalance">Remaining Principal ($)</Label>
+                        <Input
+                          id="principalBalance"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.principalBalance}
+                          onChange={(e) => setFormData({ ...formData, principalBalance: e.target.value })}
+                          placeholder="e.g., 15000"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <Label htmlFor="accountNumber">Account Number</Label>
+                      <Input
+                        id="accountNumber"
+                        value={formData.accountNumber}
+                        onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                        placeholder="e.g., ****1234 (masked for security)"
+                      />
+                    </div>
+
+                    {formData.type === 'loan' && (
+                      <div>
+                        <Label htmlFor="interestRate">Interest Rate (APR %)</Label>
+                        <Input
+                          id="interestRate"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          value={formData.interestRate}
+                          onChange={(e) => setFormData({ ...formData, interestRate: e.target.value })}
+                          placeholder="e.g., 5.5"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center space-x-2">
                 <input
                   id="isActive"
@@ -269,6 +604,83 @@ export default function AccountsPage() {
                 {account.notes && (
                   <p className="text-sm text-slate-600 mb-4">{account.notes}</p>
                 )}
+                
+                {/* Credit Card Details */}
+                {account.type === 'credit_card' && (
+                  <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg space-y-2 border border-blue-200 dark:border-blue-800">
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 text-sm mb-2">Credit Card Info</h4>
+                    {account.creditLimit && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Limit: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(account.creditLimit)}</span></div>
+                    )}
+                    {account.interestRate && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">APR: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{account.interestRate.toFixed(2)}%</span></div>
+                    )}
+                    {account.cashBackPercent && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Cash Back: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{account.cashBackPercent.toFixed(2)}%</span></div>
+                    )}
+                    {account.pointsPerDollar && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Points: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{account.pointsPerDollar.toFixed(2)}/$ </span></div>
+                    )}
+                    {account.annualFee && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Annual Fee: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(account.annualFee)}</span></div>
+                    )}
+                    {account.rewardsProgram && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Program: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{account.rewardsProgram}</span></div>
+                    )}
+                  </div>
+                )}
+
+                {/* Savings/Checking Details */}
+                {(account.type === 'savings' || account.type === 'checking') && (
+                  <div className="mb-4 p-3 bg-green-50 dark:bg-green-950 rounded-lg space-y-2 border border-green-200 dark:border-green-800">
+                    <h4 className="font-semibold text-green-900 dark:text-green-100 text-sm mb-2">{account.type === 'savings' ? 'Savings' : 'Checking'} Info</h4>
+                    {account.interestRateApy && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">APY: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{account.interestRateApy.toFixed(2)}%</span></div>
+                    )}
+                    {account.monthlyFee !== null && account.monthlyFee !== undefined && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Monthly Fee: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(account.monthlyFee)}</span></div>
+                    )}
+                    {account.minimumBalance && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Min Balance: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(account.minimumBalance)}</span></div>
+                    )}
+                    {account.isFdic && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">✓ </span><span className="font-semibold text-slate-900 dark:text-slate-100">FDIC Insured</span></div>
+                    )}
+                  </div>
+                )}
+
+                {/* Cash Details */}
+                {account.type === 'cash' && (
+                  <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950 rounded-lg space-y-2 border border-amber-200 dark:border-amber-800">
+                    <h4 className="font-semibold text-amber-900 dark:text-amber-100 text-sm mb-2">Cash Details</h4>
+                    {account.location && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Location: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{account.location}</span></div>
+                    )}
+                    {account.currentBalance && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Balance: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(account.currentBalance)}</span></div>
+                    )}
+                  </div>
+                )}
+
+                {/* Investment/Loan Details */}
+                {(account.type === 'investment' || account.type === 'loan') && (
+                  <div className="mb-4 p-3 bg-purple-50 dark:bg-purple-950 rounded-lg space-y-2 border border-purple-200 dark:border-purple-800">
+                    <h4 className="font-semibold text-purple-900 dark:text-purple-100 text-sm mb-2">{account.type === 'investment' ? 'Investment' : 'Loan'} Info</h4>
+                    {account.currentBalance && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Balance: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(account.currentBalance)}</span></div>
+                    )}
+                    {account.principalBalance && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Principal: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(account.principalBalance)}</span></div>
+                    )}
+                    {account.interestRate && account.type === 'loan' && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Rate: </span><span className="font-semibold text-slate-900 dark:text-slate-100">{account.interestRate.toFixed(2)}%</span></div>
+                    )}
+                    {account.accountNumber && (
+                      <div className="text-sm"><span className="text-slate-600 dark:text-slate-300">Account: </span><span className="font-semibold text-xs text-slate-900 dark:text-slate-100">{account.accountNumber}</span></div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex gap-2">
                   <Button
                     size="sm"

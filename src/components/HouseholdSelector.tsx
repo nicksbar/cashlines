@@ -124,6 +124,15 @@ export function HouseholdSelector() {
   }
 
   if (!currentHousehold) {
+    // If we have households but none selected, auto-select the first one
+    if (households.length > 0) {
+      selectHousehold(households[0].id)
+      return (
+        <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+          Loading household...
+        </div>
+      )
+    }
     return null
   }
 

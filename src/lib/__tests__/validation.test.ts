@@ -162,8 +162,8 @@ describe('Account Validation', () => {
       expect(result.success).toBe(false)
     })
 
-    it('should validate account types', () => {
-      const validTypes = ['checking', 'savings', 'credit_card', 'cash', 'other']
+    it('should validate all account types', () => {
+      const validTypes = ['checking', 'savings', 'credit_card', 'cash', 'investment', 'loan', 'other']
 
       for (const type of validTypes) {
         const data = { name: 'Test', type }
@@ -176,6 +176,155 @@ describe('Account Validation', () => {
       const invalidData = {
         name: 'Test',
         type: 'invalid_type',
+      }
+
+      const result = accountCreateSchema.safeParse(invalidData)
+      expect(result.success).toBe(false)
+    })
+
+    it('should validate credit card specific fields', () => {
+      const validData = {
+        name: 'Amex Platinum',
+        type: 'credit_card',
+        creditLimit: 10000,
+        interestRate: 18.99,
+        cashBackPercent: 1.5,
+        pointsPerDollar: 2,
+        annualFee: 550,
+        rewardsProgram: 'Membership Rewards',
+      }
+
+      const result = accountCreateSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.creditLimit).toBe(10000)
+        expect(result.data.interestRate).toBe(18.99)
+        expect(result.data.annualFee).toBe(550)
+      }
+    })
+
+    it('should validate savings account fields', () => {
+      const validData = {
+        name: 'Emergency Fund',
+        type: 'savings',
+        interestRateApy: 4.5,
+        monthlyFee: 0,
+        minimumBalance: 500,
+        isFdic: true,
+      }
+
+      const result = accountCreateSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.interestRateApy).toBe(4.5)
+        expect(result.data.isFdic).toBe(true)
+      }
+    })
+
+    it('should validate checking account fields', () => {
+      const validData = {
+        name: 'Chase Checking',
+        type: 'checking',
+        interestRateApy: 0.05,
+        monthlyFee: 12,
+        minimumBalance: 0,
+        isFdic: true,
+      }
+
+      const result = accountCreateSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.monthlyFee).toBe(12)
+      }
+    })
+
+    it('should validate cash account fields', () => {
+      const validData = {
+        name: 'Wallet',
+        type: 'cash',
+        location: 'Wallet',
+        currentBalance: 250.75,
+      }
+
+      const result = accountCreateSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.location).toBe('Wallet')
+        expect(result.data.currentBalance).toBe(250.75)
+      }
+    })
+
+    it('should validate investment account fields', () => {
+      const validData = {
+        name: 'Vanguard Portfolio',
+        type: 'investment',
+        currentBalance: 50000,
+        accountNumber: '****1234',
+      }
+
+      const result = accountCreateSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.currentBalance).toBe(50000)
+      }
+    })
+
+    it('should validate loan account fields', () => {
+      const validData = {
+        name: 'Car Loan',
+        type: 'loan',
+        principalBalance: 15000,
+        currentBalance: 12500,
+        interestRate: 5.5,
+        accountNumber: '****5678',
+      }
+
+      const result = accountCreateSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.principalBalance).toBe(15000)
+        expect(result.data.interestRate).toBe(5.5)
+      }
+    })
+
+    it('should reject invalid interest rates', () => {
+      const invalidData = {
+        name: 'Test',
+        type: 'credit_card',
+        interestRate: 150, // max is 100
+      }
+
+      const result = accountCreateSchema.safeParse(invalidData)
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject negative credit limits', () => {
+      const invalidData = {
+        name: 'Test Card',
+        type: 'credit_card',
+        creditLimit: -1000,
+      }
+
+      const result = accountCreateSchema.safeParse(invalidData)
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject negative cash back percent', () => {
+      const invalidData = {
+        name: 'Test Card',
+        type: 'credit_card',
+        cashBackPercent: -0.5,
+      }
+
+      const result = accountCreateSchema.safeParse(invalidData)
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject negative annual fee', () => {
+      const invalidData = {
+        name: 'Premium Card',
+        type: 'credit_card',
+        annualFee: -50,
       }
 
       const result = accountCreateSchema.safeParse(invalidData)
@@ -202,6 +351,35 @@ describe('Account Validation', () => {
 
       const result = accountUpdateSchema.safeParse(emptyData)
       expect(result.success).toBe(true)
+    })
+
+    it('should allow updating credit card fields', () => {
+      const updateData = {
+        creditLimit: 15000,
+        interestRate: 16.99,
+        cashBackPercent: 2.5,
+      }
+
+      const result = accountUpdateSchema.safeParse(updateData)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.creditLimit).toBe(15000)
+        expect(result.data.interestRate).toBe(16.99)
+      }
+    })
+
+    it('should allow updating to null for optional fields', () => {
+      const updateData = {
+        creditLimit: null,
+        interestRateApy: null,
+        location: null,
+      }
+
+      const result = accountUpdateSchema.safeParse(updateData)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.creditLimit).toBeNull()
+      }
     })
   })
 })

@@ -39,7 +39,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           
           if (selected) {
             setCurrentHousehold(selected)
-            localStorage.setItem('selectedHouseholdId', selected.id)
+            if (!savedId) {
+              localStorage.setItem('selectedHouseholdId', selected.id)
+            }
           }
         }
       } catch (error) {
@@ -57,8 +59,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (household) {
       setCurrentHousehold(household)
       localStorage.setItem('selectedHouseholdId', householdId)
-      // Force UI update by also updating in component state
-      window.dispatchEvent(new Event('householdChanged'))
     }
   }
 
@@ -71,7 +71,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     if (!res.ok) throw new Error('Failed to create household')
     const newHousehold = await res.json()
-    setHouseholds([...households, newHousehold])
+    
+    // Update both households list and select the new one
+    const updatedHouseholds = [...households, newHousehold]
+    setHouseholds(updatedHouseholds)
+    setCurrentHousehold(newHousehold)
+    localStorage.setItem('selectedHouseholdId', newHousehold.id)
+    
     return newHousehold
   }
 

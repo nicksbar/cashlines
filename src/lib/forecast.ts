@@ -99,7 +99,7 @@ export function calculateNextDueDate(
     case 'monthly':
       if (dueDay) {
         nextDate.setDate(dueDay)
-        // If the due day has already passed this month, move to next month
+        // If the due day is today or has already passed this month, move to next month
         if (nextDate <= fromDate) {
           nextDate.setMonth(nextDate.getMonth() + 1)
           nextDate.setDate(dueDay)
