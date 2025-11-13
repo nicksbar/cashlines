@@ -40,6 +40,7 @@ export default function RootLayout({
                         <NavLink href="/transactions">Expenses</NavLink>
                         <NavLink href="/routes">Routes</NavLink>
                         <NavLink href="/rules">Rules</NavLink>
+                        <NavLink href="/insights">Insights</NavLink>
                         <NavLink href="/templates">Templates</NavLink>
                         <NavLink href="/import">Import</NavLink>
                         <NavLink href="/settings">Settings</NavLink>

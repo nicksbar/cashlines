@@ -10,6 +10,7 @@ import { formatCurrency } from '@/src/lib/money'
 import { formatMonth, getCurrentMonthYear, getMonthsInRange } from '@/src/lib/date'
 import { useUser } from '@/src/lib/UserContext'
 import { RecurringExpensesForecast } from '@/src/components/RecurringExpensesForecast'
+import { FinancialInsightsWidget } from '@/src/components/FinancialInsightsWidget'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface Summary {
@@ -622,6 +623,9 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Financial Insights Widget */}
+      <FinancialInsightsWidget />
 
       {/* Charts Section */}
       {summary && (
