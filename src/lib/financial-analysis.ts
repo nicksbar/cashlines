@@ -218,6 +218,16 @@ export function analyzeCashFlow(accounts: Account[], monthlySpending: number): C
 }
 
 /**
+ * Format currency for display
+ */
+function formatMoney(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(amount)
+}
+
+/**
  * Generate actionable financial insights
  */
 export function generateInsights(
@@ -230,130 +240,174 @@ export function generateInsights(
   const insights: FinancialInsight[] = []
 
   // Credit card utilization warning
-  if (creditCardAnalysis.utilizationRate > 80) {
+  if (creditCardAnalysis.totalCreditLimit > 0 && creditCardAnalysis.utilizationRate > 30) {
+    const severity = creditCardAnalysis.utilizationRate > 80 ? 'high' : creditCardAnalysis.utilizationRate > 50 ? 'medium' : 'low'
+    const priority = creditCardAnalysis.utilizationRate > 80 ? 9 : creditCardAnalysis.utilizationRate > 50 ? 7 : 5
+    
     insights.push({
       type: 'warning',
-      title: 'High Credit Card Utilization',
-      description: `You're using ${creditCardAnalysis.utilizationRate.toFixed(1)}% of your available credit. This impacts your credit score.`,
-      impact: 'high',
+      title: 'Credit Card Utilization',
+      description: `You're using ${creditCardAnalysis.utilizationRate.toFixed(1)}% of your available credit (${formatMoney(creditCardAnalysis.totalBalance)} of ${formatMoney(creditCardAnalysis.totalCreditLimit)}). Ideal is below 30% for credit scores.`,
+      impact: severity as any,
       metric: `${creditCardAnalysis.utilizationRate.toFixed(1)}%`,
-      action: 'Consider paying down balances to below 30% utilization',
-      priority: 9,
+      action: `Pay down to below 30% utilization to improve credit score. Target: ${formatMoney(creditCardAnalysis.totalCreditLimit * 0.3)}`,
+      priority,
     })
   }
 
-  // Interest paid vs earned gap
-  if (cashFlow.opportunityGap > 100) {
+  // Interest paid vs earned gap - HIGH IMPACT
+  if (cashFlow.opportunityGap > 10) {
+    const yearlyGap = cashFlow.opportunityGap * 12
     insights.push({
       type: 'opportunity',
-      title: 'Interest Paid vs Earned Gap',
-      description: `You're paying $${cashFlow.monthlyInterestPaid.toFixed(2)}/month in interest but earning only $${cashFlow.monthlyInterestEarned.toFixed(2)}. Opportunity to optimize.`,
+      title: 'Optimize Interest Gap',
+      description: `You're paying $${cashFlow.monthlyInterestPaid.toFixed(2)}/month in interest but earning only $${cashFlow.monthlyInterestEarned.toFixed(2)}. Annual gap: $${yearlyGap.toFixed(2)}`,
       impact: 'high',
-      metric: `$${cashFlow.opportunityGap.toFixed(2)}/month`,
+      metric: `$${yearlyGap.toFixed(2)}/year`,
       action: 'Prioritize paying off high-interest debt or increase savings APY',
       priority: 8,
     })
   }
 
+  // High-yield savings opportunity
+  const lowYieldSavings = accounts.filter(
+    a => (a.type === 'savings' || a.type === 'checking') && (!a.interestRateApy || a.interestRateApy < 1) && (a.currentBalance || 0) > 5000
+  )
+  
+  if (lowYieldSavings.length > 0) {
+    const totalLowYield = lowYieldSavings.reduce((sum, a) => sum + (a.currentBalance || 0), 0)
+    const currentYield = lowYieldSavings.reduce((sum, a) => sum + ((a.currentBalance || 0) * ((a.interestRateApy || 0) / 100 / 12)), 0)
+    const potentialYield = totalLowYield * (0.045 / 12) // 4.5% high-yield
+    const monthlyOpportunity = potentialYield - currentYield
+
+    insights.push({
+      type: 'opportunity',
+      title: 'High-Yield Savings Opportunity',
+      description: `You have ${formatMoney(totalLowYield)} earning ${(lowYieldSavings[0]?.interestRateApy || 0).toFixed(2)}% APY. High-yield savings offer 4-5% APY.`,
+      impact: 'medium',
+      metric: `+$${(monthlyOpportunity * 12).toFixed(2)}/year`,
+      action: `Move ${lowYieldSavings.map(a => a.name).join(', ')} to high-yield account`,
+      priority: 7,
+    })
+  }
+
   // Reward optimization opportunity
-  if (creditCardAnalysis.bestRewards && monthlySpending > 0) {
-    const potentialMonthlyRewards = (monthlySpending * creditCardAnalysis.bestRewards.card.cashBackPercent! / 100)
-    if (potentialMonthlyRewards > 20) {
+  const ccWithRewards = accounts.filter(a => a.type === 'credit_card' && a.cashBackPercent && a.cashBackPercent > 0)
+  if (ccWithRewards.length > 0 && monthlySpending > 0) {
+    const bestCard = ccWithRewards.reduce((best, card) => {
+      const rewards = (card.cashBackPercent || 0) * monthlySpending
+      return (best.cashBackPercent || 0) * monthlySpending > rewards ? best : card
+    })
+
+    const monthlyRewards = (bestCard.cashBackPercent || 0) * monthlySpending / 100
+    const yearlyRewards = monthlyRewards * 12
+
+    if (yearlyRewards > 50) {
       insights.push({
         type: 'opportunity',
-        title: 'Maximize Rewards Usage',
-        description: `Your ${creditCardAnalysis.bestRewards.card.name} card offers ${creditCardAnalysis.bestRewards.card.cashBackPercent}% cashback. You could earn ~$${(potentialMonthlyRewards * 12).toFixed(2)}/year.`,
+        title: `Maximize ${bestCard.name} Usage`,
+        description: `${bestCard.name} earns ${bestCard.cashBackPercent}% cashback. On your ${formatMoney(monthlySpending)}/month spending, you'd earn ${formatMoney(monthlyRewards)}/month.`,
         impact: 'medium',
-        metric: `$${(potentialMonthlyRewards * 12).toFixed(2)}/year`,
-        action: `Use ${creditCardAnalysis.bestRewards.card.name} for all eligible purchases`,
+        metric: `$${yearlyRewards.toFixed(2)}/year`,
+        action: `Use ${bestCard.name} for as much spending as possible`,
         priority: 6,
       })
     }
   }
 
   // Annual fee vs value analysis
-  const highFeeCards = accounts.filter(
-    a => a.type === 'credit_card' && a.annualFee && a.annualFee > 95
-  )
-  if (highFeeCards.length > 0) {
-    highFeeCards.forEach(card => {
-      if (card.cashBackPercent && card.cashBackPercent > 0) {
-        const breakeven = (card.annualFee! / card.cashBackPercent) * 100
-        if (breakeven > monthlySpending * 12) {
-          insights.push({
-            type: 'warning',
-            title: `Annual Fee Not Worth It: ${card.name}`,
-            description: `This card costs $${card.annualFee}/year but you need $${breakeven.toFixed(0)}/year in spending to break even on rewards.`,
-            impact: 'medium',
-            metric: `$${card.annualFee}/year`,
-            action: `Consider downgrading or canceling this card`,
-            priority: 5,
-          })
-        }
-      }
-    })
-  }
+  const highFeeCards = accounts.filter(a => a.type === 'credit_card' && a.annualFee && a.annualFee > 0)
+  
+  highFeeCards.forEach(card => {
+    const monthlySpendOnCard = monthlySpending * 0.4 // Assume 40% of spending on any one card
+    const cashbackValue = ((card.cashBackPercent || 0) * monthlySpendOnCard * 12)
+    const netValue = cashbackValue - (card.annualFee || 0)
+    
+    if (netValue < 0 && card.annualFee! > 50) {
+      insights.push({
+        type: 'warning',
+        title: `Annual Fee Cost: ${card.name}`,
+        description: `This card costs $${card.annualFee}/year. Estimated rewards only cover $${cashbackValue.toFixed(2)}, for a net loss of $${Math.abs(netValue).toFixed(2)}.`,
+        impact: 'medium',
+        metric: `-$${Math.abs(netValue).toFixed(2)}/year`,
+        action: `Consider downgrading to no-fee version or canceling`,
+        priority: 5,
+      })
+    }
+  })
 
   // FDIC insurance coverage check
-  const savingsAccountsTotal = accounts
+  const fdic = accounts
     .filter(a => (a.type === 'savings' || a.type === 'checking') && a.isFdic)
     .reduce((sum, a) => sum + (a.currentBalance || 0), 0)
   
-  if (savingsAccountsTotal > 250000) {
+  if (fdic > 250000) {
     insights.push({
       type: 'warning',
       title: 'FDIC Coverage Limit Exceeded',
-      description: `Your FDIC-insured accounts total $${savingsAccountsTotal.toFixed(0)}, exceeding the $250,000 protection limit per bank.`,
+      description: `Your FDIC-insured accounts total ${formatMoney(fdic)}, exceeding the $250,000 protection limit per bank.`,
       impact: 'high',
-      metric: `$${(savingsAccountsTotal - 250000).toFixed(0)} uninsured`,
-      action: 'Spread deposits across multiple banks or use money market accounts',
-      priority: 7,
-    })
-  }
-
-  // Low-interest checking account detection
-  const lowYieldAccounts = accounts.filter(
-    a => a.type === 'checking' && (!a.interestRateApy || a.interestRateApy < 0.5) && (a.currentBalance || 0) > 10000
-  )
-  if (lowYieldAccounts.length > 0) {
-    insights.push({
-      type: 'opportunity',
-      title: 'Optimize Checking Account Yield',
-      description: `You have $${lowYieldAccounts.reduce((sum, a) => sum + (a.currentBalance || 0), 0).toFixed(0)} in low-yield checking. High-yield alternatives offer 4-5% APY.`,
-      impact: 'medium',
-      metric: `Potential extra: $${((lowYieldAccounts.reduce((sum, a) => sum + (a.currentBalance || 0), 0) * 0.045) / 12).toFixed(2)}/month`,
-      action: 'Move excess to high-yield savings account',
-      priority: 6,
+      metric: `${formatMoney(fdic - 250000)} uninsured`,
+      action: 'Spread deposits across multiple banks',
+      priority: 8,
     })
   }
 
   // Monthly fee analysis
-  if (cashFlow.monthlyFeesTotal > 20) {
+  if (cashFlow.monthlyFeesTotal > 5) {
     insights.push({
       type: 'warning',
-      title: 'High Monthly Fees',
-      description: `You're paying $${cashFlow.monthlyFeesTotal.toFixed(2)}/month in fees ($${(cashFlow.monthlyFeesTotal * 12).toFixed(2)}/year).`,
+      title: 'Account Fees',
+      description: `You're paying $${cashFlow.monthlyFeesTotal.toFixed(2)}/month ($${(cashFlow.monthlyFeesTotal * 12).toFixed(2)}/year) in account and credit card fees.`,
       impact: 'medium',
       metric: `$${(cashFlow.monthlyFeesTotal * 12).toFixed(2)}/year`,
-      action: 'Review account fees and switch to fee-free alternatives where possible',
-      priority: 5,
+      action: 'Switch to fee-free checking/savings accounts',
+      priority: 4,
     })
   }
 
-  // Net worth milestone tracking
+  // Net worth positive milestone
   if (netWorth.netWorth > 0) {
+    const netWorthPercent = (netWorth.netWorth / netWorth.assets) * 100
     insights.push({
       type: 'info',
-      title: 'Net Worth Status',
-      description: `Your current net worth is $${netWorth.netWorth.toFixed(2)} (Assets: $${netWorth.assets.toFixed(2)}, Liabilities: $${netWorth.liabilities.toFixed(2)}).`,
+      title: 'Positive Net Worth',
+      description: `You have ${formatMoney(netWorth.netWorth)} net worth. Assets: ${formatMoney(netWorth.assets)}, Liabilities: ${formatMoney(netWorth.liabilities)} (${netWorthPercent.toFixed(1)}% equity).`,
       impact: 'low',
-      metric: `$${netWorth.netWorth.toFixed(2)}`,
+      metric: `${formatMoney(netWorth.netWorth)}`,
+      priority: 2,
+    })
+  }
+
+  // Debt payoff opportunity
+  if (netWorth.liabilities > 10000 && monthlySpending > 0) {
+    const monthlyAvailable = netWorth.assets * 0.1 // Assume 10% of assets could be used
+    const monthsToPayoff = netWorth.liabilities / monthlyAvailable
+    
+    insights.push({
+      type: 'info',
+      title: 'Debt Payoff Timeline',
+      description: `At current asset levels, you could pay off ${formatMoney(netWorth.liabilities)} debt in ~${Math.ceil(monthsToPayoff)} months if you allocate ${formatMoney(monthlyAvailable)}/month.`,
+      impact: 'low',
+      metric: `${Math.ceil(monthsToPayoff)} months`,
+      priority: 3,
+    })
+  }
+
+  // Interest earned is significant
+  if (cashFlow.monthlyInterestEarned > 25) {
+    insights.push({
+      type: 'info',
+      title: 'Strong Interest Earnings',
+      description: `Your savings are earning ${formatMoney(cashFlow.monthlyInterestEarned)}/month (${formatMoney(cashFlow.monthlyInterestEarned * 12)}/year). Great job finding high-yield accounts!`,
+      impact: 'low',
+      metric: `${formatMoney(cashFlow.monthlyInterestEarned * 12)}/year`,
       priority: 2,
     })
   }
 
   // Sort by priority
-  return insights.sort((a, b) => b.priority - a.priority)
+  return insights.sort((a, b) => b.priority - a.priority).slice(0, 10)
 }
 
 export function suggestCardStrategy(

@@ -22,44 +22,92 @@ async function main() {
 
   console.log(`Created user: ${user.email}`)
 
-  // Create accounts
+  // Create accounts with realistic financial data
   const checking = await prisma.account.create({
     data: {
       userId: user.id,
       name: 'Checking',
       type: 'checking',
       isActive: true,
+      currentBalance: 5500,
+      interestRateApy: 0.50,
+      monthlyFee: 0,
+      minimumBalance: 500,
+      isFdic: true,
     },
   })
 
   const savings = await prisma.account.create({
     data: {
       userId: user.id,
-      name: 'Savings',
+      name: 'High-Yield Savings',
       type: 'savings',
       isActive: true,
+      currentBalance: 15000,
+      interestRateApy: 4.75,
+      monthlyFee: 0,
+      minimumBalance: 1000,
+      isFdic: true,
     },
   })
 
   const amex = await prisma.account.create({
     data: {
       userId: user.id,
-      name: 'Amex',
+      name: 'American Express Platinum',
       type: 'credit_card',
       isActive: true,
+      creditLimit: 25000,
+      interestRate: 18.99,
+      currentBalance: 3200,
+      annualFee: 695,
+      cashBackPercent: 1.5,
+      pointsPerDollar: 1,
+      rewardsProgram: 'Membership Rewards',
+    },
+  })
+
+  const chase = await prisma.account.create({
+    data: {
+      userId: user.id,
+      name: 'Chase Freedom Flex',
+      type: 'credit_card',
+      isActive: true,
+      creditLimit: 10000,
+      interestRate: 21.99,
+      currentBalance: 0,
+      annualFee: 0,
+      cashBackPercent: 5.0,
+      pointsPerDollar: 1.5,
+      rewardsProgram: 'Ultimate Rewards',
     },
   })
 
   const cash = await prisma.account.create({
     data: {
       userId: user.id,
-      name: 'Cash',
+      name: 'Wallet',
       type: 'cash',
       isActive: true,
+      currentBalance: 245.50,
+      location: 'Physical Wallet',
     },
   })
 
-  console.log(`Created accounts: ${checking.name}, ${savings.name}, ${amex.name}, ${cash.name}`)
+  const student = await prisma.account.create({
+    data: {
+      userId: user.id,
+      name: 'Student Loan',
+      type: 'loan',
+      isActive: true,
+      principalBalance: 35000,
+      currentBalance: 32400,
+      interestRate: 6.08,
+      accountNumber: 'LOAN-XXX-1234',
+    },
+  })
+
+  console.log(`Created accounts: ${checking.name}, ${savings.name}, ${amex.name}, ${chase.name}, ${cash.name}, ${student.name}`)
 
   // Create sample income
   const today = new Date()
@@ -97,54 +145,43 @@ async function main() {
 
   console.log(`Created income entries: ${income1.amount} from ${income1.source}, ${income2.amount} from ${income2.source}`)
 
-  // Create sample transactions
-  const tx1 = await prisma.transaction.create({
-    data: {
-      userId: user.id,
-      accountId: amex.id,
-      date: today,
-      amount: 85.50,
-      description: 'Grocery Store',
-      method: 'cc',
-      tags: JSON.stringify(['groceries', 'recurring']),
-    },
-  })
+  // Create sample transactions with realistic spending
+  const transactions = [
+    { desc: 'Whole Foods Grocery Store', amt: 145.78, method: 'cc', split: 'need', target: 'Food' },
+    { desc: 'Amazon Purchase', amt: 89.99, method: 'cc', split: 'want', target: 'Shopping' },
+    { desc: 'Electric Bill', amt: 156.23, method: 'ach', split: 'need', target: 'Utilities' },
+    { desc: 'Starbucks Coffee', amt: 6.45, method: 'cc', split: 'want', target: 'Dining' },
+    { desc: 'Netflix Subscription', amt: 15.99, method: 'cc', split: 'want', target: 'Entertainment' },
+    { desc: 'Gas Station', amt: 62.50, method: 'cc', split: 'need', target: 'Transportation' },
+    { desc: 'Restaurant Dinner', amt: 78.50, method: 'cc', split: 'want', target: 'Dining' },
+    { desc: 'ATM Withdrawal', amt: 100.00, method: 'ach', split: 'want', target: 'Cash' },
+  ]
 
-  const tx2 = await prisma.transaction.create({
-    data: {
-      userId: user.id,
-      accountId: cash.id,
-      date: today,
-      amount: 25.00,
-      description: 'Coffee',
-      method: 'cash',
-      tags: JSON.stringify(['dining']),
-    },
-  })
+  for (const tx of transactions) {
+    const transaction = await prisma.transaction.create({
+      data: {
+        userId: user.id,
+        accountId: tx.method === 'ach' ? checking.id : amex.id,
+        date: today,
+        amount: tx.amt,
+        description: tx.desc,
+        method: tx.method,
+        tags: JSON.stringify(['tracked']),
+      },
+    })
 
-  console.log(`Created transactions: ${tx1.description} (${tx1.amount}), ${tx2.description} (${tx2.amount})`)
+    // Create split
+    await prisma.split.create({
+      data: {
+        transactionId: transaction.id,
+        type: tx.split,
+        target: tx.target,
+        percent: 100,
+      },
+    })
+  }
 
-  // Create splits for the first transaction
-  await prisma.split.create({
-    data: {
-      transactionId: tx1.id,
-      type: 'need',
-      target: 'Food',
-      percent: 100,
-    },
-  })
-
-  // Create splits for the second transaction
-  await prisma.split.create({
-    data: {
-      transactionId: tx2.id,
-      type: 'want',
-      target: 'Discretionary',
-      percent: 100,
-    },
-  })
-
-  console.log('Created splits')
+  console.log(`Created ${transactions.length} sample transactions with splits`)
 
   // Create a routing rule
   const rule = await prisma.rule.create({
