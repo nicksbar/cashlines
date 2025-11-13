@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { useEffect, useRef, useState } from 'react'
 import { AlertCircle, CheckCircle, Upload, Eye, Download } from 'lucide-react'
 import { formatCurrency } from '@/lib/money'
+import { useConfirmDialog } from '@/components/ConfirmDialog'
 
 interface ParsedRow {
   date: string
@@ -31,6 +32,8 @@ interface ParsedTransaction extends ParsedRow {
 }
 
 export default function ImportPage() {
+  const { dialog: confirmDialog, confirm } = useConfirmDialog()
+  const [alertMessage, setAlertMessage] = useState<{ text: string; type: 'error' } | null>(null)
   const [accounts, setAccounts] = useState<any[]>([])
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [parsedData, setParsedData] = useState<ParsedTransaction[]>([])
@@ -120,7 +123,8 @@ export default function ImportPage() {
       const rows = parseCSV(text)
 
       if (rows.length < 2) {
-        alert('CSV must have header row and at least one data row')
+        setAlertMessage({ text: 'CSV must have header row and at least one data row', type: 'error' })
+        setTimeout(() => setAlertMessage(null), 4000)
         return
       }
 
@@ -196,14 +200,16 @@ export default function ImportPage() {
 
       setParsedData(parsed)
     } catch (error) {
-      alert('Error parsing file: ' + (error instanceof Error ? error.message : 'Unknown error'))
+      setAlertMessage({ text: 'Error parsing file: ' + (error instanceof Error ? error.message : 'Unknown error'), type: 'error' })
+      setTimeout(() => setAlertMessage(null), 4000)
     }
   }
 
   const handleBulkImport = async () => {
     const validRows = parsedData.filter(r => r.isValid)
     if (validRows.length === 0) {
-      alert('No valid rows to import')
+      setAlertMessage({ text: 'No valid rows to import', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 4000)
       return
     }
 
@@ -459,6 +465,16 @@ export default function ImportPage() {
           <p className="text-blue-900 dark:text-blue-100">• <strong>Amounts:</strong> Decimal numbers only, no currency symbols</p>
         </CardContent>
       </Card>
+
+      {confirmDialog}
+
+      {alertMessage && (
+        <div className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700`}>
+          <p className={`text-sm font-medium text-red-800 dark:text-red-200`}>
+            {alertMessage.text}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

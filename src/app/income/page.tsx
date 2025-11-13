@@ -9,6 +9,8 @@ import { formatCurrency } from '@/lib/money'
 import { formatDate } from '@/lib/date'
 import { Plus, Trash2, TrendingUp, Edit2, Download } from 'lucide-react'
 import { useUser } from '@/lib/UserContext'
+import { useConfirmDialog } from '@/components/ConfirmDialog'
+import { usePromptDialog } from '@/components/PromptDialog'
 
 interface IncomeEntry {
   id: string
@@ -35,12 +37,15 @@ interface IncomeEntry {
 
 export default function IncomePage() {
   const { currentHousehold } = useUser()
+  const { dialog: confirmDialog, confirm } = useConfirmDialog()
+  const { dialog: promptDialog, prompt } = usePromptDialog()
   const [income, setIncome] = useState<IncomeEntry[]>([])
   const [accounts, setAccounts] = useState<any[]>([])
   const [people, setPeople] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [alertMessage, setAlertMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     source: '',
@@ -177,13 +182,25 @@ export default function IncomePage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this income entry?')) return
-    try {
-      const response = await fetch(`/api/income/${id}`, { method: 'DELETE' })
-      if (response.ok) fetchData()
-    } catch (error) {
-      console.error('Error deleting income:', error)
-    }
+    confirm({
+      title: 'Delete Income Entry',
+      message: 'Are you sure you want to delete this income entry? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/income/${id}`, { method: 'DELETE' })
+          if (response.ok) {
+            fetchData()
+            setAlertMessage({ text: 'Income entry deleted', type: 'success' })
+            setTimeout(() => setAlertMessage(null), 2000)
+          }
+        } catch (error) {
+          console.error('Error deleting income:', error)
+        }
+      },
+    })
   }
 
   const totalIncome = income.reduce((sum, i) => sum + i.netAmount, 0)
@@ -206,50 +223,68 @@ export default function IncomePage() {
         a.download = `income-${new Date().toISOString().split('T')[0]}.csv`
         a.click()
         window.URL.revokeObjectURL(url)
+        setAlertMessage({ text: 'Income exported successfully', type: 'success' })
+        setTimeout(() => setAlertMessage(null), 2000)
       }
     } catch (error) {
       console.error('Error exporting income:', error)
-      alert('Failed to export income')
+      setAlertMessage({ text: 'Failed to export income', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 3000)
     }
   }
 
   const saveAsTemplate = async () => {
     if (!formData.source || !formData.grossAmount) {
-      alert('Please fill in source and gross amount')
+      setAlertMessage({ text: 'Please fill in source and gross amount', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 3000)
       return
     }
 
-    const templateName = prompt('Template name (e.g., "Biweekly Salary"):')
-    if (!templateName) return
+    prompt({
+      title: 'Save as Template',
+      message: 'Choose a name for this income template',
+      inputPlaceholder: 'e.g., "Biweekly Salary"',
+      confirmLabel: 'Save',
+      onConfirm: async (templateName) => {
+        try {
+          const response = await fetch('/api/templates/income', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-household-id': currentHousehold?.id || '',
+            },
+            body: JSON.stringify({
+              name: templateName,
+              description: formData.source,
+              accountId: formData.accountId,
+              grossAmount: parseFloat(formData.grossAmount),
+              federalTaxes: parseFloat(formData.taxes) || 0,
+              stateTaxes: 0,
+              socialSecurity: 0,
+              medicare: 0,
+              preDeductions: parseFloat(formData.preTaxDeductions) || 0,
+              postDeductions: parseFloat(formData.postTaxDeductions) || 0,
+              notes: formData.notes,
+            }),
+          })
 
-    try {
-      const response = await fetch('/api/templates/income', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: templateName,
-          description: formData.source,
-          grossAmount: parseFloat(formData.grossAmount),
-          federalTaxes: parseFloat(formData.taxes) || 0,
-          stateTaxes: 0,
-          socialSecurity: 0,
-          medicare: 0,
-          preDeductions: parseFloat(formData.preTaxDeductions) || 0,
-          postDeductions: parseFloat(formData.postTaxDeductions) || 0,
-          notes: formData.notes,
-        }),
-      })
-
-      if (response.ok) {
-        alert('Template saved successfully!')
-        handleCancel()
-      } else {
-        alert('Failed to save template')
-      }
-    } catch (error) {
-      console.error('Error saving template:', error)
-      alert('Error saving template')
-    }
+          if (response.ok) {
+            setAlertMessage({ text: 'Template saved successfully!', type: 'success' })
+            setTimeout(() => {
+              setAlertMessage(null)
+              handleCancel()
+            }, 1500)
+          } else {
+            setAlertMessage({ text: 'Failed to save template', type: 'error' })
+            setTimeout(() => setAlertMessage(null), 3000)
+          }
+        } catch (error) {
+          console.error('Error saving template:', error)
+          setAlertMessage({ text: 'Error saving template', type: 'error' })
+          setTimeout(() => setAlertMessage(null), 3000)
+        }
+      },
+    })
   }
 
   return (
@@ -591,6 +626,25 @@ export default function IncomePage() {
           )}
         </CardContent>
       </Card>
+
+      {confirmDialog}
+      {promptDialog}
+
+      {alertMessage && (
+        <div className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg ${
+          alertMessage.type === 'success'
+            ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700'
+            : 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700'
+        }`}>
+          <p className={`text-sm font-medium ${
+            alertMessage.type === 'success'
+              ? 'text-green-800 dark:text-green-200'
+              : 'text-red-800 dark:text-red-200'
+          }`}>
+            {alertMessage.text}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

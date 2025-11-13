@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Plus, Trash2, Edit2, Check, X } from 'lucide-react'
 import { formatCurrency } from '@/lib/money'
 import { useUser } from '@/lib/UserContext'
+import { useConfirmDialog } from '@/components/ConfirmDialog'
 
 const ACCOUNT_TYPES = [
   { value: 'checking', label: 'Checking' },
@@ -49,6 +50,7 @@ interface Account {
 
 export default function AccountsPage() {
   const { currentHousehold } = useUser()
+  const { dialog: confirmDialog, confirm } = useConfirmDialog()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [people, setPeople] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -191,14 +193,22 @@ export default function AccountsPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this account?')) return
-    try {
-      const response = await fetch(`/api/accounts/${id}`, { method: 'DELETE' })
-      if (!response.ok) throw new Error('Failed to delete')
-      fetchData()
-    } catch (error) {
-      console.error('Error deleting account:', error)
-    }
+    confirm({
+      title: 'Delete Account',
+      message: 'Are you sure you want to delete this account? Any associated transactions and income entries will remain but be unassigned.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/accounts/${id}`, { method: 'DELETE' })
+          if (!response.ok) throw new Error('Failed to delete')
+          fetchData()
+        } catch (error) {
+          console.error('Error deleting account:', error)
+        }
+      },
+    })
   }
 
   const handleCancel = () => {
@@ -712,6 +722,8 @@ export default function AccountsPage() {
           </CardContent>
         </Card>
       )}
+
+      {confirmDialog}
     </div>
   )
 }

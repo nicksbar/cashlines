@@ -10,6 +10,8 @@ import { formatDate } from '@/lib/date'
 import { Plus, Trash2, Edit2, Download, Zap, CheckCircle, AlertCircle } from 'lucide-react'
 import { useUser } from '@/lib/UserContext'
 import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
+import { useConfirmDialog } from '@/components/ConfirmDialog'
+import { usePromptDialog } from '@/components/PromptDialog'
 
 interface Split {
   id: string
@@ -49,6 +51,9 @@ const METHOD_LABELS: Record<string, string> = {
 
 export default function TransactionsPage() {
   const { currentHousehold } = useUser()
+  const { dialog: confirmDialog, confirm } = useConfirmDialog()
+  const { dialog: promptDialog, prompt } = usePromptDialog()
+  const [alertMessage, setAlertMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [accounts, setAccounts] = useState<any[]>([])
   const [people, setPeople] = useState<any[]>([])
@@ -201,13 +206,25 @@ export default function TransactionsPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this transaction?')) return
-    try {
-      const response = await fetch(`/api/transactions/${id}`, { method: 'DELETE' })
-      if (response.ok) fetchData()
-    } catch (error) {
-      console.error('Error deleting transaction:', error)
-    }
+    confirm({
+      title: 'Delete Transaction',
+      message: 'Are you sure you want to delete this transaction? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/transactions/${id}`, { method: 'DELETE' })
+          if (response.ok) {
+            fetchData()
+            setAlertMessage({ text: 'Transaction deleted', type: 'success' })
+            setTimeout(() => setAlertMessage(null), 2000)
+          }
+        } catch (error) {
+          console.error('Error deleting transaction:', error)
+        }
+      },
+    })
   }
 
   const openConvertModal = (tx: Transaction) => {
@@ -289,47 +306,64 @@ export default function TransactionsPage() {
         a.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`
         a.click()
         window.URL.revokeObjectURL(url)
+        setAlertMessage({ text: 'Transactions exported successfully', type: 'success' })
+        setTimeout(() => setAlertMessage(null), 2000)
       }
     } catch (error) {
       console.error('Error exporting transactions:', error)
-      alert('Failed to export transactions')
+      setAlertMessage({ text: 'Failed to export transactions', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 3000)
     }
   }
 
   const saveAsTemplate = async () => {
     if (!formData.description || !formData.amount) {
-      alert('Please fill in description and amount')
+      setAlertMessage({ text: 'Please fill in description and amount', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 3000)
       return
     }
 
-    const templateName = prompt('Template name (e.g., "Rent", "Grocery Run"):')
-    if (!templateName) return
+    prompt({
+      title: 'Save as Template',
+      message: 'Choose a name for this transaction template',
+      inputPlaceholder: 'e.g., "Rent", "Grocery Run"',
+      confirmLabel: 'Save',
+      onConfirm: async (templateName) => {
+        try {
+          const response = await fetch('/api/templates/transactions', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-household-id': currentHousehold?.id || '',
+            },
+            body: JSON.stringify({
+              name: templateName,
+              description: formData.description,
+              amount: parseFloat(formData.amount),
+              method: formData.method,
+              accountId: formData.accountId,
+              notes: formData.notes,
+              tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+            }),
+          })
 
-    try {
-      const response = await fetch('/api/templates/transactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: templateName,
-          description: formData.description,
-          amount: parseFloat(formData.amount),
-          method: formData.method,
-          accountId: formData.accountId,
-          notes: formData.notes,
-          tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
-        }),
-      })
-
-      if (response.ok) {
-        alert('Template saved successfully!')
-        handleCancel()
-      } else {
-        alert('Failed to save template')
-      }
-    } catch (error) {
-      console.error('Error saving template:', error)
-      alert('Error saving template')
-    }
+          if (response.ok) {
+            setAlertMessage({ text: 'Template saved successfully!', type: 'success' })
+            setTimeout(() => {
+              setAlertMessage(null)
+              handleCancel()
+            }, 1500)
+          } else {
+            setAlertMessage({ text: 'Failed to save template', type: 'error' })
+            setTimeout(() => setAlertMessage(null), 3000)
+          }
+        } catch (error) {
+          console.error('Error saving template:', error)
+          setAlertMessage({ text: 'Error saving template', type: 'error' })
+          setTimeout(() => setAlertMessage(null), 3000)
+        }
+      },
+    })
   }
 
   return (
@@ -779,6 +813,25 @@ export default function TransactionsPage() {
         onClose={() => setShowQuickEntry(false)}
         householdId={currentHousehold?.id}
       />
+
+      {confirmDialog}
+      {promptDialog}
+
+      {alertMessage && (
+        <div className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg ${
+          alertMessage.type === 'success'
+            ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700'
+            : 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700'
+        }`}>
+          <p className={`text-sm font-medium ${
+            alertMessage.type === 'success'
+              ? 'text-green-800 dark:text-green-200'
+              : 'text-red-800 dark:text-red-200'
+          }`}>
+            {alertMessage.text}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

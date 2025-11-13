@@ -6,6 +6,30 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const userId = request.headers.get('x-household-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Missing household ID' },
+        { status: 400 }
+      );
+    }
+
+    // Verify template belongs to user
+    const existingTemplate = await prisma.template.findFirst({
+      where: {
+        id: params.id,
+        userId,
+      },
+    });
+
+    if (!existingTemplate) {
+      return NextResponse.json(
+        { error: 'Template not found or does not belong to this user' },
+        { status: 404 }
+      );
+    }
+
     const data = await request.json();
 
     const updateData: any = {};
@@ -56,6 +80,30 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const userId = request.headers.get('x-household-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Missing household ID' },
+        { status: 400 }
+      );
+    }
+
+    // Verify template belongs to user
+    const existingTemplate = await prisma.template.findFirst({
+      where: {
+        id: params.id,
+        userId,
+      },
+    });
+
+    if (!existingTemplate) {
+      return NextResponse.json(
+        { error: 'Template not found or does not belong to this user' },
+        { status: 404 }
+      );
+    }
+
     await prisma.template.delete({
       where: {
         id: params.id,

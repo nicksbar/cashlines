@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useUser } from '@/lib/UserContext'
+import { useConfirmDialog } from '@/components/ConfirmDialog'
 
 interface Person {
   id: string
@@ -41,6 +42,7 @@ const COLORS = [
 
 export default function PeoplePage() {
   const { currentHousehold } = useUser()
+  const { dialog: confirmDialog, confirm } = useConfirmDialog()
   const [people, setPeople] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -120,22 +122,28 @@ export default function PeoplePage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this person? Transactions will be unassigned.')) {
-      return
-    }
-    if (!currentHousehold) return
-    
-    try {
-      const response = await fetch(`/api/people/${id}`, { 
-        method: 'DELETE',
-        headers: { 'x-household-id': currentHousehold.id },
-      })
-      if (response.ok) {
-        fetchPeople()
-      }
-    } catch (error) {
-      console.error('Error deleting person:', error)
-    }
+    confirm({
+      title: 'Delete Person',
+      message: 'Are you sure you want to delete this person? All income and transaction assignments will be removed.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      isDestructive: true,
+      onConfirm: async () => {
+        if (!currentHousehold) return
+        
+        try {
+          const response = await fetch(`/api/people/${id}`, { 
+            method: 'DELETE',
+            headers: { 'x-household-id': currentHousehold.id },
+          })
+          if (response.ok) {
+            fetchPeople()
+          }
+        } catch (error) {
+          console.error('Error deleting person:', error)
+        }
+      },
+    })
   }
 
   const resetForm = () => {
@@ -390,6 +398,8 @@ export default function PeoplePage() {
           </div>
         </Card>
       </div>
+
+      {confirmDialog}
     </div>
   )
 }
