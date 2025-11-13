@@ -13,6 +13,13 @@ interface Person {
   color?: string
 }
 
+interface Account {
+  id: string
+  name: string
+  type: string
+  isActive: boolean
+}
+
 interface TransactionFormProps {
   onClose: () => void
   onSuccess: () => void
@@ -40,6 +47,7 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
 
   const [templateId, setTemplateId] = useState(initialData?.templateId || '')
   const [people, setPeople] = useState<Person[]>([])
+  const [accounts, setAccounts] = useState<Account[]>([])
 
   useEffect(() => {
     const fetchPeople = async () => {
@@ -55,6 +63,36 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
     }
     fetchPeople()
   }, [])
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const response = await fetch('/api/accounts')
+        if (response.ok) {
+          const data = await response.json()
+          setAccounts(data)
+        }
+      } catch (error) {
+        console.error('Error fetching accounts:', error)
+      }
+    }
+    fetchAccounts()
+  }, [])
+
+  // Filter accounts based on payment method
+  const getFilteredAccounts = (method: string) => {
+    const methodToTypeMap: { [key: string]: string[] } = {
+      cc: ['credit_card'],
+      cash: ['cash'],
+      ach: ['checking', 'savings'],
+      other: ['checking', 'savings', 'credit_card', 'cash', 'other'],
+    }
+
+    const allowedTypes = methodToTypeMap[method] || []
+    return accounts.filter(
+      (account) => account.isActive && allowedTypes.includes(account.type)
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -131,13 +169,32 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
             <select
               id="method"
               value={formData.method}
-              onChange={(e) => setFormData({ ...formData, method: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, method: e.target.value, accountId: '' })
+              }}
               className="w-full px-2 py-1 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             >
               <option value="cc">Credit Card</option>
               <option value="cash">Cash</option>
               <option value="ach">ACH</option>
               <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="account" className="text-slate-900 dark:text-slate-100">Account *</Label>
+            <select
+              id="account"
+              value={formData.accountId}
+              onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
+              className="w-full h-10 px-3 py-2 rounded-md border border-slate-300 bg-white text-slate-900 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+              required
+            >
+              <option value="">Select account...</option>
+              {getFilteredAccounts(formData.method).map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.name}
+                </option>
+              ))}
             </select>
           </div>
           <div>

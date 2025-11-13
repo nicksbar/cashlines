@@ -96,6 +96,20 @@ export default function TransactionsPage() {
     }
   }
 
+  const getFilteredAccounts = (method: string) => {
+    const methodToTypeMap: { [key: string]: string[] } = {
+      cc: ['credit_card'],
+      cash: ['cash'],
+      ach: ['checking', 'savings'],
+      other: ['checking', 'savings', 'credit_card', 'cash', 'other'],
+    }
+
+    const allowedTypes = methodToTypeMap[method] || []
+    return accounts.filter(
+      (account) => account.isActive && allowedTypes.includes(account.type)
+    )
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!currentHousehold) return
@@ -338,7 +352,7 @@ export default function TransactionsPage() {
                   <select
                     id="method"
                     value={formData.method}
-                    onChange={(e) => setFormData({ ...formData, method: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, method: e.target.value, accountId: '' })}
                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cc">Credit Card</option>
@@ -357,7 +371,7 @@ export default function TransactionsPage() {
                     required
                   >
                     <option value="">Select account...</option>
-                    {accounts.map((acc) => (
+                    {getFilteredAccounts(formData.method).map((acc) => (
                       <option key={acc.id} value={acc.id}>
                         {acc.name}
                       </option>
