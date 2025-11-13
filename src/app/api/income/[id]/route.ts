@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/src/lib/db'
-import { incomeUpdateSchema } from '@/src/lib/validation'
+import { prisma } from '@/lib/db'
+import { incomeUpdateSchema } from '@/lib/validation'
 
 /**
  * GET /api/income/[id]

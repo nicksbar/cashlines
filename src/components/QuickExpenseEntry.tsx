@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { X, AlertCircle, CheckCircle } from 'lucide-react'
-import { formatCurrency } from '@/src/lib/money'
+import { formatCurrency } from '@/lib/money'
 
 interface RecurringExpense {
   id: string
@@ -75,13 +75,7 @@ export function QuickExpenseEntry({
     )
   }
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchData()
-    }
-  }, [isOpen, householdId])
-
-  async function fetchData() {
+  const fetchData = useCallback(async function() {
     try {
       setLoading(true)
       setError(null)
@@ -109,7 +103,13 @@ export function QuickExpenseEntry({
     } finally {
       setLoading(false)
     }
-  }
+  }, [householdId])
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchData()
+    }
+  }, [isOpen, householdId, fetchData])
 
   function selectExpense(expense: RecurringExpense) {
     setSelectedExpense(expense)

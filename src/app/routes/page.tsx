@@ -1,9 +1,9 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useState, useEffect } from 'react'
-import { formatCurrency } from '@/src/lib/money'
-import { getCurrentMonthYear, formatMonth } from '@/src/lib/date'
+import { formatCurrency } from '@/lib/money'
+import { getCurrentMonthYear, formatMonth } from '@/lib/date'
 import { AlertCircle } from 'lucide-react'
 
 interface RoutingSummary {

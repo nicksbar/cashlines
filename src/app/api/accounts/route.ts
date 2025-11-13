@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/src/lib/db'
-import { accountCreateSchema, accountUpdateSchema } from '@/src/lib/validation'
-import { getErrorMessage } from '@/src/lib/utils'
+import { prisma } from '@/lib/db'
+import { accountCreateSchema, accountUpdateSchema } from '@/lib/validation'
+import { getErrorMessage } from '@/lib/utils'
 
 /**
  * GET /api/accounts

@@ -1,6 +1,6 @@
 'use client'
 
-import { FinancialInsightsWidget } from '@/src/components/FinancialInsightsWidget'
+import { FinancialInsightsWidget } from '@/components/FinancialInsightsWidget'
 
 export default function InsightsPage() {
   return (

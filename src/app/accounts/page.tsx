@@ -1,13 +1,13 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
-import { useState, useEffect } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useState, useEffect, useCallback } from 'react'
 import { Plus, Trash2, Edit2, Check, X } from 'lucide-react'
-import { formatCurrency } from '@/src/lib/money'
-import { useUser } from '@/src/lib/UserContext'
+import { formatCurrency } from '@/lib/money'
+import { useUser } from '@/lib/UserContext'
 
 const ACCOUNT_TYPES = [
   { value: 'checking', label: 'Checking' },
@@ -80,13 +80,7 @@ export default function AccountsPage() {
     principalBalance: '',
   })
 
-  useEffect(() => {
-    if (currentHousehold) {
-      fetchData()
-    }
-  }, [currentHousehold?.id])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!currentHousehold) return
 
     try {
@@ -103,7 +97,13 @@ export default function AccountsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentHousehold])
+
+  useEffect(() => {
+    if (currentHousehold) {
+      fetchData()
+    }
+  }, [currentHousehold, fetchData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

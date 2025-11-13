@@ -1,14 +1,14 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
-import { useState, useEffect } from 'react'
-import { formatCurrency } from '@/src/lib/money'
-import { formatDate } from '@/src/lib/date'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useState, useEffect, useCallback } from 'react'
+import { formatCurrency } from '@/lib/money'
+import { formatDate } from '@/lib/date'
 import { Plus, Trash2, TrendingUp, Edit2, Download } from 'lucide-react'
-import { useUser } from '@/src/lib/UserContext'
+import { useUser } from '@/lib/UserContext'
 
 interface IncomeEntry {
   id: string
@@ -55,13 +55,7 @@ export default function IncomePage() {
     tags: '',
   })
 
-  useEffect(() => {
-    if (currentHousehold) {
-      fetchData()
-    }
-  }, [currentHousehold?.id])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!currentHousehold) return
 
     try {
@@ -80,7 +74,13 @@ export default function IncomePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentHousehold])
+
+  useEffect(() => {
+    if (currentHousehold) {
+      fetchData()
+    }
+  }, [currentHousehold, fetchData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

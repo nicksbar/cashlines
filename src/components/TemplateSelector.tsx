@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Button } from '@/src/components/ui/button'
-import { Select } from '@/src/components/ui/select'
+import { useEffect, useState, useCallback } from 'react'
+import { Button } from '@/components/ui/button'
+import { Select } from '@/components/ui/select'
 
 interface Template {
   id: string
@@ -31,11 +31,7 @@ export function TemplateSelector({ type, onSelect }: TemplateSelectorProps) {
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState('')
 
-  useEffect(() => {
-    fetchTemplates()
-  }, [type])
-
-  async function fetchTemplates() {
+  const fetchTemplates = useCallback(async function() {
     try {
       const endpoint = `/api/templates/${type === 'transaction' ? 'transactions' : 'income'}`
       const response = await fetch(endpoint)
@@ -48,7 +44,11 @@ export function TemplateSelector({ type, onSelect }: TemplateSelectorProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [type])
+
+  useEffect(() => {
+    fetchTemplates()
+  }, [type, fetchTemplates])
 
   const handleSelect = () => {
     const template = templates.find(t => t.id === selectedId)

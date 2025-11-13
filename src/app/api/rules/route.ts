@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/src/lib/db'
-import { ruleCreateSchema, ruleUpdateSchema } from '@/src/lib/validation'
+import { prisma } from '@/lib/db'
+import { ruleCreateSchema, ruleUpdateSchema } from '@/lib/validation'
 
 /**
  * GET /api/rules

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/src/lib/db'
+import { prisma } from '@/lib/db'
 
 // Helper to create a specific date
 function createDate(year: number, month: number, day: number) {

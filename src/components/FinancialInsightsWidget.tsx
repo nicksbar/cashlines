@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { useUser } from '@/src/lib/UserContext'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useUser } from '@/lib/UserContext'
 import {
   analyzeCreditCards,
   calculateNetWorth,
@@ -13,8 +13,8 @@ import {
   type CashFlowAnalysis,
   type FinancialInsight,
   type Account,
-} from '@/src/lib/financial-analysis'
-import { formatCurrency } from '@/src/lib/money'
+} from '@/lib/financial-analysis'
+import { formatCurrency } from '@/lib/money'
 import {
   AlertCircle,
   TrendingUp,

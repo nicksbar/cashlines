@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Select } from '@/src/components/ui/select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Select } from '@/components/ui/select'
 import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownLeft, Percent, Target } from 'lucide-react'
-import { formatCurrency } from '@/src/lib/money'
-import { formatMonth, getCurrentMonthYear, getMonthsInRange } from '@/src/lib/date'
-import { useUser } from '@/src/lib/UserContext'
-import { RecurringExpensesForecast } from '@/src/components/RecurringExpensesForecast'
-import { FinancialInsightsWidget } from '@/src/components/FinancialInsightsWidget'
+import { formatCurrency } from '@/lib/money'
+import { formatMonth, getCurrentMonthYear, getMonthsInRange } from '@/lib/date'
+import { useUser } from '@/lib/UserContext'
+import { RecurringExpensesForecast } from '@/components/RecurringExpensesForecast'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface Summary {
@@ -624,8 +623,77 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {/* Financial Insights Widget */}
-      <FinancialInsightsWidget />
+      {/* Financial Insights - Dashboard Preview */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-slate-900 dark:text-slate-100">Financial Insights</CardTitle>
+            <CardDescription className="text-slate-600 dark:text-slate-400">Key findings from your financial data</CardDescription>
+          </div>
+          <Link href="/insights">
+            <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+              View Full Analysis →
+            </Button>
+          </Link>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Accounts</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {Object.keys(summary.byMethod).length}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">by payment method</p>
+            </div>
+
+            <div className={`p-3 rounded-lg border border-slate-200 dark:border-slate-700 ${
+              expenseRatio > 80 ? 'bg-red-50 dark:bg-red-950' :
+              expenseRatio > 60 ? 'bg-yellow-50 dark:bg-yellow-950' :
+              'bg-green-50 dark:bg-green-950'
+            }`}>
+              <p className="text-xs font-medium mb-1 text-slate-600 dark:text-slate-400">Expense Ratio</p>
+              <p className={`text-2xl font-bold ${
+                expenseRatio > 80 ? 'text-red-600 dark:text-red-400' :
+                expenseRatio > 60 ? 'text-yellow-600 dark:text-yellow-400' :
+                'text-green-600 dark:text-green-400'
+              }`}>
+                {expenseRatio.toFixed(1)}%
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">of income</p>
+            </div>
+
+            <div className={`p-3 rounded-lg border border-slate-200 dark:border-slate-700 ${
+              savingsRate > 20 ? 'bg-green-50 dark:bg-green-950' :
+              savingsRate > 10 ? 'bg-blue-50 dark:bg-blue-950' :
+              'bg-orange-50 dark:bg-orange-950'
+            }`}>
+              <p className="text-xs font-medium mb-1 text-slate-600 dark:text-slate-400">Savings Rate</p>
+              <p className={`text-2xl font-bold ${
+                savingsRate > 20 ? 'text-green-600 dark:text-green-400' :
+                savingsRate > 10 ? 'text-blue-600 dark:text-blue-400' :
+                'text-orange-600 dark:text-orange-400'
+              }`}>
+                {savingsRate.toFixed(1)}%
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">of income</p>
+            </div>
+
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Avg Transaction</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {formatCurrency(avgTransaction)}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{summary.transactionCount} total</p>
+            </div>
+          </div>
+
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-700 rounded-lg">
+            <p className="text-sm text-blue-900 dark:text-blue-100">
+              💡 <strong>Tip:</strong> Check the full insights page for detailed credit card analysis, net worth breakdown, and personalized recommendations.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Charts Section */}
       {summary && (

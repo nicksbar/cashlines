@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
-import { InfoTooltip } from '@/src/components/InfoTooltip'
-import { formatCurrency } from '@/src/lib/money'
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { InfoTooltip } from '@/components/InfoTooltip'
+import { formatCurrency } from '@/lib/money'
 import { Trash2, Plus, AlertCircle, Zap } from 'lucide-react'
-import { QuickExpenseEntry } from '@/src/components/QuickExpenseEntry'
-import { useUser } from '@/src/lib/UserContext'
+import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
+import { useUser } from '@/lib/UserContext'
 
 interface RecurringExpense {
   id: string
@@ -59,14 +59,7 @@ export default function RecurringExpensesPage() {
     notes: '',
   })
 
-  useEffect(() => {
-    if (currentHousehold) {
-      fetchExpenses()
-      fetchAccounts()
-    }
-  }, [currentHousehold?.id])
-
-  async function fetchExpenses() {
+  const fetchExpenses = useCallback(async function() {
     if (!currentHousehold) return
 
     try {
@@ -83,9 +76,9 @@ export default function RecurringExpensesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentHousehold])
 
-  async function fetchAccounts() {
+  const fetchAccounts = useCallback(async function() {
     if (!currentHousehold) return
 
     try {
@@ -98,7 +91,14 @@ export default function RecurringExpensesPage() {
     } catch (err) {
       console.error('Error fetching accounts:', err)
     }
-  }
+  }, [currentHousehold])
+
+  useEffect(() => {
+    if (currentHousehold) {
+      fetchExpenses()
+      fetchAccounts()
+    }
+  }, [currentHousehold, fetchExpenses, fetchAccounts])
 
   function resetForm() {
     setFormData({

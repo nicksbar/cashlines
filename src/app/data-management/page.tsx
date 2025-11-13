@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { AlertCircle, Trash2, RefreshCw, Zap } from 'lucide-react'
-import { useUser } from '@/src/lib/UserContext'
+import { useUser } from '@/lib/UserContext'
 
 export default function DataManagementPage() {
   const { currentHousehold } = useUser()

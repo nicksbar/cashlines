@@ -1,12 +1,12 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useEffect, useRef, useState } from 'react'
 import { AlertCircle, CheckCircle, Upload, Eye, Download } from 'lucide-react'
-import { formatCurrency } from '@/src/lib/money'
+import { formatCurrency } from '@/lib/money'
 
 interface ParsedRow {
   date: string

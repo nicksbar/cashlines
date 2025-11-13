@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { formatCurrency } from '@/src/lib/money'
-import { getExpectedMonthlyTotal, compareForecast, formatForecastStatus } from '@/src/lib/forecast'
-import { useUser } from '@/src/lib/UserContext'
+import { useEffect, useState, useCallback } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { formatCurrency } from '@/lib/money'
+import { getExpectedMonthlyTotal, compareForecast, formatForecastStatus } from '@/lib/forecast'
+import { useUser } from '@/lib/UserContext'
 import { TrendingUp } from 'lucide-react'
 
 interface RecurringExpense {
@@ -27,13 +27,7 @@ export function RecurringExpensesForecast({ actualCCSpending }: RecurringExpense
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (currentHousehold) {
-      fetchExpenses()
-    }
-  }, [currentHousehold])
-
-  async function fetchExpenses() {
+  const fetchExpenses = useCallback(async function() {
     if (!currentHousehold) return
     
     try {
@@ -49,7 +43,13 @@ export function RecurringExpensesForecast({ actualCCSpending }: RecurringExpense
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentHousehold])
+
+  useEffect(() => {
+    if (currentHousehold) {
+      fetchExpenses()
+    }
+  }, [currentHousehold, fetchExpenses])
 
   if (loading) {
     return (

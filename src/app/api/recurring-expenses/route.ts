@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/src/lib/db";
-import { recurringExpenseSchema } from "@/src/lib/validation";
+import { prisma } from '@/lib/db';
+import { recurringExpenseSchema } from '@/lib/validation';
 
 export async function GET(request: NextRequest) {
   try {

@@ -1,15 +1,15 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
-import { useState, useEffect } from 'react'
-import { formatCurrency } from '@/src/lib/money'
-import { formatDate } from '@/src/lib/date'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useState, useEffect, useCallback } from 'react'
+import { formatCurrency } from '@/lib/money'
+import { formatDate } from '@/lib/date'
 import { Plus, Trash2, Edit2, Download, Zap, CheckCircle, AlertCircle } from 'lucide-react'
-import { useUser } from '@/src/lib/UserContext'
-import { QuickExpenseEntry } from '@/src/components/QuickExpenseEntry'
+import { useUser } from '@/lib/UserContext'
+import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 
 interface Split {
   id: string
@@ -79,13 +79,7 @@ export default function TransactionsPage() {
     splits: [{ type: 'need', target: '', percent: 100 }],
   })
 
-  useEffect(() => {
-    if (currentHousehold) {
-      fetchData()
-    }
-  }, [currentHousehold?.id])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!currentHousehold) return
 
     try {
@@ -104,7 +98,13 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentHousehold])
+
+  useEffect(() => {
+    if (currentHousehold) {
+      fetchData()
+    }
+  }, [currentHousehold, fetchData])
 
   const getFilteredAccounts = (method: string) => {
     const methodToTypeMap: { [key: string]: string[] } = {

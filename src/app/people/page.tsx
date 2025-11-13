@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Button } from '@/src/components/ui/button'
-import { Card } from '@/src/components/ui/card'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
-import { useUser } from '@/src/lib/UserContext'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useUser } from '@/lib/UserContext'
 
 interface Person {
   id: string
@@ -51,31 +51,39 @@ export default function PeoplePage() {
     color: '#4ECDC4',
   })
 
-  useEffect(() => {
-    if (currentHousehold) {
-      fetchPeople()
-    }
-  }, [currentHousehold?.id])
-
-  const fetchPeople = async () => {
-    if (!currentHousehold) return
-
+  const fetchPeople = useCallback(async () => {
     try {
+      if (!currentHousehold) {
+        setLoading(false)
+        return
+      }
+
       const response = await fetch('/api/people', {
         headers: { 'x-household-id': currentHousehold.id },
       })
-      if (response.ok) {
-        const data = await response.json()
-        setPeople(data)
+      
+      if (!response.ok) {
+        console.error('Failed to fetch people:', response.status)
+        setLoading(false)
+        return
       }
+      
+      const data = await response.json()
+      setPeople(data)
     } catch (error) {
       console.error('Error fetching people:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentHousehold])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (currentHousehold) {
+      fetchPeople()
+    }
+  }, [currentHousehold, fetchPeople])
+
+  const handleAddPerson = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!currentHousehold) return
 
@@ -115,8 +123,13 @@ export default function PeoplePage() {
     if (!confirm('Are you sure you want to delete this person? Transactions will be unassigned.')) {
       return
     }
+    if (!currentHousehold) return
+    
     try {
-      const response = await fetch(`/api/people/${id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/people/${id}`, { 
+        method: 'DELETE',
+        headers: { 'x-household-id': currentHousehold.id },
+      })
       if (response.ok) {
         fetchPeople()
       }
@@ -162,7 +175,7 @@ export default function PeoplePage() {
             <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-100">
               {editingId ? 'Edit Person' : 'Add New Person'}
             </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleAddPerson} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="name" className="dark:text-slate-300">

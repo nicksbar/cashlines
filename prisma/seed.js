@@ -22,15 +22,40 @@ async function main() {
 
   console.log(`Created user: ${user.email}`)
 
-  // Create accounts with realistic financial data
+  // Create household members
+  const alice = await prisma.person.upsert({
+    where: { userId_name: { userId: user.id, name: 'Alice' } },
+    update: {},
+    create: {
+      userId: user.id,
+      name: 'Alice',
+      role: 'primary',
+      color: '#4ECDC4', // Teal
+    },
+  })
+
+  const bob = await prisma.person.upsert({
+    where: { userId_name: { userId: user.id, name: 'Bob' } },
+    update: {},
+    create: {
+      userId: user.id,
+      name: 'Bob',
+      role: 'spouse',
+      color: '#FF6B6B', // Red
+    },
+  })
+
+  console.log(`Created household members: ${alice.name} (${alice.role}), ${bob.name} (${bob.role})`)
+
+  // Create accounts with realistic financial data (with some financial challenges)
   const checking = await prisma.account.create({
     data: {
       userId: user.id,
       name: 'Checking',
       type: 'checking',
       isActive: true,
-      currentBalance: 5500,
-      interestRateApy: 0.50,
+      currentBalance: 8500,
+      interestRateApy: 0.01, // Very low APY - traditional checking account
       monthlyFee: 0,
       minimumBalance: 500,
       isFdic: true,
@@ -40,11 +65,11 @@ async function main() {
   const savings = await prisma.account.create({
     data: {
       userId: user.id,
-      name: 'High-Yield Savings',
+      name: 'Regular Savings',
       type: 'savings',
       isActive: true,
-      currentBalance: 15000,
-      interestRateApy: 4.75,
+      currentBalance: 12000,
+      interestRateApy: 4.35, // Market rate high-yield savings account (Nov 2024)
       monthlyFee: 0,
       minimumBalance: 1000,
       isFdic: true,
@@ -57,9 +82,9 @@ async function main() {
       name: 'American Express Platinum',
       type: 'credit_card',
       isActive: true,
-      creditLimit: 25000,
-      interestRate: 18.99,
-      currentBalance: 3200,
+      creditLimit: 15000,
+      interestRate: 19.99, // High APR
+      currentBalance: 8500, // High utilization - 56.7%!
       annualFee: 695,
       cashBackPercent: 1.5,
       pointsPerDollar: 1,
@@ -73,13 +98,29 @@ async function main() {
       name: 'Chase Freedom Flex',
       type: 'credit_card',
       isActive: true,
-      creditLimit: 10000,
-      interestRate: 21.99,
-      currentBalance: 0,
+      creditLimit: 8000,
+      interestRate: 22.99, // Higher APR
+      currentBalance: 3200, // 40% utilization
       annualFee: 0,
       cashBackPercent: 5.0,
       pointsPerDollar: 1.5,
       rewardsProgram: 'Ultimate Rewards',
+    },
+  })
+
+  const discover = await prisma.account.create({
+    data: {
+      userId: user.id,
+      name: 'Discover It',
+      type: 'credit_card',
+      isActive: true,
+      creditLimit: 5000,
+      interestRate: 21.99,
+      currentBalance: 4500, // 90% utilization - WARNING!
+      annualFee: 0,
+      cashBackPercent: 2.0,
+      pointsPerDollar: 1,
+      rewardsProgram: 'Discover Cashback',
     },
   })
 
@@ -107,7 +148,7 @@ async function main() {
     },
   })
 
-  console.log(`Created accounts: ${checking.name}, ${savings.name}, ${amex.name}, ${chase.name}, ${cash.name}, ${student.name}`)
+  console.log(`Created accounts: ${checking.name}, ${savings.name}, ${amex.name}, ${chase.name}, ${discover.name}, ${cash.name}, ${student.name}`)
 
   // Create sample income
   const today = new Date()
@@ -116,6 +157,7 @@ async function main() {
   const income1 = await prisma.income.create({
     data: {
       userId: user.id,
+      personId: alice.id,
       accountId: checking.id,
       date: lastMonth,
       grossAmount: 5000,
@@ -131,6 +173,7 @@ async function main() {
   const income2 = await prisma.income.create({
     data: {
       userId: user.id,
+      personId: bob.id,
       accountId: checking.id,
       date: today,
       grossAmount: 500,
@@ -147,21 +190,24 @@ async function main() {
 
   // Create sample transactions with realistic spending
   const transactions = [
-    { desc: 'Whole Foods Grocery Store', amt: 145.78, method: 'cc', split: 'need', target: 'Food' },
-    { desc: 'Amazon Purchase', amt: 89.99, method: 'cc', split: 'want', target: 'Shopping' },
-    { desc: 'Electric Bill', amt: 156.23, method: 'ach', split: 'need', target: 'Utilities' },
-    { desc: 'Starbucks Coffee', amt: 6.45, method: 'cc', split: 'want', target: 'Dining' },
-    { desc: 'Netflix Subscription', amt: 15.99, method: 'cc', split: 'want', target: 'Entertainment' },
-    { desc: 'Gas Station', amt: 62.50, method: 'cc', split: 'need', target: 'Transportation' },
-    { desc: 'Restaurant Dinner', amt: 78.50, method: 'cc', split: 'want', target: 'Dining' },
-    { desc: 'ATM Withdrawal', amt: 100.00, method: 'ach', split: 'want', target: 'Cash' },
+    { desc: 'Whole Foods Grocery Store', amt: 245.78, method: 'cc', split: 'need', target: 'Food', card: chase, person: alice },
+    { desc: 'Amazon Purchase', amt: 189.99, method: 'cc', split: 'want', target: 'Shopping', card: amex, person: bob },
+    { desc: 'Electric Bill', amt: 156.23, method: 'ach', split: 'need', target: 'Utilities', card: null, person: alice },
+    { desc: 'Starbucks Coffee', amt: 16.45, method: 'cc', split: 'want', target: 'Dining', card: chase, person: alice },
+    { desc: 'Netflix Subscription', amt: 15.99, method: 'cc', split: 'want', target: 'Entertainment', card: discover, person: null },
+    { desc: 'Gas Station', amt: 62.50, method: 'cc', split: 'need', target: 'Transportation', card: amex, person: bob },
+    { desc: 'Restaurant Dinner', amt: 178.50, method: 'cc', split: 'want', target: 'Dining', card: amex, person: null },
+    { desc: 'Grocery Store Costco', amt: 287.64, method: 'cc', split: 'need', target: 'Food', card: discover, person: alice },
+    { desc: 'Target Shopping', amt: 95.23, method: 'cc', split: 'want', target: 'Shopping', card: chase, person: bob },
+    { desc: 'Uber Rides', amt: 45.50, method: 'cc', split: 'need', target: 'Transportation', card: chase, person: alice },
   ]
 
   for (const tx of transactions) {
     const transaction = await prisma.transaction.create({
       data: {
         userId: user.id,
-        accountId: tx.method === 'ach' ? checking.id : amex.id,
+        personId: tx.person?.id || null,
+        accountId: tx.method === 'ach' ? checking.id : tx.card?.id || amex.id,
         date: today,
         amount: tx.amt,
         description: tx.desc,
