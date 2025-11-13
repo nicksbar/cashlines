@@ -67,11 +67,19 @@ export async function POST(request: NextRequest) {
       where: { userId: user.id },
     })
 
+    await prisma.recurringExpense.deleteMany({
+      where: { userId: user.id },
+    })
+
     await prisma.account.deleteMany({
       where: { userId: user.id },
     })
 
     await prisma.person.deleteMany({
+      where: { userId: user.id },
+    })
+
+    await prisma.setting.deleteMany({
       where: { userId: user.id },
     })
 

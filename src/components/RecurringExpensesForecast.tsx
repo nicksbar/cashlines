@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { formatCurrency } from '@/src/lib/money'
 import { getExpectedMonthlyTotal, compareForecast, formatForecastStatus } from '@/src/lib/forecast'
+import { useUser } from '@/src/lib/UserContext'
 import { TrendingUp } from 'lucide-react'
 
 interface RecurringExpense {
@@ -21,18 +22,24 @@ interface RecurringExpensesForecastProps {
 }
 
 export function RecurringExpensesForecast({ actualCCSpending }: RecurringExpensesForecastProps) {
+  const { currentHousehold } = useUser()
   const [expenses, setExpenses] = useState<RecurringExpense[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchExpenses()
-  }, [])
+    if (currentHousehold) {
+      fetchExpenses()
+    }
+  }, [currentHousehold])
 
   async function fetchExpenses() {
+    if (!currentHousehold) return
+    
     try {
       setLoading(true)
-      const response = await fetch('/api/recurring-expenses')
+      const headers = { 'x-household-id': currentHousehold.id }
+      const response = await fetch('/api/recurring-expenses', { headers })
       if (!response.ok) throw new Error('Failed to fetch recurring expenses')
       const data = await response.json()
       setExpenses(data)
