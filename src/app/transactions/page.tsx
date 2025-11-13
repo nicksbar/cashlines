@@ -7,7 +7,7 @@ import { Label } from '@/src/components/ui/label'
 import { useState, useEffect } from 'react'
 import { formatCurrency } from '@/src/lib/money'
 import { formatDate } from '@/src/lib/date'
-import { Plus, Trash2, Edit2, Download, Zap } from 'lucide-react'
+import { Plus, Trash2, Edit2, Download, Zap, CheckCircle, AlertCircle } from 'lucide-react'
 import { useUser } from '@/src/lib/UserContext'
 import { QuickExpenseEntry } from '@/src/components/QuickExpenseEntry'
 
@@ -57,6 +57,16 @@ export default function TransactionsPage() {
   const [expenseType, setExpenseType] = useState<'one-off' | 'recurring'>('one-off')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showQuickEntry, setShowQuickEntry] = useState(false)
+  const [showConvertModal, setShowConvertModal] = useState(false)
+  const [convertingTransaction, setConvertingTransaction] = useState<Transaction | null>(null)
+  const [recurringFormData, setRecurringFormData] = useState({
+    frequency: 'monthly',
+    dueDay: new Date().getDate(),
+  })
+  const [convertStatus, setConvertStatus] = useState<{
+    type: 'idle' | 'loading' | 'success' | 'error'
+    message: string
+  }>({ type: 'idle', message: '' })
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     amount: '',
@@ -197,6 +207,72 @@ export default function TransactionsPage() {
       if (response.ok) fetchData()
     } catch (error) {
       console.error('Error deleting transaction:', error)
+    }
+  }
+
+  const openConvertModal = (tx: Transaction) => {
+    setConvertingTransaction(tx)
+    setRecurringFormData({
+      frequency: 'monthly',
+      dueDay: new Date(tx.date).getDate(),
+    })
+    setShowConvertModal(true)
+  }
+
+  const handleConvertToRecurring = async () => {
+    if (!convertingTransaction || !currentHousehold) return
+
+    try {
+      setConvertStatus({ type: 'loading', message: 'Creating recurring expense...' })
+
+      const body: any = {
+        description: convertingTransaction.description,
+        amount: convertingTransaction.amount,
+        frequency: recurringFormData.frequency,
+        dueDay: recurringFormData.frequency === 'monthly' ? recurringFormData.dueDay : null,
+        accountId: convertingTransaction.accountId,
+      }
+
+      // Only include notes if they exist
+      if (convertingTransaction.notes) {
+        body.notes = convertingTransaction.notes
+      }
+
+      const response = await fetch('/api/recurring-expenses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-household-id': currentHousehold.id,
+        },
+        body: JSON.stringify(body),
+      })
+
+      if (response.ok) {
+        setConvertStatus({
+          type: 'success',
+          message: `Created recurring: "${convertingTransaction.description}"`,
+        })
+        
+        // Auto-close modal after success
+        setTimeout(() => {
+          setShowConvertModal(false)
+          setConvertingTransaction(null)
+          setConvertStatus({ type: 'idle', message: '' })
+        }, 1500)
+      } else {
+        const errorData = await response.json()
+        console.error('Error response:', errorData)
+        setConvertStatus({
+          type: 'error',
+          message: `Failed: ${errorData.error || 'Unknown error'}`,
+        })
+      }
+    } catch (error) {
+      console.error('Error converting to recurring:', error)
+      setConvertStatus({
+        type: 'error',
+        message: 'Error creating recurring expense',
+      })
     }
   }
 
@@ -564,6 +640,13 @@ export default function TransactionsPage() {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
+                          onClick={() => openConvertModal(tx)}
+                          className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                          title="Convert to recurring"
+                        >
+                          <Zap className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleDelete(tx.id)}
                           className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                           title="Delete transaction"
@@ -581,6 +664,115 @@ export default function TransactionsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Convert to Recurring Modal */}
+      {showConvertModal && convertingTransaction && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="text-slate-900 dark:text-slate-100">
+                Convert to Recurring
+              </CardTitle>
+              <CardDescription className="text-slate-600 dark:text-slate-400">
+                Make &quot;{convertingTransaction.description}&quot; a recurring expense
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {convertStatus.type === 'success' && (
+                <div className="flex gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-green-700 dark:text-green-300">{convertStatus.message}</p>
+                </div>
+              )}
+
+              {convertStatus.type === 'error' && (
+                <div className="flex gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700 dark:text-red-300">{convertStatus.message}</p>
+                </div>
+              )}
+
+              {convertStatus.type !== 'success' && (
+                <>
+                  <div>
+                    <Label htmlFor="recurringFrequency" className="text-slate-900 dark:text-slate-100">
+                      Frequency
+                    </Label>
+                    <select
+                      id="recurringFrequency"
+                      value={recurringFormData.frequency}
+                      onChange={(e) =>
+                        setRecurringFormData({ ...recurringFormData, frequency: e.target.value })
+                      }
+                      disabled={convertStatus.type === 'loading'}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                    >
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
+                  </div>
+
+                  {recurringFormData.frequency === 'monthly' && (
+                    <div>
+                      <Label htmlFor="recurringDueDay" className="text-slate-900 dark:text-slate-100">
+                        Due Day of Month
+                      </Label>
+                      <Input
+                        id="recurringDueDay"
+                        type="number"
+                        min="1"
+                        max="31"
+                        value={recurringFormData.dueDay}
+                        onChange={(e) =>
+                          setRecurringFormData({
+                            ...recurringFormData,
+                            dueDay: parseInt(e.target.value),
+                          })
+                        }
+                        disabled={convertStatus.type === 'loading'}
+                        className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 disabled:opacity-50"
+                      />
+                    </div>
+                  )}
+
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p className="text-sm text-blue-900 dark:text-blue-200">
+                      <strong>Amount:</strong> {formatCurrency(convertingTransaction.amount)}
+                    </p>
+                    <p className="text-sm text-blue-900 dark:text-blue-200">
+                      <strong>Account:</strong> {convertingTransaction.account.name}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowConvertModal(false)
+                        setConvertingTransaction(null)
+                        setConvertStatus({ type: 'idle', message: '' })
+                      }}
+                      disabled={convertStatus.type === 'loading'}
+                      className="flex-1 dark:border-slate-600 dark:text-slate-100 disabled:opacity-50"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleConvertToRecurring}
+                      disabled={convertStatus.type === 'loading'}
+                      className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white disabled:opacity-50"
+                    >
+                      {convertStatus.type === 'loading' ? 'Creating...' : 'Create Recurring'}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <QuickExpenseEntry
         isOpen={showQuickEntry}

@@ -46,6 +46,8 @@ export default function RecurringExpensesPage() {
   const [showForm, setShowForm] = useState(false)
   const [showQuickEntry, setShowQuickEntry] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; description: string } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -58,14 +60,20 @@ export default function RecurringExpensesPage() {
   })
 
   useEffect(() => {
-    fetchExpenses()
-    fetchAccounts()
-  }, [])
+    if (currentHousehold) {
+      fetchExpenses()
+      fetchAccounts()
+    }
+  }, [currentHousehold?.id])
 
   async function fetchExpenses() {
+    if (!currentHousehold) return
+
     try {
       setLoading(true)
-      const response = await fetch('/api/recurring-expenses')
+      const response = await fetch('/api/recurring-expenses', {
+        headers: { 'x-household-id': currentHousehold.id },
+      })
       if (!response.ok) throw new Error('Failed to fetch expenses')
       const data = await response.json()
       setExpenses(data)
@@ -78,8 +86,12 @@ export default function RecurringExpensesPage() {
   }
 
   async function fetchAccounts() {
+    if (!currentHousehold) return
+
     try {
-      const response = await fetch('/api/accounts')
+      const response = await fetch('/api/accounts', {
+        headers: { 'x-household-id': currentHousehold.id },
+      })
       if (!response.ok) throw new Error('Failed to fetch accounts')
       const data = await response.json()
       setAccounts(data.filter((a: Account) => a.isActive))
@@ -103,33 +115,56 @@ export default function RecurringExpensesPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!currentHousehold) return
 
-    const payload = {
-      accountId: formData.accountId || null,
+    const payload: any = {
       description: formData.description,
       amount: parseFloat(formData.amount),
       frequency: formData.frequency,
-      dueDay: formData.dueDay ? parseInt(formData.dueDay) : null,
-      notes: formData.notes || null,
+    }
+
+    // Only include optional fields if they have values
+    if (formData.accountId) {
+      payload.accountId = formData.accountId
+    }
+    if (formData.dueDay) {
+      payload.dueDay = parseInt(formData.dueDay)
+    }
+    if (formData.notes) {
+      payload.notes = formData.notes
     }
 
     try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'x-household-id': currentHousehold.id,
+      }
+
       if (editingId) {
         // Update
         const response = await fetch(`/api/recurring-expenses/${editingId}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(payload),
         })
-        if (!response.ok) throw new Error('Failed to update expense')
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to update expense')
+        }
       } else {
         // Create
         const response = await fetch('/api/recurring-expenses', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          headers,
+          body: JSON.stringify({
+            ...payload,
+            accountId: formData.accountId || null,
+          }),
         })
-        if (!response.ok) throw new Error('Failed to create expense')
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to create expense')
+        }
       }
       await fetchExpenses()
       resetForm()
@@ -139,16 +174,21 @@ export default function RecurringExpensesPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Are you sure you want to delete this recurring expense?')) return
+    if (!currentHousehold) return
 
     try {
+      setIsDeleting(true)
       const response = await fetch(`/api/recurring-expenses/${id}`, {
         method: 'DELETE',
+        headers: { 'x-household-id': currentHousehold.id },
       })
       if (!response.ok) throw new Error('Failed to delete expense')
       await fetchExpenses()
+      setDeleteConfirm(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -407,7 +447,7 @@ export default function RecurringExpensesPage() {
                       Edit
                     </Button>
                     <Button
-                      onClick={() => handleDelete(expense.id)}
+                      onClick={() => setDeleteConfirm({ id: expense.id, description: expense.description })}
                       variant="outline"
                       size="sm"
                       className="dark:bg-red-900/30 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/50"
@@ -419,6 +459,45 @@ export default function RecurringExpensesPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-sm mx-4">
+            <CardContent className="space-y-4 pt-6">
+              <div className="flex gap-3">
+                <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                    Delete Recurring Expense?
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    &quot;{deleteConfirm.description}&quot; will be permanently deleted.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteConfirm(null)}
+                  disabled={isDeleting}
+                  className="flex-1 dark:border-slate-600 dark:text-slate-100 disabled:opacity-50"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => handleDelete(deleteConfirm.id)}
+                  disabled={isDeleting}
+                  className="flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white disabled:opacity-50"
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

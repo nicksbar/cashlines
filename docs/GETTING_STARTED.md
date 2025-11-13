@@ -9,7 +9,7 @@
 npm install
 
 # 2. Set up environment variables
-cp .env.example .env.local
+cp .env.example .env
 
 # 3. Database setup (already done, but for reference)
 npx prisma db push
