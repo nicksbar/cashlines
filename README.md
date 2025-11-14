@@ -4,7 +4,7 @@
 
 **Purpose**: Understand your money flow. Track income from multiple sources, split expenses across categories (Need/Want/Debt/Tax/Savings), create routing rules for automation, and analyze monthly reports—all privately on your own hardware.
 
-[![CI Status](https://github.com/nicksbar/cashlines/actions/workflows/test.yml/badge.svg?branch=development)](https://github.com/nicksbar/cashlines/actions/workflows/test.yml) [![Tests](https://img.shields.io/badge/tests-318%2F318-brightgreen)](#) [![License](https://img.shields.io/badge/license-MIT-blue)](#license)
+[![CI Status](https://github.com/nicksbar/cashlines/actions/workflows/test.yml/badge.svg?branch=development)](https://github.com/nicksbar/cashlines/actions/workflows/test.yml) [![Tests](https://img.shields.io/badge/tests-489%2F489-brightgreen)](#) [![License](https://img.shields.io/badge/license-MIT-blue)](#license)
 
 ## Features
 
@@ -170,39 +170,46 @@ Complete docs in `/docs/`:
 
 ## Testing
 
-Cashlines includes comprehensive automated testing:
+Cashlines includes comprehensive automated testing at all levels:
 
 ```bash
-# Unit and API tests (Jest)
+# Unit and API tests (Jest) - 402 tests
 npm test                    # Run all tests
 npm test -- --watch        # Watch mode for development
 npm test -- --coverage     # Coverage report
 
-# E2E tests (Playwright) 
+# E2E tests (Playwright) - 87 tests across 3 browsers
 npm run test:e2e           # Run E2E tests (headless)
 npm run test:e2e:ui        # Interactive test UI (recommended for development)
 npm run test:e2e:debug     # Step through tests with DevTools
 
-# Run all tests
-npm run test:all           # Jest + Playwright
+# Run all tests together
+npm run test:all           # Jest (402) + Playwright (87)
 ```
 
 **Test Coverage:**
-- ✅ 399 unit/API tests (Jest)
-- ✅ 11 E2E tests (Playwright) - Dashboard, Navigation, Responsive, Dark Mode
-- ✅ 100% pass rate
-- ✅ 0 TypeScript errors
+- ✅ **402 unit/API tests** (Jest) - Core functionality, APIs, utilities
+- ✅ **87 E2E tests** (Playwright) - Dashboard, workflows, navigation, responsive design, performance
+- ✅ **489 total tests** - 100% pass rate across Chromium, Firefox, and WebKit
+- ✅ **0 TypeScript errors**
 
-[**E2E Testing Guide →**](./e2e/README.md) - How to write and run E2E tests with Playwright
+**CI/CD Integration:**
+- ✅ Automated tests run on every commit and pull request
+- ✅ E2E tests run daily for regression detection
+- ✅ Coverage reports uploaded to Codecov
+- ✅ Artifacts (test reports, videos) saved for 30 days
+
+[**E2E Testing Guide →**](./e2e/README.md) - Learn how to write and run E2E tests  
+[**Test Status Report →**](./E2E_TEST_STATUS.md) - Detailed test coverage and results
 
 ## Status
 
 ✅ **MVP complete**: 12 core features fully implemented  
-✅ **410 tests passing** (399 unit/API + 11 E2E) - 100% success rate  
+✅ **489 tests passing** (402 unit/API + 87 E2E) - 100% success rate  
 ✅ **Production-ready**: Builds successfully with zero TypeScript errors  
 ✅ **Dark mode**: Full light/dark/auto theme support  
 ✅ **Self-hosted**: Docker and LXC deployment ready  
-✅ **Well-documented**: Complete dev guide and E2E testing guide
+✅ **CI/CD integrated**: Automated testing on every commit
 
 ## Privacy & Security
 
