@@ -151,7 +151,7 @@ export function HouseholdSelector() {
       </Button>
 
       {showDropdown && (
-        <div className="absolute top-full mt-1 left-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 min-w-48">
+        <div className="absolute top-full mt-1 left-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 min-w-48 max-h-80 overflow-y-auto">
           <div className="p-2 space-y-1">
             {households.map((household) => (
               <button

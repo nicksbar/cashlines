@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useUser } from '@/lib/UserContext'
 import { formatCurrency } from '@/lib/money'
-import { Save, AlertCircle } from 'lucide-react'
+import { Save, AlertCircle, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
 interface Settings {
   userId: string
@@ -86,6 +87,28 @@ export default function SettingsPage() {
       setMessage({ type: 'error', text: 'Error saving settings' })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleDeleteHousehold = async (householdId: string, householdName: string) => {
+    try {
+      const response = await fetch(`/api/households/${householdId}`, {
+        method: 'DELETE',
+        headers: {
+          'x-household-id': currentHousehold?.id || 'user_1',
+        },
+      })
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: `"${householdName}" deleted successfully` })
+        setTimeout(() => setMessage(null), 3000)
+      } else {
+        const error = await response.json()
+        setMessage({ type: 'error', text: error.error || 'Failed to delete household' })
+      }
+    } catch (error) {
+      console.error('Error deleting household:', error)
+      setMessage({ type: 'error', text: 'Error deleting household' })
     }
   }
 
@@ -391,6 +414,24 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Household Management Link */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-slate-900 dark:text-slate-100">Household Management</CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">
+            Create, view, and delete households
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link href="/households">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              Manage Households
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
 
       <div className="flex gap-2 justify-end">
         <Button

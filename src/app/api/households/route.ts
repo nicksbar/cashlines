@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(household)
+    return NextResponse.json(household, { status: 201 })
   } catch (error) {
     console.error('Error creating household:', error)
     return NextResponse.json(
@@ -70,3 +70,5 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+
