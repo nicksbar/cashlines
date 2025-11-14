@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/src/lib/db";
-import { recurringExpenseSchema } from "@/src/lib/validation";
-
-const USER_ID = "user_1"; // Hardcoded for single-user MVP
+import { prisma } from '@/lib/db';
+import { recurringExpenseSchema } from '@/lib/validation';
 
 export async function GET(request: NextRequest) {
   try {
+    const householdId = request.headers.get('x-household-id')
+    
+    if (!householdId) {
+      return NextResponse.json(
+        { error: 'Missing household ID' },
+        { status: 400 }
+      )
+    }
+
     const expenses = await prisma.recurringExpense.findMany({
-      where: { userId: USER_ID },
+      where: { userId: householdId },
       include: { account: true },
       orderBy: { nextDueDate: "asc" },
     });
@@ -24,13 +31,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const householdId = request.headers.get('x-household-id')
+    
+    if (!householdId) {
+      return NextResponse.json(
+        { error: 'Missing household ID' },
+        { status: 400 }
+      )
+    }
+
     const body = await request.json();
 
     // Validate input
     const validation = recurringExpenseSchema.safeParse(body);
     if (!validation.success) {
+      console.error('Validation error:', validation.error.errors);
       return NextResponse.json(
-        { error: "Invalid input", details: validation.error },
+        { error: "Invalid input", details: validation.error.errors },
         { status: 400 }
       );
     }
@@ -43,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     const expense = await prisma.recurringExpense.create({
       data: {
-        userId: USER_ID,
+        userId: householdId,
         accountId: accountId || null,
         description,
         amount,

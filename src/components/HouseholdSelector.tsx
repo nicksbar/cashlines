@@ -1,10 +1,10 @@
 'use client'
 
-import { useUser } from '@/src/lib/UserContext'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { useUser } from '@/lib/UserContext'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChevronDown, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 
@@ -124,6 +124,15 @@ export function HouseholdSelector() {
   }
 
   if (!currentHousehold) {
+    // If we have households but none selected, auto-select the first one
+    if (households.length > 0) {
+      selectHousehold(households[0].id)
+      return (
+        <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+          Loading household...
+        </div>
+      )
+    }
     return null
   }
 

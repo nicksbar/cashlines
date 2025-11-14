@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/src/lib/db'
-import { accountCreateSchema, accountUpdateSchema } from '@/src/lib/validation'
-import { getErrorMessage } from '@/src/lib/utils'
+import { prisma } from '@/lib/db'
+import { accountCreateSchema, accountUpdateSchema } from '@/lib/validation'
+import { getErrorMessage } from '@/lib/utils'
 
 /**
  * GET /api/accounts
@@ -90,6 +90,19 @@ export async function POST(request: NextRequest) {
         isActive: validated.isActive,
         notes: validated.notes,
         creditLimit: validated.creditLimit,
+        interestRate: validated.interestRate,
+        cashBackPercent: validated.cashBackPercent,
+        pointsPerDollar: validated.pointsPerDollar,
+        annualFee: validated.annualFee,
+        rewardsProgram: validated.rewardsProgram,
+        interestRateApy: validated.interestRateApy,
+        monthlyFee: validated.monthlyFee,
+        minimumBalance: validated.minimumBalance,
+        isFdic: validated.isFdic,
+        location: validated.location,
+        currentBalance: validated.currentBalance,
+        accountNumber: validated.accountNumber,
+        principalBalance: validated.principalBalance,
       },
     })
 

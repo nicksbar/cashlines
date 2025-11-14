@@ -1,12 +1,14 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useState, useEffect } from 'react'
-import { formatCurrency } from '@/src/lib/money'
+import { formatCurrency } from '@/lib/money'
 import { Trash2, Star } from 'lucide-react'
+import { useConfirmDialog } from '@/components/ConfirmDialog'
+import { useUser } from '@/lib/UserContext'
 
 interface Template {
   id: string
@@ -28,21 +30,28 @@ const METHOD_LABELS: Record<string, string> = {
 }
 
 export default function TemplatesPage() {
+  const { currentHousehold } = useUser()
+  const { dialog: confirmDialog, confirm } = useConfirmDialog()
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'transaction' | 'income'>('all')
   const [sortBy, setSortBy] = useState<'usage' | 'favorites' | 'recent'>('usage')
 
   useEffect(() => {
-    fetchTemplates()
-  }, [])
+    if (currentHousehold) {
+      fetchTemplates()
+    }
+  }, [currentHousehold])
 
   const fetchTemplates = async () => {
+    if (!currentHousehold) return
+    
     try {
       setLoading(true)
+      const headers = { 'x-household-id': currentHousehold.id }
       const [transRes, incomeRes] = await Promise.all([
-        fetch('/api/templates/transactions'),
-        fetch('/api/templates/income'),
+        fetch('/api/templates/transactions', { headers }),
+        fetch('/api/templates/income', { headers }),
       ])
 
       let allTemplates: Template[] = []
@@ -64,25 +73,40 @@ export default function TemplatesPage() {
   }
 
   const handleDelete = async (id: string, type: string) => {
-    if (!confirm('Delete this template?')) return
-
-    try {
-      const endpoint = type === 'transaction' ? 'transactions' : 'income'
-      const response = await fetch(`/api/templates/${endpoint}/${id}`, { method: 'DELETE' })
-      if (response.ok) {
-        fetchTemplates()
-      }
-    } catch (error) {
-      console.error('Error deleting template:', error)
-    }
+    confirm({
+      title: 'Delete Template',
+      message: 'Are you sure you want to delete this template? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      isDestructive: true,
+      onConfirm: async () => {
+        if (!currentHousehold) return
+        try {
+          const endpoint = type === 'transaction' ? 'transactions' : 'income'
+          const response = await fetch(`/api/templates/${endpoint}/${id}`, { 
+            method: 'DELETE',
+            headers: { 'x-household-id': currentHousehold.id },
+          })
+          if (response.ok) {
+            fetchTemplates()
+          }
+        } catch (error) {
+          console.error('Error deleting template:', error)
+        }
+      },
+    })
   }
 
   const handleToggleFavorite = async (id: string, type: string, current: boolean) => {
+    if (!currentHousehold) return
     try {
       const endpoint = type === 'transaction' ? 'transactions' : 'income'
       const response = await fetch(`/api/templates/${endpoint}/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-household-id': currentHousehold.id,
+        },
         body: JSON.stringify({ isFavorite: !current }),
       })
       if (response.ok) {
@@ -201,6 +225,13 @@ export default function TemplatesPage() {
 
                   <div className="flex gap-2 ml-4">
                     <Button
+                      size="sm"
+                      onClick={() => window.location.href = `/${template.type === 'income' ? 'income' : 'transactions'}`}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Use Template
+                    </Button>
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleToggleFavorite(template.id, template.type, template.isFavorite)}
@@ -242,6 +273,8 @@ export default function TemplatesPage() {
           <p>• <strong>Organize:</strong> Sort by usage, favorites, or creation date</p>
         </CardContent>
       </Card>
+
+      {confirmDialog}
     </div>
   )
 }

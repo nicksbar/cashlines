@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/src/lib/db'
-import { getMonthRange } from '@/src/lib/date'
-import { sumAmounts } from '@/src/lib/money'
+import { prisma } from '@/lib/db'
+import { getMonthRange } from '@/lib/date'
+import { sumAmounts } from '@/lib/money'
+
+export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/reports/untracked

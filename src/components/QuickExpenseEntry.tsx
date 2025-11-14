@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { X, AlertCircle, CheckCircle } from 'lucide-react'
-import { formatCurrency } from '@/src/lib/money'
+import { formatCurrency } from '@/lib/money'
 
 interface RecurringExpense {
   id: string
@@ -60,13 +60,22 @@ export function QuickExpenseEntry({
     notes: '',
   })
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchData()
+  // Filter accounts based on payment method
+  const getFilteredAccounts = (method: string) => {
+    const methodToTypeMap: { [key: string]: string[] } = {
+      cc: ['credit_card'],
+      cash: ['cash'],
+      ach: ['checking', 'savings'],
+      other: ['checking', 'savings', 'credit_card', 'cash', 'other'],
     }
-  }, [isOpen, householdId])
 
-  async function fetchData() {
+    const allowedTypes = methodToTypeMap[method] || []
+    return accounts.filter(
+      (account) => account.isActive && allowedTypes.includes(account.type)
+    )
+  }
+
+  const fetchData = useCallback(async function() {
     try {
       setLoading(true)
       setError(null)
@@ -94,7 +103,13 @@ export function QuickExpenseEntry({
     } finally {
       setLoading(false)
     }
-  }
+  }, [householdId])
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchData()
+    }
+  }, [isOpen, householdId, fetchData])
 
   function selectExpense(expense: RecurringExpense) {
     setSelectedExpense(expense)
@@ -299,7 +314,7 @@ export function QuickExpenseEntry({
                   <select
                     id="method"
                     value={formData.method}
-                    onChange={(e) => setFormData({ ...formData, method: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, method: e.target.value, accountId: '' })}
                     className="flex h-10 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm"
                   >
                     <option value="cc">Credit Card</option>
@@ -318,7 +333,7 @@ export function QuickExpenseEntry({
                     className="flex h-10 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm"
                   >
                     <option value="">Select account</option>
-                    {accounts.map((account) => (
+                    {getFilteredAccounts(formData.method).map((account) => (
                       <option key={account.id} value={account.id}>
                         {account.name}
                       </option>

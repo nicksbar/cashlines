@@ -29,6 +29,7 @@ model User {
   people             Person[]
   settings           Setting?
   recurringExpenses  RecurringExpense[]
+  balanceSnapshots   BalanceSnapshot[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -65,10 +66,34 @@ model Account {
   person   Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
   
   name     String
-  type     String // "checking", "savings", "credit_card", "cash", "other"
+  type     String // "checking", "savings", "credit_card", "cash", "investment", "loan", "other"
   isActive Boolean @default(true)
   notes    String?
-  creditLimit Float? // Optional: for credit cards and lines of credit
+  
+  // Credit Card specific fields
+  creditLimit      Float?   // Optional: for credit cards and lines of credit
+  interestRate     Float?   // Annual percentage rate (APR)
+  cashBackPercent  Float?   // Cash back percentage (e.g., 1.5 for 1.5%)
+  pointsPerDollar  Float?   // Points earned per $1 spent
+  annualFee        Float?   // Annual fee if applicable
+  rewardsProgram   String?  // Name of rewards program
+  
+  // Savings/Checking account fields
+  interestRateApy  Float?   // Annual Percentage Yield for savings/checking
+  monthlyFee       Float?   // Monthly maintenance fee
+  minimumBalance   Float?   // Minimum balance requirement
+  isFdic           Boolean? // FDIC insured (savings/checking)
+  
+  // Cash account fields
+  location         String?  // Where cash is stored (wallet, safe, etc.)
+  
+  // Investment/Loan account fields
+  principalBalance Float?   // For loans - remaining principal
+  currentBalance   Float?   // Current account balance (snapshot, updated manually)
+  accountNumber    String?  // Account identifier (masked for security)
+  
+  // Balance tracking
+  balanceSnapshots BalanceSnapshot[]
   
   incomes           Income[]
   transactions      Transaction[]
@@ -81,6 +106,28 @@ model Account {
   @@unique([userId, name])
   @@index([userId])
   @@index([type])
+}
+
+// BalanceSnapshot: Track account balance over time for interest/growth calculations
+model BalanceSnapshot {
+  id        String @id @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  snapshotDate DateTime // Date of the snapshot
+  balance      Float    // Balance at this date
+  notes        String?  // Optional notes about this snapshot
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([accountId])
+  @@index([snapshotDate])
+  @@unique([accountId, snapshotDate])
 }
 
 // Income: Money flowing in (salary, freelance, transfers, etc.)

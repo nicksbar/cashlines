@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { AlertCircle, Trash2, RefreshCw, Zap } from 'lucide-react'
-import { useUser } from '@/src/lib/UserContext'
+import { useUser } from '@/lib/UserContext'
 
 export default function DataManagementPage() {
   const { currentHousehold } = useUser()
@@ -229,14 +229,10 @@ export default function DataManagementPage() {
               Populate your account with sample data
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                Load a realistic household scenario with ~$150k/year income, mortgage, 2 cars, and 2 kids.
-              </p>
-            </div>
-
+          <CardContent className="space-y-4">
+            {/* Quick Start Section */}
             <div className="space-y-3">
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Quick Start</p>
               <div className="space-y-2">
                 <Button
                   onClick={() => handleSeed('household')}
@@ -244,10 +240,10 @@ export default function DataManagementPage() {
                   disabled={loading}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  {loading ? 'Loading...' : 'Load Household Scenario'}
+                  Sample Household (1 Month)
                 </Button>
-                <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-                  One month of realistic expenses (~$5,400)
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Realistic family: 2 incomes, mortgage, 2 cars, ~$5,400/month expenses
                 </p>
               </div>
 
@@ -258,73 +254,79 @@ export default function DataManagementPage() {
                   disabled={loading}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  {loading ? 'Loading...' : 'Load Full Year of Data'}
+                  Full Year of Data (12 Months)
                 </Button>
-                <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-                  12 months with 50+ income & 600+ transactions
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  100+ income entries, 600+ transactions, seasonal variations
                 </p>
               </div>
+            </div>
 
-              <hr className="my-2 border-slate-300 dark:border-slate-600" />
+            <hr className="border-slate-300 dark:border-slate-600" />
 
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mt-4 mb-3">
-                Realistic Scenarios (Essential Expenses Only)
+            {/* Realistic Scenarios Section */}
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Realistic Scenarios (6 Months)</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+                Each includes: accounts, people, income, transactions, recurring expenses, rules & budget settings
               </p>
 
-              <div className="space-y-2">
+              <div className="grid gap-2">
                 <Button
                   onClick={() => handleSeed('single-no-cc')}
-                  className="w-full bg-slate-600 hover:bg-slate-700 text-white text-sm"
+                  variant="outline"
+                  className="w-full justify-start text-left"
                   disabled={loading}
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Single, No CC
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">Single, No CC</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      $2,250/month net • ACH only • Essential expenses • Emergency fund
+                    </div>
+                  </div>
                 </Button>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Simple W2 salary, tight budget, essential expenses only
-                </p>
-              </div>
 
-              <div className="space-y-2">
                 <Button
                   onClick={() => handleSeed('business-owner')}
-                  className="w-full bg-slate-600 hover:bg-slate-700 text-white text-sm"
+                  variant="outline"
+                  className="w-full justify-start text-left"
                   disabled={loading}
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Business Owner
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">Business Owner</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      $8-11K/month variable • Quarterly taxes • Multiple accounts • Business CC
+                    </div>
+                  </div>
                 </Button>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Self-employed with quarterly tax payments
-                </p>
-              </div>
 
-              <div className="space-y-2">
                 <Button
                   onClick={() => handleSeed('working-teens')}
-                  className="w-full bg-slate-600 hover:bg-slate-700 text-white text-sm"
+                  variant="outline"
+                  className="w-full justify-start text-left"
                   disabled={loading}
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Working Teens + Gig Income
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">Working Teens + Gig</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      3 people • Mixed income types • Gig work (variable) • Family accounts
+                    </div>
+                  </div>
                 </Button>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Family with variable gig income streams
-                </p>
-              </div>
 
-              <div className="space-y-2">
                 <Button
                   onClick={() => handleSeed('complex-family')}
-                  className="w-full bg-slate-600 hover:bg-slate-700 text-white text-sm"
+                  variant="outline"
+                  className="w-full justify-start text-left"
                   disabled={loading}
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Complex Family
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">Complex Family</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      2 people • 6 accounts • Bonuses • Multiple mortgages • Investment savings
+                    </div>
+                  </div>
                 </Button>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Multiple properties, business income, bonuses
-                </p>
               </div>
             </div>
           </CardContent>

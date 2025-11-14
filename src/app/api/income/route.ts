@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/src/lib/db'
-import { incomeCreateSchema } from '@/src/lib/validation'
-import { getMonthRange } from '@/src/lib/date'
+import { prisma } from '@/lib/db'
+import { incomeCreateSchema } from '@/lib/validation'
+import { getMonthRange } from '@/lib/date'
 
 /**
  * GET /api/income

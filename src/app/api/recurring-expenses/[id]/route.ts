@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/src/lib/db";
-import { recurringExpenseUpdateSchema } from "@/src/lib/validation";
-
-const USER_ID = "user_1"; // Hardcoded for single-user MVP
+import { prisma } from '@/lib/db';
+import { recurringExpenseUpdateSchema } from '@/lib/validation';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const householdId = request.headers.get('x-household-id')
+    
+    if (!householdId) {
+      return NextResponse.json(
+        { error: 'Missing household ID' },
+        { status: 400 }
+      )
+    }
+
     const { id } = params;
     const body = await request.json();
 
@@ -17,7 +24,7 @@ export async function PATCH(
       where: { id },
     });
 
-    if (!expense || expense.userId !== USER_ID) {
+    if (!expense || expense.userId !== householdId) {
       return NextResponse.json(
         { error: "Recurring expense not found" },
         { status: 404 }
@@ -54,6 +61,15 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const householdId = request.headers.get('x-household-id')
+    
+    if (!householdId) {
+      return NextResponse.json(
+        { error: 'Missing household ID' },
+        { status: 400 }
+      )
+    }
+
     const { id } = params;
 
     // Verify ownership
@@ -61,7 +77,7 @@ export async function DELETE(
       where: { id },
     });
 
-    if (!expense || expense.userId !== USER_ID) {
+    if (!expense || expense.userId !== householdId) {
       return NextResponse.json(
         { error: "Recurring expense not found" },
         { status: 404 }

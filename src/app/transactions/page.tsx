@@ -1,15 +1,18 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
-import { useState, useEffect } from 'react'
-import { formatCurrency } from '@/src/lib/money'
-import { formatDate } from '@/src/lib/date'
-import { Plus, Trash2, Edit2, Download, Zap } from 'lucide-react'
-import { useUser } from '@/src/lib/UserContext'
-import { QuickExpenseEntry } from '@/src/components/QuickExpenseEntry'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useState, useEffect, useCallback } from 'react'
+import { formatCurrency } from '@/lib/money'
+import { formatDate } from '@/lib/date'
+import { Plus, Trash2, Edit2, Download, Zap, CheckCircle, AlertCircle } from 'lucide-react'
+import { useUser } from '@/lib/UserContext'
+import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
+import { useConfirmDialog } from '@/components/ConfirmDialog'
+import { usePromptDialog } from '@/components/PromptDialog'
+import { TemplateSelector } from '@/components/TemplateSelector'
 
 interface Split {
   id: string
@@ -49,6 +52,9 @@ const METHOD_LABELS: Record<string, string> = {
 
 export default function TransactionsPage() {
   const { currentHousehold } = useUser()
+  const { dialog: confirmDialog, confirm } = useConfirmDialog()
+  const { dialog: promptDialog, prompt } = usePromptDialog()
+  const [alertMessage, setAlertMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [accounts, setAccounts] = useState<any[]>([])
   const [people, setPeople] = useState<any[]>([])
@@ -57,6 +63,16 @@ export default function TransactionsPage() {
   const [expenseType, setExpenseType] = useState<'one-off' | 'recurring'>('one-off')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showQuickEntry, setShowQuickEntry] = useState(false)
+  const [showConvertModal, setShowConvertModal] = useState(false)
+  const [convertingTransaction, setConvertingTransaction] = useState<Transaction | null>(null)
+  const [recurringFormData, setRecurringFormData] = useState({
+    frequency: 'monthly',
+    dueDay: new Date().getDate(),
+  })
+  const [convertStatus, setConvertStatus] = useState<{
+    type: 'idle' | 'loading' | 'success' | 'error'
+    message: string
+  }>({ type: 'idle', message: '' })
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     amount: '',
@@ -69,13 +85,7 @@ export default function TransactionsPage() {
     splits: [{ type: 'need', target: '', percent: 100 }],
   })
 
-  useEffect(() => {
-    if (currentHousehold) {
-      fetchData()
-    }
-  }, [currentHousehold?.id])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!currentHousehold) return
 
     try {
@@ -94,6 +104,26 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false)
     }
+  }, [currentHousehold])
+
+  useEffect(() => {
+    if (currentHousehold) {
+      fetchData()
+    }
+  }, [currentHousehold, fetchData])
+
+  const getFilteredAccounts = (method: string) => {
+    const methodToTypeMap: { [key: string]: string[] } = {
+      cc: ['credit_card'],
+      cash: ['cash'],
+      ach: ['checking', 'savings'],
+      other: ['checking', 'savings', 'credit_card', 'cash', 'other'],
+    }
+
+    const allowedTypes = methodToTypeMap[method] || []
+    return accounts.filter(
+      (account) => account.isActive && allowedTypes.includes(account.type)
+    )
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -176,13 +206,106 @@ export default function TransactionsPage() {
     setShowForm(false)
   }
 
+  const handleTemplateSelect = (template: any) => {
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      amount: template.amount?.toString() || '',
+      description: template.name || '',
+      method: template.method || 'cc',
+      accountId: template.accountId || '',
+      personId: template.personId || '',
+      notes: template.description || '',
+      tags: '',
+      splits: [{ type: 'need', target: '', percent: 100 }],
+    })
+    setShowForm(true)
+  }
+
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this transaction?')) return
+    confirm({
+      title: 'Delete Transaction',
+      message: 'Are you sure you want to delete this transaction? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/transactions/${id}`, { method: 'DELETE' })
+          if (response.ok) {
+            fetchData()
+            setAlertMessage({ text: 'Transaction deleted', type: 'success' })
+            setTimeout(() => setAlertMessage(null), 2000)
+          }
+        } catch (error) {
+          console.error('Error deleting transaction:', error)
+        }
+      },
+    })
+  }
+
+  const openConvertModal = (tx: Transaction) => {
+    setConvertingTransaction(tx)
+    setRecurringFormData({
+      frequency: 'monthly',
+      dueDay: new Date(tx.date).getDate(),
+    })
+    setShowConvertModal(true)
+  }
+
+  const handleConvertToRecurring = async () => {
+    if (!convertingTransaction || !currentHousehold) return
+
     try {
-      const response = await fetch(`/api/transactions/${id}`, { method: 'DELETE' })
-      if (response.ok) fetchData()
+      setConvertStatus({ type: 'loading', message: 'Creating recurring expense...' })
+
+      const body: any = {
+        description: convertingTransaction.description,
+        amount: convertingTransaction.amount,
+        frequency: recurringFormData.frequency,
+        dueDay: recurringFormData.frequency === 'monthly' ? recurringFormData.dueDay : null,
+        accountId: convertingTransaction.accountId,
+      }
+
+      // Only include notes if they exist
+      if (convertingTransaction.notes) {
+        body.notes = convertingTransaction.notes
+      }
+
+      const response = await fetch('/api/recurring-expenses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-household-id': currentHousehold.id,
+        },
+        body: JSON.stringify(body),
+      })
+
+      if (response.ok) {
+        setConvertStatus({
+          type: 'success',
+          message: `Created recurring: "${convertingTransaction.description}"`,
+        })
+        
+        // Auto-close modal after success
+        setTimeout(() => {
+          setShowConvertModal(false)
+          setConvertingTransaction(null)
+          setConvertStatus({ type: 'idle', message: '' })
+        }, 1500)
+      } else {
+        const errorData = await response.json()
+        console.error('Error response:', errorData)
+        setConvertStatus({
+          type: 'error',
+          message: `Failed: ${errorData.error || 'Unknown error'}`,
+        })
+      }
     } catch (error) {
-      console.error('Error deleting transaction:', error)
+      console.error('Error converting to recurring:', error)
+      setConvertStatus({
+        type: 'error',
+        message: 'Error creating recurring expense',
+      })
     }
   }
 
@@ -199,47 +322,64 @@ export default function TransactionsPage() {
         a.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`
         a.click()
         window.URL.revokeObjectURL(url)
+        setAlertMessage({ text: 'Transactions exported successfully', type: 'success' })
+        setTimeout(() => setAlertMessage(null), 2000)
       }
     } catch (error) {
       console.error('Error exporting transactions:', error)
-      alert('Failed to export transactions')
+      setAlertMessage({ text: 'Failed to export transactions', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 3000)
     }
   }
 
   const saveAsTemplate = async () => {
     if (!formData.description || !formData.amount) {
-      alert('Please fill in description and amount')
+      setAlertMessage({ text: 'Please fill in description and amount', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 3000)
       return
     }
 
-    const templateName = prompt('Template name (e.g., "Rent", "Grocery Run"):')
-    if (!templateName) return
+    prompt({
+      title: 'Save as Template',
+      message: 'Choose a name for this transaction template',
+      inputPlaceholder: 'e.g., "Rent", "Grocery Run"',
+      confirmLabel: 'Save',
+      onConfirm: async (templateName) => {
+        try {
+          const response = await fetch('/api/templates/transactions', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-household-id': currentHousehold?.id || '',
+            },
+            body: JSON.stringify({
+              name: templateName,
+              description: formData.description,
+              amount: parseFloat(formData.amount),
+              method: formData.method,
+              accountId: formData.accountId,
+              notes: formData.notes,
+              tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+            }),
+          })
 
-    try {
-      const response = await fetch('/api/templates/transactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: templateName,
-          description: formData.description,
-          amount: parseFloat(formData.amount),
-          method: formData.method,
-          accountId: formData.accountId,
-          notes: formData.notes,
-          tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
-        }),
-      })
-
-      if (response.ok) {
-        alert('Template saved successfully!')
-        handleCancel()
-      } else {
-        alert('Failed to save template')
-      }
-    } catch (error) {
-      console.error('Error saving template:', error)
-      alert('Error saving template')
-    }
+          if (response.ok) {
+            setAlertMessage({ text: 'Template saved successfully!', type: 'success' })
+            setTimeout(() => {
+              setAlertMessage(null)
+              handleCancel()
+            }, 1500)
+          } else {
+            setAlertMessage({ text: 'Failed to save template', type: 'error' })
+            setTimeout(() => setAlertMessage(null), 3000)
+          }
+        } catch (error) {
+          console.error('Error saving template:', error)
+          setAlertMessage({ text: 'Error saving template', type: 'error' })
+          setTimeout(() => setAlertMessage(null), 3000)
+        }
+      },
+    })
   }
 
   return (
@@ -254,6 +394,7 @@ export default function TransactionsPage() {
           Total: {formatCurrency(totalExpense)}
         </div>
         <div className="flex gap-2">
+          <TemplateSelector type="transaction" onSelect={handleTemplateSelect} />
           <Button onClick={exportTransactions} variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Export
@@ -338,7 +479,7 @@ export default function TransactionsPage() {
                   <select
                     id="method"
                     value={formData.method}
-                    onChange={(e) => setFormData({ ...formData, method: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, method: e.target.value, accountId: '' })}
                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cc">Credit Card</option>
@@ -357,7 +498,7 @@ export default function TransactionsPage() {
                     required
                   >
                     <option value="">Select account...</option>
-                    {accounts.map((acc) => (
+                    {getFilteredAccounts(formData.method).map((acc) => (
                       <option key={acc.id} value={acc.id}>
                         {acc.name}
                       </option>
@@ -550,6 +691,13 @@ export default function TransactionsPage() {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
+                          onClick={() => openConvertModal(tx)}
+                          className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                          title="Convert to recurring"
+                        >
+                          <Zap className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleDelete(tx.id)}
                           className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                           title="Delete transaction"
@@ -568,11 +716,139 @@ export default function TransactionsPage() {
         </CardContent>
       </Card>
 
+      {/* Convert to Recurring Modal */}
+      {showConvertModal && convertingTransaction && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="text-slate-900 dark:text-slate-100">
+                Convert to Recurring
+              </CardTitle>
+              <CardDescription className="text-slate-600 dark:text-slate-400">
+                Make &quot;{convertingTransaction.description}&quot; a recurring expense
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {convertStatus.type === 'success' && (
+                <div className="flex gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-green-700 dark:text-green-300">{convertStatus.message}</p>
+                </div>
+              )}
+
+              {convertStatus.type === 'error' && (
+                <div className="flex gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700 dark:text-red-300">{convertStatus.message}</p>
+                </div>
+              )}
+
+              {convertStatus.type !== 'success' && (
+                <>
+                  <div>
+                    <Label htmlFor="recurringFrequency" className="text-slate-900 dark:text-slate-100">
+                      Frequency
+                    </Label>
+                    <select
+                      id="recurringFrequency"
+                      value={recurringFormData.frequency}
+                      onChange={(e) =>
+                        setRecurringFormData({ ...recurringFormData, frequency: e.target.value })
+                      }
+                      disabled={convertStatus.type === 'loading'}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                    >
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
+                  </div>
+
+                  {recurringFormData.frequency === 'monthly' && (
+                    <div>
+                      <Label htmlFor="recurringDueDay" className="text-slate-900 dark:text-slate-100">
+                        Due Day of Month
+                      </Label>
+                      <Input
+                        id="recurringDueDay"
+                        type="number"
+                        min="1"
+                        max="31"
+                        value={recurringFormData.dueDay}
+                        onChange={(e) =>
+                          setRecurringFormData({
+                            ...recurringFormData,
+                            dueDay: parseInt(e.target.value),
+                          })
+                        }
+                        disabled={convertStatus.type === 'loading'}
+                        className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 disabled:opacity-50"
+                      />
+                    </div>
+                  )}
+
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p className="text-sm text-blue-900 dark:text-blue-200">
+                      <strong>Amount:</strong> {formatCurrency(convertingTransaction.amount)}
+                    </p>
+                    <p className="text-sm text-blue-900 dark:text-blue-200">
+                      <strong>Account:</strong> {convertingTransaction.account.name}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowConvertModal(false)
+                        setConvertingTransaction(null)
+                        setConvertStatus({ type: 'idle', message: '' })
+                      }}
+                      disabled={convertStatus.type === 'loading'}
+                      className="flex-1 dark:border-slate-600 dark:text-slate-100 disabled:opacity-50"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleConvertToRecurring}
+                      disabled={convertStatus.type === 'loading'}
+                      className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white disabled:opacity-50"
+                    >
+                      {convertStatus.type === 'loading' ? 'Creating...' : 'Create Recurring'}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <QuickExpenseEntry
         isOpen={showQuickEntry}
         onClose={() => setShowQuickEntry(false)}
         householdId={currentHousehold?.id}
       />
+
+      {confirmDialog}
+      {promptDialog}
+
+      {alertMessage && (
+        <div className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg ${
+          alertMessage.type === 'success'
+            ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700'
+            : 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700'
+        }`}>
+          <p className={`text-sm font-medium ${
+            alertMessage.type === 'success'
+              ? 'text-green-800 dark:text-green-200'
+              : 'text-red-800 dark:text-red-200'
+          }`}>
+            {alertMessage.text}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

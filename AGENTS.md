@@ -14,11 +14,12 @@ For GitHub Copilot agents and automated development tools.
 
 ## Quick Facts
 
-- **8 Main Features**: Dashboard, Accounts, Income, Transactions, Routes, Rules, Templates, Import
-- **3 Recent Additions**: Light/dark/auto theme system, comprehensive help system, template system
-- **Test Coverage**: 114 tests (100% passing)
+- **12 Main Features**: Dashboard, Accounts, Income, Transactions, Routes, Rules, Templates, Import, People, Recurring Expenses, Insights, Data Management
+- **Recent Additions**: DateRangeSelector component, Financial Insights with analytics, People/Household support, Recurring Expenses forecasting
+- **Test Coverage**: 399 tests (100% passing)
 - **Build Status**: Successful (19 pages)
 - **Dark Mode**: Full support throughout entire application
+- **Import Path**: Fixed tsconfig with '@/*' resolving to './src/*' for clean imports
 
 ## Architecture
 
@@ -27,45 +28,70 @@ For GitHub Copilot agents and automated development tools.
 ```
 /src
   /app
-    /api           - RESTful API endpoints (accounts, income, transactions, rules, reports, templates, export)
+    /api           - RESTful API endpoints
+      /accounts, /income, /transactions, /rules, /templates, /people, 
+      /households, /settings, /reports, /recurring-expenses, /export, /data
     /accounts      - Account management page
     /income        - Income tracking page
     /transactions  - Transaction tracking page
     /routes        - Money routing visualization
     /rules         - Routing rules management
-    /templates     - Template management (NEW)
+    /templates     - Template management
+    /people        - Household member management (with [id] detail page)
+    /recurring-expenses - Forecast and manage recurring bills
+    /insights      - Financial analytics and detailed analysis
+    /settings      - User settings and preferences
+    /data-management - Data reset and seed utilities
     /import        - Data import page
-    page.tsx       - Dashboard
+    page.tsx       - Dashboard with DateRangeSelector
     layout.tsx     - Root layout with theme provider
   /components
-    /ui            - shadcn/ui component wrappers
-    ThemeProvider.tsx  - next-themes wrapper (NEW)
-    ThemeToggle.tsx    - Theme switcher (NEW)
-    TemplateSelector.tsx - Template selection (NEW)
-    InfoTooltip.tsx    - Contextual help component (NEW)
-    TransactionForm.tsx, IncomeForm.tsx
+    /ui            - shadcn/ui component wrappers (button, card, dialog, input, label, select, tabs)
+    DateRangeSelector.tsx - Reusable date range picker with prev/next navigation
+    FinancialInsightsWidget.tsx - Key metrics preview for dashboard
+    HouseholdSelector.tsx - Switch between households
+    IncomeForm.tsx - Income entry with deductions
+    IncomeList.tsx - Income history display
+    InfoTooltip.tsx - Contextual help component with modals
+    QuickExpenseEntry.tsx - Modal for quick transaction entry
+    RecurringExpensesForecast.tsx - Forecast widget for recurring bills
+    TemplateSelector.tsx - Select and apply saved templates
+    ThemeProvider.tsx - next-themes wrapper
+    ThemeToggle.tsx - Theme switcher (light/dark/auto)
+    TransactionForm.tsx - Transaction entry with splitting
+    TransactionList.tsx - Transaction history with filtering
   /lib
     db.ts          - Prisma client
-    validation.ts  - Zod schemas
-    money.ts       - Currency formatting
-    date.ts        - Date utilities
-    constants.ts   - App constants
-    templates.ts   - Template utilities (NEW)
+    validation.ts  - Zod schemas for all models
+    money.ts       - Currency formatting and calculations
+    date.ts        - Date utilities and range calculations
+    constants.ts   - App constants and enums
+    templates.ts   - Template save/load utilities
+    sbnl.ts        - Smart Budget Need/Want/Debt/Tax/Savings allocation
+    forecast.ts    - Recurring expense forecasting logic
+    financial-analysis.ts - Advanced analytics and insights
+    creditcard.ts  - Credit card specific calculations
+    UserContext.tsx - User and household context provider
+    utils.ts       - General utilities
 /prisma
-  schema.prisma    - Full database schema with 8 models
-  migrations/      - All database migrations
+  schema.prisma    - Full database schema with 13 models
+  migrations/      - All database migrations (auto-generated)
 ```
 
 ### Key Models
 
-1. **User** - Single user (ready for multi-user)
-2. **Account** - Checking, savings, credit card, cash
-3. **Income** - Gross amount with tax/deduction breakdown
-4. **Transaction** - Expenses with splits
-5. **Split** - Money allocation (Need/Want/Debt/Tax/Savings)
-6. **Rule** - Auto-routing rules
-7. **Template** - Saved entry templates (NEW)
-8. **Tag** - For future tagging system
+1. **User** - Single user with data protection flag (multi-user ready)
+2. **Person** - Household member for tracking income/expenses (role: primary, spouse, child, etc.)
+3. **Account** - Funding source (checking, savings, credit card, cash, investment, loan)
+4. **BalanceSnapshot** - Historical balance tracking for accounts
+5. **Income** - Gross amount with automatic tax and deduction breakdown
+6. **Transaction** - Expenses linked to accounts and people
+7. **Split** - Money allocation (Need/Want/Debt/Tax/Savings)
+8. **Rule** - Auto-routing rules based on transaction patterns
+9. **Template** - Saved entry templates (income and transaction) with usage tracking
+10. **Tag** - For future tagging system (structure ready)
+11. **Setting** - User preferences (theme, display, etc.)
+12. **RecurringExpense** - Fixed bills with forecast and quick-entry support
 
 ### Database
 
@@ -136,25 +162,66 @@ npm run dev              # Development server
 
 ## Recently Completed
 
-### Template System (Latest)
-- Database: Template model with usage tracking
-- API: 8 endpoints (4 transaction, 4 income templates)
-- UI: Management page at `/templates`, "Save as Template" buttons on forms
-- Features: Usage tracking, favorite status, sorting, filtering
-- Ready for: Form integration for template selection
+### DateRangeSelector Component (Latest)
+- **Location**: `src/components/DateRangeSelector.tsx`
+- **Type-safe**: Exports `DateRangeType` and `DateRange` interfaces
+- **Features**:
+  - Preset range buttons (Week, Month, Quarter, Half-Year, Year)
+  - Previous/Next navigation for all preset ranges
+  - Custom date range with date pickers and Apply/Cancel
+  - Configurable display modes (showLabel, compact)
+  - Full dark mode support
+  - Reusable across entire application
+- **Status**: Integrated into Dashboard, ready for Income/Transactions pages
+
+### Import Path Standardization
+- **Fix**: tsconfig.json updated to use '@/*' → './src/*'
+- **Impact**: Eliminated ~200 incorrect '@/src/...' imports
+- **Result**: Clean, consistent import pattern throughout codebase
+- **All files**: Refactored to use standard '@/' imports
+
+### People/Household Features
+- **Database**: Person model with role and color support
+- **API**: `/api/people/*` endpoints with security validation
+  - All endpoints require and validate x-household-id header
+  - Ownership verification for GET, PATCH, DELETE operations
+- **Seed Data**: Alice and Bob with assigned income/transactions
+- **UI**: People management page with [id] detail view
+- **Context**: HouseholdSelector component for switching households
+
+### Financial Insights & Analytics
+- **Page**: `/app/insights/` with comprehensive financial analysis
+- **Charts**: Spending by category (pie), income vs expenses (bar/line)
+- **Metrics**: Income trends, expense ratios, savings rate, tax analysis
+- **Filtering**: Full date range support with custom date selection
+- **Dashboard Widget**: FinancialInsightsWidget with key metrics preview
+
+### Recurring Expenses & Forecasting
+- **Model**: RecurringExpense with amount, frequency, and due date
+- **Forecasting**: 90-day forecast logic in `lib/forecast.ts`
+- **Widget**: RecurringExpensesForecast on dashboard
+- **Quick Entry**: QuickExpenseEntry modal for fast bill logging
+- **Analytics**: Recurring vs actual spending comparison
 
 ### Theme System
-- Implementation: next-themes with class-based switching
-- Components: ThemeProvider, ThemeToggle
-- Default: Auto (respects OS preference)
-- Storage: localStorage persistence
-- Coverage: All pages have dark mode classes
+- **Implementation**: next-themes with class-based switching
+- **Components**: ThemeProvider, ThemeToggle
+- **Default**: Auto (respects OS preference)
+- **Storage**: localStorage persistence
+- **Coverage**: All pages have dark mode classes
+
+### Template System
+- **Database**: Template model with usage tracking and favorites
+- **API**: 8 endpoints (4 transaction, 4 income templates)
+- **UI**: Management page at `/templates`, "Save as Template" buttons on forms
+- **Features**: Usage tracking, favorite status, sorting, filtering
+- **Status**: Infrastructure ready, form integration available
 
 ### Help System
-- Component: InfoTooltip with modal display
-- Pages: Rules, Routes have comprehensive help sections
-- Features: Context-specific explanations, examples, best practices
-- Accessibility: Proper ARIA labels, keyboard navigation
+- **Component**: InfoTooltip with modal display
+- **Pages**: Rules, Routes have comprehensive help sections
+- **Features**: Context-specific explanations, examples, best practices
+- **Accessibility**: Proper ARIA labels, keyboard navigation
 
 ## Common Tasks
 
@@ -217,7 +284,7 @@ npm run dev              # Development server
 - `jest@29` - Testing
 - `ts-jest@29` - TypeScript support for Jest
 - `eslint@8` - Linting
-- `next-themes@0.4` - Theme management (NEW)
+- `next-themes@0.4` - Theme management
 
 ## Testing Strategy
 
@@ -251,20 +318,35 @@ eb15b69 Add template system for quick entry creation
 
 ## API Endpoints
 
-### Templates (NEW)
+### People & Households
+- `GET /api/people` - List household members
+- `POST /api/people` - Create person
+- `GET /api/people/[id]` - Get person details
+- `PATCH /api/people/[id]` - Update person
+- `DELETE /api/people/[id]` - Delete person
+- `GET /api/households` - List user's households
+
+### Templates
 - `GET /api/templates/transactions` - List transaction templates
 - `POST /api/templates/transactions` - Create template
 - `PATCH /api/templates/transactions/[id]` - Update/favorite
 - `DELETE /api/templates/transactions/[id]` - Delete
 - Same for `/income`
 
-### Existing
+### Financial Data
 - `/api/accounts/*` - Account CRUD
 - `/api/income/*` - Income entry management
 - `/api/transactions/*` - Transaction management
 - `/api/rules/*` - Routing rules
+- `/api/recurring-expenses/*` - Recurring expense management
 - `/api/reports/summary` - Monthly summaries
+- `/api/reports/untracked` - Untracked cash estimates
+
+### Utilities
+- `/api/settings/*` - User preferences
 - `/api/export` - CSV export
+- `/api/data/seed` - Seed demo data
+- `/api/data/reset` - Reset all data (dev only)
 
 ## Performance Notes
 
@@ -278,21 +360,26 @@ eb15b69 Add template system for quick entry creation
 
 1. Single user (hardcoded user_1)
 2. SQLite for development only (use PostgreSQL for production)
-3. Template selection UI not yet integrated (infrastructure ready)
-4. No multi-currency support
-5. No webhook integrations
+3. No multi-currency support
+4. No webhook integrations
+5. Date range selector not yet integrated into Income/Transactions pages
 
 ## Future Roadmap
 
 - [ ] User authentication system
-- [ ] Multi-user support
+- [ ] Multi-user support with proper isolation
+- [ ] Date range filtering on Income and Transactions pages
 - [ ] CSV/XLSX import with bank mapping
 - [ ] Mobile-responsive improvements
-- [ ] Advanced analytics dashboards
-- [ ] Template categories
+- [ ] Advanced analytics dashboards (drill-down capabilities)
+- [ ] Template categories and tagging
 - [ ] Bulk template operations
-- [ ] Template sharing
-- [ ] Auto-apply routing rules
+- [ ] Template sharing between households
+- [ ] Auto-apply routing rules with ML suggestions
+- [ ] Multi-currency support
+- [ ] Transaction tagging system (structure ready)
+- [ ] Budget forecasting based on historical data
+- [ ] Webhook integrations for bank connections
 
 ## Contact & Support
 
@@ -303,6 +390,6 @@ eb15b69 Add template system for quick entry creation
 
 ---
 
-**Last Updated**: November 2025
-**Version**: 1.0.0 (MVP complete)
-**Status**: Active development, feature-complete
+**Last Updated**: November 2025 (Latest Session)
+**Version**: 1.0.0+ (MVP complete, actively enhanced)
+**Status**: Active development, 12 core features implemented

@@ -1,13 +1,13 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { useState, useEffect } from 'react'
-import { formatCurrency } from '@/src/lib/money'
-import { formatDate } from '@/src/lib/date'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { useState, useEffect, useCallback } from 'react'
+import { formatCurrency } from '@/lib/money'
+import { formatDate } from '@/lib/date'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { useUser } from '@/src/lib/UserContext'
+import { useUser } from '@/lib/UserContext'
 
 interface Person {
   id: string
@@ -47,13 +47,7 @@ export default function PersonDashboard({ params }: { params: { id: string } }) 
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (currentHousehold) {
-      fetchData()
-    }
-  }, [params.id, currentHousehold?.id])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!currentHousehold) return
     
     try {
@@ -86,7 +80,13 @@ export default function PersonDashboard({ params }: { params: { id: string } }) 
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentHousehold, params.id])
+
+  useEffect(() => {
+    if (currentHousehold) {
+      fetchData()
+    }
+  }, [params.id, currentHousehold, fetchData])
 
   if (loading) {
     return (

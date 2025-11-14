@@ -8,13 +8,16 @@
 # 1. Install dependencies
 npm install
 
-# 2. Database setup (already done, but for reference)
+# 2. Set up environment variables
+cp .env.example .env
+
+# 3. Database setup (already done, but for reference)
 npx prisma db push
 
-# 3. Start dev server
+# 4. Start dev server
 npm run dev
 
-# 4. Open browser
+# 5. Open browser
 # → http://localhost:3000
 ```
 
@@ -172,6 +175,12 @@ docker-compose build --no-cache
 ```
 
 ## 🐛 Troubleshooting
+
+**DATABASE_URL not found error?**
+```bash
+# Copy the environment example file
+cp .env.example .env.local
+```
 
 **Port 3000 already in use?**
 ```bash

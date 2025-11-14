@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/src/lib/db";
+import { prisma } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-    // In a real app, get userId from session
-    const userId = "user_1";
+    const userId = request.headers.get('x-household-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Missing household ID' },
+        { status: 400 }
+      );
+    }
     
     const templates = await prisma.template.findMany({
       where: {
@@ -32,22 +38,52 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = "user_1";
+    const userId = request.headers.get('x-household-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Missing household ID' },
+        { status: 400 }
+      );
+    }
+    
     const data = await request.json();
 
+    // Validate accountId if provided
+    let validAccountId: string | undefined;
+    if (data.accountId && data.accountId.trim()) {
+      const account = await prisma.account.findFirst({
+        where: {
+          id: data.accountId,
+          userId,
+        },
+      });
+      
+      if (account) {
+        validAccountId = data.accountId;
+      }
+    }
+
+    // Build the data object, only including accountId if it's provided
+    const createData: any = {
+      type: "transaction",
+      userId,
+      name: data.name,
+      description: data.description,
+      amount: data.amount,
+      method: data.method,
+      tags: data.tags ? JSON.stringify(data.tags) : null,
+      notes: data.notes,
+      isFavorite: data.isFavorite || false,
+    };
+
+    // Only add accountId if it's valid
+    if (validAccountId) {
+      createData.accountId = validAccountId;
+    }
+
     const template = await prisma.template.create({
-      data: {
-        type: "transaction",
-        userId,
-        name: data.name,
-        description: data.description,
-        amount: data.amount,
-        method: data.method,
-        accountId: data.accountId,
-        tags: data.tags ? JSON.stringify(data.tags) : null,
-        notes: data.notes,
-        isFavorite: data.isFavorite || false,
-      },
+      data: createData,
       include: {
         account: true,
       },
@@ -55,6 +91,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(template, { status: 201 })
   } catch (error) {
+    console.error('Template creation error:', error);
     return NextResponse.json(
       { error: 'Failed to create template' },
       { status: 500 }

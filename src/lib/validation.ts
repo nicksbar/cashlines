@@ -31,12 +31,35 @@ export const accountCreateSchema = z.object({
     ACCOUNT_TYPES.SAVINGS,
     ACCOUNT_TYPES.CREDIT_CARD,
     ACCOUNT_TYPES.CASH,
+    ACCOUNT_TYPES.INVESTMENT,
+    ACCOUNT_TYPES.LOAN,
     ACCOUNT_TYPES.OTHER,
   ]),
   personId: z.string().nullable().optional(),
   isActive: z.boolean().default(true),
   notes: z.string().optional(),
+  
+  // Credit card fields
   creditLimit: z.number().positive('Credit limit must be positive').optional().nullable(),
+  interestRate: z.number().min(0).max(100, 'APR must be between 0 and 100').optional().nullable(),
+  cashBackPercent: z.number().min(0).max(100, 'Cash back must be between 0 and 100').optional().nullable(),
+  pointsPerDollar: z.number().min(0).max(100, 'Points per dollar must be between 0 and 100').optional().nullable(),
+  annualFee: z.number().min(0).optional().nullable(),
+  rewardsProgram: z.string().optional().nullable(),
+  
+  // Savings/Checking fields
+  interestRateApy: z.number().min(0).max(100, 'APY must be between 0 and 100').optional().nullable(),
+  monthlyFee: z.number().min(0).optional().nullable(),
+  minimumBalance: z.number().min(0).optional().nullable(),
+  isFdic: z.boolean().optional().nullable(),
+  
+  // Cash/General fields
+  location: z.string().optional().nullable(),
+  currentBalance: z.number().min(0, 'Balance cannot be negative').optional().nullable(),
+  accountNumber: z.string().optional().nullable(),
+  
+  // Loan/Investment fields
+  principalBalance: z.number().min(0).optional().nullable(),
 })
 
 export const accountUpdateSchema = z.object({
@@ -46,12 +69,35 @@ export const accountUpdateSchema = z.object({
     ACCOUNT_TYPES.SAVINGS,
     ACCOUNT_TYPES.CREDIT_CARD,
     ACCOUNT_TYPES.CASH,
+    ACCOUNT_TYPES.INVESTMENT,
+    ACCOUNT_TYPES.LOAN,
     ACCOUNT_TYPES.OTHER,
   ]).optional(),
   personId: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
   notes: z.string().optional(),
+  
+  // Credit card fields
   creditLimit: z.number().positive('Credit limit must be positive').optional().nullable(),
+  interestRate: z.number().min(0).max(100).optional().nullable(),
+  cashBackPercent: z.number().min(0).max(100).optional().nullable(),
+  pointsPerDollar: z.number().min(0).max(100).optional().nullable(),
+  annualFee: z.number().min(0).optional().nullable(),
+  rewardsProgram: z.string().optional().nullable(),
+  
+  // Savings/Checking fields
+  interestRateApy: z.number().min(0).max(100).optional().nullable(),
+  monthlyFee: z.number().min(0).optional().nullable(),
+  minimumBalance: z.number().min(0).optional().nullable(),
+  isFdic: z.boolean().optional().nullable(),
+  
+  // Cash/General fields
+  location: z.string().optional().nullable(),
+  currentBalance: z.number().min(0, 'Balance cannot be negative').optional().nullable(),
+  accountNumber: z.string().optional().nullable(),
+  
+  // Loan/Investment fields
+  principalBalance: z.number().min(0).optional().nullable(),
 })
 
 export type AccountCreate = z.infer<typeof accountCreateSchema>

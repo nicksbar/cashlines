@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Input } from '@/src/components/ui/input'
-import { Label } from '@/src/components/ui/label'
-import { useUser } from '@/src/lib/UserContext'
-import { formatCurrency } from '@/src/lib/money'
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useUser } from '@/lib/UserContext'
+import { formatCurrency } from '@/lib/money'
 import { Save, AlertCircle } from 'lucide-react'
 
 interface Settings {
@@ -33,13 +33,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  useEffect(() => {
-    if (currentHousehold) {
-      fetchSettings()
-    }
-  }, [currentHousehold?.id])
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     if (!currentHousehold) return
 
     try {
@@ -57,7 +51,13 @@ export default function SettingsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentHousehold])
+
+  useEffect(() => {
+    if (currentHousehold) {
+      fetchSettings()
+    }
+  }, [currentHousehold, fetchSettings])
 
   const handleSave = async () => {
     if (!currentHousehold || !settings) return

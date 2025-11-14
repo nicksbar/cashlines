@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Button } from '@/src/components/ui/button'
-import { Select } from '@/src/components/ui/select'
+import { useEffect, useState, useCallback } from 'react'
+import { Button } from '@/components/ui/button'
+import { useUser } from '@/lib/UserContext'
 
 interface Template {
   id: string
@@ -27,69 +27,75 @@ interface TemplateSelectorProps {
 }
 
 export function TemplateSelector({ type, onSelect }: TemplateSelectorProps) {
+  const { currentHousehold } = useUser()
   const [templates, setTemplates] = useState<Template[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedId, setSelectedId] = useState('')
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    fetchTemplates()
-  }, [type])
-
-  async function fetchTemplates() {
-    try {
-      const endpoint = `/api/templates/${type === 'transaction' ? 'transactions' : 'income'}`
-      const response = await fetch(endpoint)
-      if (response.ok) {
-        const data = await response.json()
-        setTemplates(data)
+    if (!currentHousehold) return
+    
+    const fetchTemplates = async () => {
+      try {
+        const endpoint = `/api/templates/${type === 'transaction' ? 'transactions' : 'income'}`
+        const response = await fetch(endpoint, {
+          headers: { 'x-household-id': currentHousehold.id }
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setTemplates(data || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch templates:', error)
       }
-    } catch (error) {
-      console.error('Failed to fetch templates:', error)
-    } finally {
-      setLoading(false)
     }
+    
+    fetchTemplates()
+  }, [type, currentHousehold])
+
+  const handleSelect = (template: Template) => {
+    onSelect(template)
+    setOpen(false)
   }
 
-  const handleSelect = () => {
-    const template = templates.find(t => t.id === selectedId)
-    if (template) {
-      onSelect(template)
-      setSelectedId('')
-    }
-  }
+  if (!currentHousehold || templates.length === 0) return null
 
-  if (loading) {
-    return <div className="text-sm text-slate-500 dark:text-slate-400">Loading templates...</div>
-  }
-
-  if (templates.length === 0) {
-    return <div className="text-sm text-slate-500 dark:text-slate-400">No templates yet</div>
-  }
+  // Sort by favorite, then by usage
+  const sorted = [...templates].sort((a, b) => {
+    if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1
+    return b.usageCount - a.usageCount
+  })
 
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-        Quick Create from Template
-      </label>
-      <div className="flex gap-2">
-        <Select value={selectedId} onValueChange={setSelectedId}>
-          <option value="">Select a template...</option>
-          {templates.map(template => (
-            <option key={template.id} value={template.id}>
-              {template.isFavorite ? '⭐ ' : ''}{template.name}
-              {template.usageCount > 0 && ` (${template.usageCount}x)`}
-            </option>
+    <div className="relative inline-block">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(!open)}
+        className="dark:border-slate-600 dark:text-slate-100"
+      >
+        📋 Quick Template
+      </Button>
+      
+      {open && (
+        <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg z-50 min-w-[200px]">
+          {sorted.map(template => (
+            <button
+              key={template.id}
+              onClick={() => handleSelect(template)}
+              className="w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-slate-700 text-sm text-slate-900 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 last:border-b-0 flex justify-between items-center"
+            >
+              <span>
+                {template.isFavorite && <span className="mr-1">⭐</span>}
+                {template.name}
+              </span>
+              {template.usageCount > 0 && (
+                <span className="text-xs text-slate-500 dark:text-slate-400 ml-2">({template.usageCount}x)</span>
+              )}
+            </button>
           ))}
-        </Select>
-        <Button 
-          type="button" 
-          onClick={handleSelect}
-          disabled={!selectedId}
-          className="bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 text-white"
-        >
-          Use Template
-        </Button>
-      </div>
+        </div>
+      )}
     </div>
   )
 }

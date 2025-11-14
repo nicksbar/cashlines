@@ -1,11 +1,11 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import "./globals.css"
-import { cn } from "@/src/lib/utils"
-import { ThemeProviderWrapper } from "@/src/components/ThemeProvider"
-import { ThemeToggle } from "@/src/components/ThemeToggle"
-import { UserProvider } from "@/src/lib/UserContext"
-import { HouseholdSelector } from "@/src/components/HouseholdSelector"
+import { cn } from '@/lib/utils'
+import { ThemeProviderWrapper } from '@/components/ThemeProvider'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { UserProvider } from '@/lib/UserContext'
+import { HouseholdSelector } from '@/components/HouseholdSelector'
 
 export const metadata: Metadata = {
   title: "Cashlines - Money Tracking",
@@ -40,6 +40,7 @@ export default function RootLayout({
                         <NavLink href="/transactions">Expenses</NavLink>
                         <NavLink href="/routes">Routes</NavLink>
                         <NavLink href="/rules">Rules</NavLink>
+                        <NavLink href="/insights">Insights</NavLink>
                         <NavLink href="/templates">Templates</NavLink>
                         <NavLink href="/import">Import</NavLink>
                         <NavLink href="/settings">Settings</NavLink>

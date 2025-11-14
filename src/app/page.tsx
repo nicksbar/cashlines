@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
-import { Button } from '@/src/components/ui/button'
-import { Select } from '@/src/components/ui/select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Select } from '@/components/ui/select'
 import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownLeft, Percent, Target } from 'lucide-react'
-import { formatCurrency } from '@/src/lib/money'
-import { formatMonth, getCurrentMonthYear, getMonthsInRange } from '@/src/lib/date'
-import { useUser } from '@/src/lib/UserContext'
-import { RecurringExpensesForecast } from '@/src/components/RecurringExpensesForecast'
+import { formatCurrency } from '@/lib/money'
+import { formatMonth, getCurrentMonthYear, getMonthsInRange } from '@/lib/date'
+import { useUser } from '@/lib/UserContext'
+import { RecurringExpensesForecast } from '@/components/RecurringExpensesForecast'
+import { DateRangeSelector, type DateRange as DateRangeValue } from '@/components/DateRangeSelector'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface Summary {
@@ -31,14 +32,6 @@ interface Person {
   color?: string
 }
 
-type DateRange = 'week' | 'month' | 'quarter' | 'half-year' | 'year' | 'all'
-
-interface DateSelection {
-  rangeType: DateRange
-  startDate: Date
-  endDate: Date
-}
-
 export default function Dashboard() {
   const { currentHousehold } = useUser()
   const [summary, setSummary] = useState<Summary | null>(null)
@@ -46,70 +39,20 @@ export default function Dashboard() {
   const [people, setPeople] = useState<Person[]>([])
   const [personMetrics, setPersonMetrics] = useState<Record<string, { income: number; expenses: number }>>({})
   const [loading, setLoading] = useState(true)
-  const [dateRange, setDateRange] = useState<DateRange>('month')
-  const [customStartDate, setCustomStartDate] = useState<Date | null>(null)
-  const [customEndDate, setCustomEndDate] = useState<Date | null>(null)
+  const [dateRange, setDateRange] = useState<DateRangeValue>({
+    type: 'month',
+    startDate: (() => {
+      const now = new Date()
+      return new Date(now.getFullYear(), now.getMonth(), 1)
+    })(),
+    endDate: (() => {
+      const now = new Date()
+      return new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    })(),
+    label: '',
+  })
   const months = getMonthsInRange(new Date().getFullYear() - 1, 1, new Date().getFullYear(), 12)
 
-  // Get actual date range based on selection
-  const getDateSelection = (range: DateRange): DateSelection => {
-    const now = new Date()
-    const currentYear = now.getFullYear()
-    const currentMonth = now.getMonth() + 1
-    const today = new Date(currentYear, now.getMonth(), now.getDate())
-
-    // If custom dates are set, use them
-    if (customStartDate && customEndDate) {
-      return {
-        rangeType: range,
-        startDate: customStartDate,
-        endDate: customEndDate,
-      }
-    }
-
-    switch (range) {
-      case 'week': {
-        const weekStart = new Date(today)
-        weekStart.setDate(today.getDate() - today.getDay())
-        const weekEnd = new Date(weekStart)
-        weekEnd.setDate(weekStart.getDate() + 6)
-        return { rangeType: range, startDate: weekStart, endDate: weekEnd }
-      }
-      case 'month': {
-        const monthStart = new Date(currentYear, currentMonth - 1, 1)
-        const monthEnd = new Date(currentYear, currentMonth, 0)
-        return { rangeType: range, startDate: monthStart, endDate: monthEnd }
-      }
-      case 'quarter': {
-        const q = Math.ceil(currentMonth / 3)
-        const quarterStart = new Date(currentYear, (q - 1) * 3, 1)
-        const quarterEnd = new Date(currentYear, q * 3, 0)
-        return { rangeType: range, startDate: quarterStart, endDate: quarterEnd }
-      }
-      case 'half-year': {
-        const isH1 = currentMonth <= 6
-        const start = isH1 ? new Date(currentYear, 0, 1) : new Date(currentYear, 5, 1)
-        const end = isH1 ? new Date(currentYear, 5, 30) : new Date(currentYear, 11, 31)
-        return { rangeType: range, startDate: start, endDate: end }
-      }
-      case 'year': {
-        const yearStart = new Date(currentYear, 0, 1)
-        const yearEnd = new Date(currentYear, 11, 31)
-        return { rangeType: range, startDate: yearStart, endDate: yearEnd }
-      }
-      case 'all': {
-        const allStart = new Date(currentYear - 1, 0, 1)
-        const allEnd = new Date(currentYear, 11, 31)
-        return { rangeType: range, startDate: allStart, endDate: allEnd }
-      }
-      default:
-        return { rangeType: 'month', startDate: new Date(currentYear, currentMonth - 1, 1), endDate: new Date(currentYear, currentMonth, 0) }
-    }
-  }
-
-  // Calculate date range based on selection
-  const dateSelection = getDateSelection(dateRange)
-  
   // Convert date range to months for API calls
   const getMonthsFromDateRange = (start: Date, end: Date) => {
     const months = []
@@ -121,14 +64,14 @@ export default function Dashboard() {
     return months
   }
 
-  const rangeMonths = getMonthsFromDateRange(dateSelection.startDate, dateSelection.endDate)
+  const rangeMonths = getMonthsFromDateRange(dateRange.startDate, dateRange.endDate)
 
   useEffect(() => {
     if (currentHousehold) {
       fetchSummaries()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateRange, customStartDate, customEndDate, currentHousehold?.id])
+  }, [dateRange, currentHousehold?.id])
 
   const fetchSummaries = async () => {
     if (!currentHousehold) return
@@ -296,10 +239,7 @@ export default function Dashboard() {
   }
 
   // Get range label for display
-  const getRangeLabel = () => {
-    const formatDate = (date: Date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    return `${formatDate(dateSelection.startDate)} - ${formatDate(dateSelection.endDate)}`
-  }
+  const rangeLabel = dateRange.label
 
   // Calculate useful metrics
   const netBalance = summary.totalIncome - summary.totalExpense
@@ -332,146 +272,10 @@ export default function Dashboard() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Dashboard</h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-2">{getRangeLabel()}</p>
       </div>
 
-      {/* Date Range Selector */}
-      <div className="space-y-4">
-        <div className="flex gap-2 flex-wrap">
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Date Range
-          </label>
-          <div className="w-full flex gap-2 flex-wrap">
-            <button
-              onClick={() => {
-                setDateRange('week')
-                setCustomStartDate(null)
-                setCustomEndDate(null)
-              }}
-              className={`px-3 py-2 rounded-lg font-medium transition-colors ${
-                dateRange === 'week'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-300 dark:hover:bg-slate-600'
-              }`}
-            >
-              Week
-            </button>
-            <button
-              onClick={() => {
-                setDateRange('month')
-                setCustomStartDate(null)
-                setCustomEndDate(null)
-              }}
-              className={`px-3 py-2 rounded-lg font-medium transition-colors ${
-                dateRange === 'month'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-300 dark:hover:bg-slate-600'
-              }`}
-            >
-              Month
-            </button>
-            <button
-              onClick={() => {
-                setDateRange('quarter')
-                setCustomStartDate(null)
-                setCustomEndDate(null)
-              }}
-              className={`px-3 py-2 rounded-lg font-medium transition-colors ${
-                dateRange === 'quarter'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-300 dark:hover:bg-slate-600'
-              }`}
-            >
-              Quarter
-            </button>
-            <button
-              onClick={() => {
-                setDateRange('half-year')
-                setCustomStartDate(null)
-                setCustomEndDate(null)
-              }}
-              className={`px-3 py-2 rounded-lg font-medium transition-colors ${
-                dateRange === 'half-year'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-300 dark:hover:bg-slate-600'
-              }`}
-            >
-              6 Months
-            </button>
-            <button
-              onClick={() => {
-                setDateRange('year')
-                setCustomStartDate(null)
-                setCustomEndDate(null)
-              }}
-              className={`px-3 py-2 rounded-lg font-medium transition-colors ${
-                dateRange === 'year'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-300 dark:hover:bg-slate-600'
-              }`}
-            >
-              Year
-            </button>
-            <button
-              onClick={() => {
-                setDateRange('all')
-                setCustomStartDate(null)
-                setCustomEndDate(null)
-              }}
-              className={`px-3 py-2 rounded-lg font-medium transition-colors ${
-                dateRange === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-300 dark:hover:bg-slate-600'
-              }`}
-            >
-              All Time
-            </button>
-          </div>
-        </div>
-
-        {/* Custom Date Range */}
-        <div className="flex gap-4 items-end">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Start Date
-            </label>
-            <input
-              type="date"
-              value={customStartDate ? customStartDate.toISOString().split('T')[0] : ''}
-              onChange={(e) => {
-                if (e.target.value) {
-                  const date = new Date(e.target.value + 'T00:00:00')
-                  setCustomStartDate(date)
-                }
-              }}
-              className="px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              End Date
-            </label>
-            <input
-              type="date"
-              value={customEndDate ? customEndDate.toISOString().split('T')[0] : ''}
-              onChange={(e) => {
-                if (e.target.value) {
-                  const date = new Date(e.target.value + 'T00:00:00')
-                  setCustomEndDate(date)
-                }
-              }}
-              className="px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-        </div>
-
-        {/* Display selected range */}
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
-          <p className="text-sm text-blue-900 dark:text-blue-200">
-            <strong>Selected:</strong> {getRangeLabel()}
-          </p>
-        </div>
-      </div>
+      {/* Date Range Selector Component */}
+      <DateRangeSelector value={dateRange} onChange={setDateRange} compact />
 
       {/* Summary Cards - Main Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
@@ -623,6 +427,78 @@ export default function Dashboard() {
         </Card>
       )}
 
+      {/* Financial Insights - Dashboard Preview */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-slate-900 dark:text-slate-100">Financial Insights</CardTitle>
+            <CardDescription className="text-slate-600 dark:text-slate-400">Key findings from your financial data</CardDescription>
+          </div>
+          <Link href="/insights">
+            <Button variant="outline" size="sm" className="dark:border-slate-600 dark:text-slate-300">
+              View Full Analysis →
+            </Button>
+          </Link>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Accounts</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {Object.keys(summary.byMethod).length}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">by payment method</p>
+            </div>
+
+            <div className={`p-3 rounded-lg border border-slate-200 dark:border-slate-700 ${
+              expenseRatio > 80 ? 'bg-red-50 dark:bg-red-950' :
+              expenseRatio > 60 ? 'bg-yellow-50 dark:bg-yellow-950' :
+              'bg-green-50 dark:bg-green-950'
+            }`}>
+              <p className="text-xs font-medium mb-1 text-slate-600 dark:text-slate-400">Expense Ratio</p>
+              <p className={`text-2xl font-bold ${
+                expenseRatio > 80 ? 'text-red-600 dark:text-red-400' :
+                expenseRatio > 60 ? 'text-yellow-600 dark:text-yellow-400' :
+                'text-green-600 dark:text-green-400'
+              }`}>
+                {expenseRatio.toFixed(1)}%
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">of income</p>
+            </div>
+
+            <div className={`p-3 rounded-lg border border-slate-200 dark:border-slate-700 ${
+              savingsRate > 20 ? 'bg-green-50 dark:bg-green-950' :
+              savingsRate > 10 ? 'bg-blue-50 dark:bg-blue-950' :
+              'bg-orange-50 dark:bg-orange-950'
+            }`}>
+              <p className="text-xs font-medium mb-1 text-slate-600 dark:text-slate-400">Savings Rate</p>
+              <p className={`text-2xl font-bold ${
+                savingsRate > 20 ? 'text-green-600 dark:text-green-400' :
+                savingsRate > 10 ? 'text-blue-600 dark:text-blue-400' :
+                'text-orange-600 dark:text-orange-400'
+              }`}>
+                {savingsRate.toFixed(1)}%
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">of income</p>
+            </div>
+
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Avg Transaction</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {formatCurrency(avgTransaction)}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{summary.transactionCount} total</p>
+            </div>
+          </div>
+
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-700 rounded-lg">
+            <p className="text-sm text-blue-900 dark:text-blue-100">
+              💡 <strong>Tip:</strong> Check the full insights page for detailed credit card analysis, net worth breakdown, and personalized recommendations.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Charts Section */}
       {summary && (
         <div className="grid gap-6 lg:grid-cols-2">
@@ -630,7 +506,7 @@ export default function Dashboard() {
           <Card>
             <CardHeader>
               <CardTitle className="text-slate-900 dark:text-slate-100">Spending by Category</CardTitle>
-              <CardDescription className="text-slate-600 dark:text-slate-400">{getRangeLabel()}</CardDescription>
+              <CardDescription className="text-slate-600 dark:text-slate-400">{rangeLabel}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>

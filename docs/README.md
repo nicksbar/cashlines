@@ -5,20 +5,26 @@ This directory contains the complete Cashlines documentation.
 ## Quick Navigation
 
 - **[Getting Started](./GETTING_STARTED.md)** - Setup instructions for local development
+- **[Setup & Security Checklist](./SETUP.md)** - Complete setup guide and branch protection
 - **[Features & Usage](./FEATURES.md)** - Detailed feature documentation
+- **[Charts & Visualizations](./CHARTS.md)** - Dashboard charts and test data generation
+- **[Development Guide](./DEVELOPMENT.md)** - Complete developer guide for contributing
+- **[Test Coverage](./TEST_COVERAGE.md)** - Detailed test coverage and validation reference
 - **[Spent But Not Listed (SBNL)](./SBNL.md)** - Untracked spending analysis
-- **[Architecture](./ARCHITECTURE.md)** - Technical architecture and design
+- **[Project Overview](./PROJECT_OVERVIEW.md)** - Full implementation summary
+- **[Architecture](./API.md)** - Technical architecture and design notes
 - **[API Reference](./API.md)** - Complete API endpoint documentation
 - **[Deployment](./DEPLOYMENT.md)** - Docker, LXC, and container deployment
 - **[Templates System](./TEMPLATES.md)** - Template system for quick entry creation
-- **[Theme System](./THEMES.md)** - Light/dark/auto theme support
 - **[Help System](./HELP_SYSTEM.md)** - Contextual help and tooltips
 - **[Branch Security](./BRANCH_SECURITY.md)** - Branch protection and governance
 
 ## For Agents & Contributors
 
 - **[Agent Instructions](../AGENTS.md)** - For GitHub Copilot agents and automated development
-- **[Contributing](./CONTRIBUTING.md)** - How to contribute to Cashlines
+- **[Development Guide](./DEVELOPMENT.md)** - Complete developer guide for contributing
+- **[Project Overview](./PROJECT_OVERVIEW.md)** - Full implementation summary
+- **[Session Notes](../SESSION_NOTES.md)** - Latest session work and improvements
 
 ## Project Overview
 
