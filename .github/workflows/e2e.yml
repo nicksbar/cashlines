@@ -40,10 +40,9 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Install Playwright
+      - name: Install Playwright and system dependencies
         run: |
-          npx playwright install ${{ matrix.browser }}
-          npx playwright install-deps ${{ matrix.browser }}
+          npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Build Next.js
         run: npm run build

@@ -54,8 +54,9 @@ jobs:
           flags: unittests
           name: codecov-umbrella
 
-      - name: Install Playwright browsers
-        run: npx playwright install
+      - name: Install Playwright browsers and dependencies
+        run: |
+          npx playwright install --with-deps chromium firefox webkit
 
       - name: Run E2E tests
         run: npm run test:e2e
