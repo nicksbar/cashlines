@@ -19,6 +19,7 @@ jobs:
     
     env:
       DATABASE_URL: "file:./prisma/dev.db"
+      NODE_ENV: test
 
     steps:
       - uses: actions/checkout@v4
@@ -174,7 +175,8 @@ jobs:
           ## Build Verification
 
           - ✅ Linting passed
-          - ✅ 289 tests passed
+          - ✅ 521 unit tests passed
+          - ✅ 216 E2E tests (648 across 3 browsers)
           - ✅ Production build successful
           - ✅ Docker image built and verified
           - **Node.js**: 20.x

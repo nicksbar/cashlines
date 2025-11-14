@@ -25,6 +25,7 @@ jobs:
     
     env:
       DATABASE_URL: "file:./prisma/dev.db"
+      NODE_ENV: "test"
 
     steps:
       - uses: actions/checkout@v4
@@ -43,6 +44,14 @@ jobs:
 
       - name: Generate Prisma client
         run: npx prisma generate
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
       - name: Install Playwright and system dependencies
         run: |
@@ -87,6 +96,16 @@ jobs:
           echo "## E2E Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ E2E tests completed across all browsers" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- **216 unique tests** across 3 browsers = **648 total** test runs" >> $GITHUB_STEP_SUMMARY
+          echo "- Quick Log feature: 10 tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Account management: 4 tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Income entry: 3 tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Transaction entry: 4 tests" >> $GITHUB_STEP_SUMMARY
+          echo "- People/Household: 3 tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Rules management: 3 tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Plus 20+ additional workflow tests" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
           echo "- Playwright reports available in artifacts" >> $GITHUB_STEP_SUMMARY

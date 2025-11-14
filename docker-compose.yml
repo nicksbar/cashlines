@@ -1,7 +1,31 @@
 version: '3.8'
 
 services:
-  # Cashlines web app (uses SQLite by default)
+  # PostgreSQL database (production-recommended)
+  postgres:
+    image: postgres:16-alpine
+    container_name: cashlines-postgres
+    environment:
+      POSTGRES_USER: cashlines
+      POSTGRES_PASSWORD: cashlines_secure_password
+      POSTGRES_DB: cashlines
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cashlines"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cashlines-network
+    # Security: don't expose to host network in production
+    # Use networks instead for inter-container communication
+
+  # Cashlines web app (uses PostgreSQL by default)
   cashlines:
     build:
       context: .
@@ -11,37 +35,26 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=file:/app/data/cashlines.db
-      # Uncomment to use PostgreSQL:
-      # - DATABASE_URL=postgresql://cashlines:cashlines@postgres:5432/cashlines
+      - DATABASE_URL=postgresql://cashlines:cashlines_secure_password@postgres:5432/cashlines?schema=public
+      - HOSTNAME=0.0.0.0
+      - PORT=3000
     volumes:
-      - cashlines-data:/app/data
+      - cashlines-logs:/app/logs
     restart: unless-stopped
-    # Uncomment to depend on Postgres:
-    # depends_on:
-    #   - postgres
-
-  # Optional: PostgreSQL database (commented out by default)
-  # postgres:
-  #   image: postgres:16-alpine
-  #   container_name: cashlines-postgres
-  #   environment:
-  #     POSTGRES_USER: cashlines
-  #     POSTGRES_PASSWORD: cashlines
-  #     POSTGRES_DB: cashlines
-  #   volumes:
-  #     - postgres-data:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U cashlines"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cashlines-network
+    # Remove 'build' and uncomment 'image' for pre-built images:
+    # image: cashlines:latest
 
 volumes:
-  cashlines-data:
+  postgres-data:
     driver: local
-  # postgres-data:
-  #   driver: local
+  cashlines-logs:
+    driver: local
+
+networks:
+  cashlines-network:
+    driver: bridge
