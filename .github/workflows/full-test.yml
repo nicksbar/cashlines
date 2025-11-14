@@ -1,4 +1,4 @@
-name: Full Test Suite
+name: 'Test Suite: Unit & E2E Tests'
 
 on:
   push:

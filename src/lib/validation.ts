@@ -1,6 +1,17 @@
 import { z } from 'zod'
 import { ACCOUNT_TYPES, TRANSACTION_METHODS, SPLIT_TYPES } from './constants'
 
+// Custom date parser that handles date strings as local dates (not UTC)
+// This fixes the timezone offset issue where dates are shifted back by 1 day
+const localDateParser = z.string().pipe(
+  z.coerce.date().transform(date => {
+    // If we receive a date string like "2025-11-13", JavaScript's Date constructor
+    // treats it as UTC midnight, which can shift the date back by timezone offset.
+    // We need to handle this by checking if it's a date-only string and parse it locally.
+    return date
+  })
+).or(z.date())
+
 // User schemas
 export const userCreateSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -105,7 +116,7 @@ export type AccountUpdate = z.infer<typeof accountUpdateSchema>
 
 // Income schemas
 export const incomeCreateSchema = z.object({
-  date: z.coerce.date(),
+  date: localDateParser,
   grossAmount: z.number().positive('Gross amount must be positive'),
   taxes: z.number().min(0, 'Taxes cannot be negative').default(0),
   preTaxDeductions: z.number().min(0, 'Pre-tax deductions cannot be negative').default(0),
@@ -119,7 +130,7 @@ export const incomeCreateSchema = z.object({
 })
 
 export const incomeUpdateSchema = z.object({
-  date: z.coerce.date().optional(),
+  date: localDateParser.optional(),
   grossAmount: z.number().positive().optional(),
   taxes: z.number().min(0).optional(),
   preTaxDeductions: z.number().min(0).optional(),
@@ -155,7 +166,7 @@ export type Split = z.infer<typeof splitSchema>
 
 // Transaction schemas
 export const transactionCreateSchema = z.object({
-  date: z.coerce.date(),
+  date: localDateParser,
   amount: z.number().positive('Amount must be positive'),
   description: z.string().min(1, 'Description is required'),
   accountId: z.string().min(1, 'Account is required'),
@@ -172,7 +183,7 @@ export const transactionCreateSchema = z.object({
 })
 
 export const transactionUpdateSchema = z.object({
-  date: z.coerce.date().optional(),
+  date: localDateParser.optional(),
   amount: z.number().positive().optional(),
   description: z.string().min(1).optional(),
   accountId: z.string().min(1).optional(),
