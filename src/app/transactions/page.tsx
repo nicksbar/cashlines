@@ -81,6 +81,7 @@ export default function TransactionsPage() {
     accountId: '',
     personId: '',
     notes: '',
+    websiteUrl: '',
     tags: '',
     splits: [{ type: 'need', target: '', percent: 100 }],
   })
@@ -158,6 +159,7 @@ export default function TransactionsPage() {
           accountId: '',
           personId: '',
           notes: '',
+          websiteUrl: '',
           tags: '',
           splits: [{ type: 'need', target: '', percent: 100 }],
         })
@@ -180,6 +182,7 @@ export default function TransactionsPage() {
       accountId: tx.accountId,
       personId: tx.personId || '',
       notes: tx.notes || '',
+      websiteUrl: (tx as any).websiteUrl || '',
       tags: typeof tx.tags === 'string' ? JSON.parse(tx.tags).join(', ') : (tx.tags as any).join(', '),
       splits: tx.splits.map(s => ({
         type: s.type,
@@ -200,6 +203,7 @@ export default function TransactionsPage() {
       accountId: '',
       personId: '',
       notes: '',
+      websiteUrl: '',
       tags: '',
       splits: [{ type: 'need', target: '', percent: 100 }],
     })
@@ -531,6 +535,18 @@ export default function TransactionsPage() {
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Optional notes"
+                  className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="websiteUrl">Website URL</Label>
+                <Input
+                  id="websiteUrl"
+                  type="url"
+                  value={formData.websiteUrl}
+                  onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                  placeholder="https://example.com"
                   className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                 />
               </div>

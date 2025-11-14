@@ -180,6 +180,7 @@ export const transactionCreateSchema = z.object({
   notes: z.string().optional(),
   tags: z.array(z.string()).default([]),
   splits: z.array(splitSchema).default([]),
+  websiteUrl: z.string().url('Invalid URL').optional().nullable(),
 })
 
 export const transactionUpdateSchema = z.object({
@@ -197,6 +198,7 @@ export const transactionUpdateSchema = z.object({
   notes: z.string().optional(),
   tags: z.array(z.string()).optional(),
   splits: z.array(splitSchema).optional(),
+  websiteUrl: z.string().url('Invalid URL').optional().nullable(),
 })
 
 export type TransactionCreate = z.infer<typeof transactionCreateSchema>
@@ -245,19 +247,21 @@ export const recurringExpenseSchema = z.object({
   accountId: z.string().optional().nullable(),
   description: z.string().min(1, 'Description is required'),
   amount: z.number().positive('Amount must be positive'),
-  frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+  frequency: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'semi-annual', 'yearly']),
   dueDay: z.number().min(1).max(31).optional().nullable(), // Day of month for monthly expenses
   notes: z.string().optional(),
+  websiteUrl: z.string().url('Invalid URL').optional().nullable(),
 })
 
 export const recurringExpenseUpdateSchema = z.object({
   accountId: z.string().optional().nullable(),
   description: z.string().min(1).optional(),
   amount: z.number().positive().optional(),
-  frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']).optional(),
+  frequency: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'semi-annual', 'yearly']).optional(),
   dueDay: z.number().min(1).max(31).optional().nullable(),
   isActive: z.boolean().optional(),
   notes: z.string().optional(),
+  websiteUrl: z.string().url('Invalid URL').optional().nullable(),
 })
 
 export type RecurringExpenseCreate = z.infer<typeof recurringExpenseSchema>

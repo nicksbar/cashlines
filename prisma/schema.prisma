@@ -182,6 +182,7 @@ model Transaction {
   method      String // "cc", "cash", "ach", "other"
   notes       String?
   tags        String // JSON array: ["groceries", "recurring"]
+  websiteUrl  String? // Link to merchant/vendor website
   
   splits Split[]
   
@@ -342,12 +343,13 @@ model RecurringExpense {
   account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   
   description    String   // e.g., "T-Mobile Bill", "Rent", "Insurance"
-  amount         Float    // Monthly/recurring amount
-  frequency      String   // "daily", "weekly", "monthly", "yearly"
+  amount         Float    // Recurring amount
+  frequency      String   // "daily", "weekly", "monthly", "quarterly", "semi-annual", "yearly"
   dueDay         Int?     // Day of month for monthly expenses (1-31)
   nextDueDate    DateTime // Next expected charge date
   isActive       Boolean @default(true)
   notes          String?
+  websiteUrl     String?  // Link to bill payment or vendor website
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

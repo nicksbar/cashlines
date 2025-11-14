@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { accountId, description, amount, frequency, dueDay, notes } =
+    const { accountId, description, amount, frequency, dueDay, notes, websiteUrl } =
       validation.data;
 
     // Calculate next due date based on frequency and dueDay
@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
         dueDay: dueDay || null,
         nextDueDate,
         notes: notes || null,
+        websiteUrl: websiteUrl || null,
       },
       include: { account: true },
     });

@@ -43,6 +43,7 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
     personId: initialData?.personId || '',
     method: initialData?.method || 'cc',
     notes: initialData?.notes || '',
+    websiteUrl: '',
   })
 
   const [templateId, setTemplateId] = useState(initialData?.templateId || '')
@@ -108,6 +109,7 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
           personId: formData.personId || null,
           method: formData.method,
           notes: formData.notes,
+          websiteUrl: formData.websiteUrl || null,
           tags: [],
           splits: [],
         }),
@@ -219,6 +221,17 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+            />
+          </div>
+          <div>
+            <Label htmlFor="websiteUrl" className="text-slate-900 dark:text-slate-100">Website URL</Label>
+            <Input
+              id="websiteUrl"
+              type="url"
+              value={formData.websiteUrl}
+              onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+              placeholder="https://example.com"
               className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />
           </div>

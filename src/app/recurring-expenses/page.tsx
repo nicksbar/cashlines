@@ -22,6 +22,7 @@ interface RecurringExpense {
   nextDueDate: string
   isActive: boolean
   notes: string | null
+  websiteUrl?: string | null
   account?: {
     id: string
     name: string
@@ -57,6 +58,7 @@ export default function RecurringExpensesPage() {
     frequency: 'monthly',
     dueDay: '',
     notes: '',
+    websiteUrl: '',
   })
 
   const fetchExpenses = useCallback(async function() {
@@ -108,6 +110,7 @@ export default function RecurringExpensesPage() {
       frequency: 'monthly',
       dueDay: '',
       notes: '',
+      websiteUrl: '',
     })
     setEditingId(null)
     setShowForm(false)
@@ -132,6 +135,9 @@ export default function RecurringExpensesPage() {
     }
     if (formData.notes) {
       payload.notes = formData.notes
+    }
+    if (formData.websiteUrl) {
+      payload.websiteUrl = formData.websiteUrl
     }
 
     try {
@@ -200,6 +206,7 @@ export default function RecurringExpensesPage() {
       frequency: expense.frequency,
       dueDay: expense.dueDay?.toString() || '',
       notes: expense.notes || '',
+      websiteUrl: expense.websiteUrl || '',
     })
     setEditingId(expense.id)
     setShowForm(true)
@@ -298,6 +305,8 @@ export default function RecurringExpensesPage() {
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly (Every 3 Months)</option>
+                    <option value="semi-annual">Semi-Annual (Every 6 Months)</option>
                     <option value="yearly">Yearly</option>
                   </select>
                 </div>
@@ -340,6 +349,17 @@ export default function RecurringExpensesPage() {
                   value={formData.notes}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Additional notes..."
+                  className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-400"
+                />
+              </div>
+
+              <div>
+                <Label className="dark:text-slate-300">Website URL (Optional)</Label>
+                <Input
+                  type="url"
+                  value={formData.websiteUrl}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                  placeholder="https://example.com"
                   className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-400"
                 />
               </div>
@@ -410,6 +430,17 @@ export default function RecurringExpensesPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold dark:text-slate-100">{expense.description}</h3>
+                      {expense.websiteUrl && (
+                        <a
+                          href={expense.websiteUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
+                          title="Visit website"
+                        >
+                          🔗
+                        </a>
+                      )}
                       {!expense.isActive && (
                         <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded">
                           Inactive
