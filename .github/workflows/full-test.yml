@@ -104,7 +104,7 @@ jobs:
           echo "- ✅ Coverage Thresholds Enforced" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Unit & API Tests (Jest) - 402 tests" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Production Build" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ E2E Tests (Playwright) - 87 tests across 3 browsers" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ E2E Tests (Playwright) - 206 unique tests across 3 browsers (618 total)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Coverage Policy" >> $GITHUB_STEP_SUMMARY
           echo "Global: 50% statements, 65% branches, 80% functions" >> $GITHUB_STEP_SUMMARY
