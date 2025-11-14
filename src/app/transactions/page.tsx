@@ -219,6 +219,7 @@ export default function TransactionsPage() {
       accountId: template.accountId || '',
       personId: template.personId || '',
       notes: template.description || '',
+      websiteUrl: template.websiteUrl || '',
       tags: '',
       splits: [{ type: 'need', target: '', percent: 100 }],
     })
