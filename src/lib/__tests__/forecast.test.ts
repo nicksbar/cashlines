@@ -4,6 +4,7 @@ import {
   getExpectedMonthlyTotal,
   getExpensesDueInMonth,
   compareForecast,
+  formatForecastStatus,
 } from '../forecast'
 
 describe('Recurring Expenses Forecast', () => {
@@ -34,6 +35,14 @@ describe('Recurring Expenses Forecast', () => {
     it('should calculate next monthly occurrence on same day', () => {
       const today = new Date(2024, 0, 15) // January 15, 2024
       const next = calculateNextDueDate('monthly', 15, today)
+      expect(next.getDate()).toBe(15)
+      expect(next.getMonth()).toBe(1) // February
+      expect(next.getFullYear()).toBe(2024)
+    })
+
+    it('should calculate next monthly without dueDay specified', () => {
+      const today = new Date(2024, 0, 15) // January 15, 2024
+      const next = calculateNextDueDate('monthly', null, today)
       expect(next.getDate()).toBe(15)
       expect(next.getMonth()).toBe(1) // February
       expect(next.getFullYear()).toBe(2024)
@@ -94,10 +103,10 @@ describe('Recurring Expenses Forecast', () => {
       expect(monthly).toBe(75)
     })
 
-    it('should return yearly amount divided by 12', () => {
-      const expense = { ...mockExpense, amount: 1200, frequency: 'yearly' }
+    it('should return amount for unknown frequency', () => {
+      const expense = { ...mockExpense, amount: 50, frequency: 'unknown-freq' }
       const monthly = getMonthlyAmount(expense)
-      expect(monthly).toBe(100)
+      expect(monthly).toBe(50) // Should return amount as-is for unknown frequency
     })
 
     it('should return 0 for inactive expenses', () => {
@@ -209,6 +218,48 @@ describe('Recurring Expenses Forecast', () => {
       // 30% difference should be on-track with 0.3 threshold
       const forecast = compareForecast(100, 130, 0.3)
       expect(forecast.status).toBe('on-track')
+    })
+  })
+
+  describe('formatForecastStatus', () => {
+    it('should format on-track status', () => {
+      const forecast = compareForecast(100, 105, 0.1)
+      const formatted = formatForecastStatus(forecast)
+      expect(formatted).toBe('✓ On track')
+    })
+
+    it('should format under status with amount', () => {
+      const forecast = compareForecast(100, 50, 0.1)
+      const formatted = formatForecastStatus(forecast)
+      expect(formatted).toContain('↓ Under by')
+      expect(formatted).toContain('50.00')
+    })
+
+    it('should format over status with amount', () => {
+      const forecast = compareForecast(100, 150, 0.1)
+      const formatted = formatForecastStatus(forecast)
+      expect(formatted).toContain('↑ Over by')
+      expect(formatted).toContain('50.00')
+    })
+  })
+
+  describe('Unknown Frequency Handling', () => {
+    it('should handle unknown frequency in getExpectedMonthlyTotal', () => {
+      const expenses = [
+        { ...mockExpense, amount: 100, frequency: 'unknown' },
+        { ...mockExpense, id: 'test-2', amount: 50, frequency: 'monthly' },
+      ]
+      const total = getExpectedMonthlyTotal(expenses, 2024, 0)
+      // Unknown frequency falls through to default (no action taken)
+      expect(total).toBe(50) // Only the monthly expense counts
+    })
+
+    it('should handle calculateNextDueDate with unknown frequency', () => {
+      const today = new Date(2024, 0, 15)
+      const next = calculateNextDueDate('unknown', undefined, today)
+      // Default case should advance by one month
+      expect(next.getMonth()).toBe(1) // February
+      expect(next.getFullYear()).toBe(2024)
     })
   })
 
