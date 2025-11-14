@@ -25,7 +25,7 @@ services:
     # Security: don't expose to host network in production
     # Use networks instead for inter-container communication
 
-  # Cashlines web app (uses PostgreSQL by default)
+  # Cashlines web app (uses PostgreSQL)
   cashlines:
     build:
       context: .

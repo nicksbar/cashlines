@@ -8,14 +8,8 @@ generator client {
 }
 
 datasource db {
-  // Default: SQLite for local development and standalone Docker
-  // For docker-compose: change to "postgresql" and use postgres service
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
-  
-  // Uncomment for docker-compose PostgreSQL:
-  // provider = "postgresql"
-  // url      = env("DATABASE_URL")
 }
 
 // User model for future multi-user support
