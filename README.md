@@ -193,14 +193,14 @@ npm run test:all           # Jest (402) + Playwright (87)
 - ✅ **489 total tests** - 100% pass rate across Chromium, Firefox, and WebKit
 - ✅ **0 TypeScript errors**
 
-**CI/CD Integration:**
-- ✅ Automated tests run on every commit and pull request
-- ✅ E2E tests run daily for regression detection
-- ✅ Coverage reports uploaded to Codecov
-- ✅ Artifacts (test reports, videos) saved for 30 days
+**Coverage Enforcement:**
+- ✅ Global thresholds: 50% statements, 65% branches, 80% functions
+- ✅ Utilities (`src/lib/`): 90% statements, 85% branches, 95% functions
+- ✅ APIs (`src/app/api/`): 75% statements, 70% branches, 85% functions
+- ✅ Build fails if coverage drops below thresholds
+- ✅ Codecov integration tracks historical trends
 
-[**E2E Testing Guide →**](./e2e/README.md) - Learn how to write and run E2E tests  
-[**Test Status Report →**](./E2E_TEST_STATUS.md) - Detailed test coverage and results
+[**Coverage Policy →**](./docs/COVERAGE.md) - Detailed coverage thresholds and best practices
 
 ## Status
 
