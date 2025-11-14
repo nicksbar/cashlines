@@ -9,6 +9,10 @@ on:
     # Run E2E tests daily at 2 AM UTC for regression detection
     - cron: '0 2 * * *'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   e2e-tests:
     name: E2E Tests (${{ matrix.browser }})
