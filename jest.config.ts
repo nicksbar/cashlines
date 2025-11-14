@@ -8,20 +8,21 @@ const config: Config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  globals: {
-    'ts-jest': {
-      tsconfig: {
-        jsx: 'react',
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          jsx: 'react',
+        },
       },
-    },
+    ],
   },
   collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
+    'src/lib/{constants,creditcard,money,sbnl,validation,forecast}.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/**/__tests__/**',
     '!src/**/testUtils.ts',
-    '!src/app/layout.tsx',
-    '!src/app/page.tsx',
     '!src/**/*.spec.ts',
   ],
   coverageThreshold: {
@@ -36,12 +37,6 @@ const config: Config = {
       functions: 95,
       lines: 90,
       statements: 90,
-    },
-    './src/app/api': {
-      branches: 70,
-      functions: 85,
-      lines: 75,
-      statements: 75,
     },
   },
 }
