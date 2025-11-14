@@ -167,16 +167,42 @@ Complete docs in `/docs/`:
 - **[Development Guide](./docs/DEVELOPMENT.md)** - Developer setup and workflows
 - **[Deployment](./docs/DEPLOYMENT.md)** - Docker, LXC, production setups
 - **[Agent Instructions](./AGENTS.md)** - Development guidelines
-- **[Session Notes](./SESSION_NOTES.md)** - Latest improvements and roadmap
+
+## Testing
+
+Cashlines includes comprehensive automated testing:
+
+```bash
+# Unit and API tests (Jest)
+npm test                    # Run all tests
+npm test -- --watch        # Watch mode for development
+npm test -- --coverage     # Coverage report
+
+# E2E tests (Playwright) 
+npm run test:e2e           # Run E2E tests (headless)
+npm run test:e2e:ui        # Interactive test UI (recommended for development)
+npm run test:e2e:debug     # Step through tests with DevTools
+
+# Run all tests
+npm run test:all           # Jest + Playwright
+```
+
+**Test Coverage:**
+- ✅ 399 unit/API tests (Jest)
+- ✅ 11 E2E tests (Playwright) - Dashboard, Navigation, Responsive, Dark Mode
+- ✅ 100% pass rate
+- ✅ 0 TypeScript errors
+
+[**E2E Testing Guide →**](./e2e/README.md) - How to write and run E2E tests with Playwright
 
 ## Status
 
 ✅ **MVP complete**: 12 core features fully implemented  
-✅ **399 tests passing** (100% success rate)  
+✅ **410 tests passing** (399 unit/API + 11 E2E) - 100% success rate  
 ✅ **Production-ready**: Builds successfully with zero TypeScript errors  
 ✅ **Dark mode**: Full light/dark/auto theme support  
 ✅ **Self-hosted**: Docker and LXC deployment ready  
-✅ **Well-documented**: Complete dev guide and session notes
+✅ **Well-documented**: Complete dev guide and E2E testing guide
 
 ## Privacy & Security
 

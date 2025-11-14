@@ -9,6 +9,7 @@ This directory contains the complete Cashlines documentation.
 - **[Features & Usage](./FEATURES.md)** - Detailed feature documentation
 - **[Charts & Visualizations](./CHARTS.md)** - Dashboard charts and test data generation
 - **[Development Guide](./DEVELOPMENT.md)** - Complete developer guide for contributing
+- **[E2E Testing Guide](./E2E_TESTING.md)** - Playwright E2E testing setup and best practices
 - **[Test Coverage](./TEST_COVERAGE.md)** - Detailed test coverage and validation reference
 - **[Spent But Not Listed (SBNL)](./SBNL.md)** - Untracked spending analysis
 - **[Project Overview](./PROJECT_OVERVIEW.md)** - Full implementation summary
