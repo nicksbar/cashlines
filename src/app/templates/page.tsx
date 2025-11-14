@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { formatCurrency } from '@/lib/money'
 import { Trash2, Star } from 'lucide-react'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
@@ -37,13 +37,7 @@ export default function TemplatesPage() {
   const [filter, setFilter] = useState<'all' | 'transaction' | 'income'>('all')
   const [sortBy, setSortBy] = useState<'usage' | 'favorites' | 'recent'>('usage')
 
-  useEffect(() => {
-    if (currentHousehold) {
-      fetchTemplates()
-    }
-  }, [currentHousehold, fetchTemplates])
-
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     if (!currentHousehold) return
     
     try {
@@ -70,7 +64,13 @@ export default function TemplatesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentHousehold])
+
+  useEffect(() => {
+    if (currentHousehold) {
+      fetchTemplates()
+    }
+  }, [currentHousehold, fetchTemplates])
 
   const handleDelete = async (id: string, type: string) => {
     confirm({
