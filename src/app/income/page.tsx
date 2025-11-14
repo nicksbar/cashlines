@@ -11,6 +11,7 @@ import { Plus, Trash2, TrendingUp, Edit2, Download } from 'lucide-react'
 import { useUser } from '@/lib/UserContext'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import { usePromptDialog } from '@/components/PromptDialog'
+import { TemplateSelector } from '@/components/TemplateSelector'
 
 interface IncomeEntry {
   id: string
@@ -181,6 +182,24 @@ export default function IncomePage() {
     })
   }
 
+  const handleTemplateSelect = (template: any) => {
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      source: template.name || '',
+      accountId: template.accountId || '',
+      personId: template.personId || '',
+      grossAmount: template.grossAmount?.toString() || '',
+      taxes: template.federalTaxes || template.stateTaxes ? 
+        ((template.federalTaxes || 0) + (template.stateTaxes || 0) + (template.socialSecurity || 0) + (template.medicare || 0)).toString() : '',
+      preTaxDeductions: template.preDeductions?.toString() || '',
+      postTaxDeductions: template.postDeductions?.toString() || '',
+      netAmount: '',
+      notes: template.description || '',
+      tags: '',
+    })
+    setShowForm(true)
+  }
+
   const handleDelete = async (id: string) => {
     confirm({
       title: 'Delete Income Entry',
@@ -297,6 +316,7 @@ export default function IncomePage() {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Summary</h2>
         <div className="flex gap-2">
+          <TemplateSelector type="income" onSelect={handleTemplateSelect} />
           <Button onClick={exportIncome} variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Export
@@ -345,7 +365,7 @@ export default function IncomePage() {
         </div>
       )}
 
-            {showForm && (
+      {showForm && (
         <Card>
           <CardHeader>
             <CardTitle className="text-slate-900 dark:text-slate-100">{editingId ? 'Edit Income' : 'Add Income'}</CardTitle>

@@ -225,6 +225,13 @@ export default function TemplatesPage() {
 
                   <div className="flex gap-2 ml-4">
                     <Button
+                      size="sm"
+                      onClick={() => window.location.href = `/${template.type === 'income' ? 'income' : 'transactions'}`}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Use Template
+                    </Button>
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleToggleFavorite(template.id, template.type, template.isFavorite)}

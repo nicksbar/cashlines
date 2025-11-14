@@ -12,6 +12,7 @@ import { useUser } from '@/lib/UserContext'
 import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import { usePromptDialog } from '@/components/PromptDialog'
+import { TemplateSelector } from '@/components/TemplateSelector'
 
 interface Split {
   id: string
@@ -205,6 +206,21 @@ export default function TransactionsPage() {
     setShowForm(false)
   }
 
+  const handleTemplateSelect = (template: any) => {
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      amount: template.amount?.toString() || '',
+      description: template.name || '',
+      method: template.method || 'cc',
+      accountId: template.accountId || '',
+      personId: template.personId || '',
+      notes: template.description || '',
+      tags: '',
+      splits: [{ type: 'need', target: '', percent: 100 }],
+    })
+    setShowForm(true)
+  }
+
   const handleDelete = async (id: string) => {
     confirm({
       title: 'Delete Transaction',
@@ -378,6 +394,7 @@ export default function TransactionsPage() {
           Total: {formatCurrency(totalExpense)}
         </div>
         <div className="flex gap-2">
+          <TemplateSelector type="transaction" onSelect={handleTemplateSelect} />
           <Button onClick={exportTransactions} variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Export
