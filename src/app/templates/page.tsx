@@ -41,7 +41,7 @@ export default function TemplatesPage() {
     if (currentHousehold) {
       fetchTemplates()
     }
-  }, [currentHousehold])
+  }, [currentHousehold, fetchTemplates])
 
   const fetchTemplates = async () => {
     if (!currentHousehold) return
@@ -266,10 +266,10 @@ export default function TemplatesPage() {
           <CardTitle className="text-base text-blue-900 dark:text-blue-100">💡 Template Tips</CardTitle>
         </CardHeader>
         <CardContent className="text-sm space-y-2 text-blue-900 dark:text-blue-100">
-          <p>• <strong>Save as Template:</strong> Create an entry, click &quot;Save as Template&quot;, and give it a name</p>
+          <p>• <strong>Save as Template:</strong> Create an entry, click &ldquo;Save as Template&rdquo;, and give it a name</p>
           <p>• <strong>Use Templates:</strong> When creating a new entry, select a template to pre-fill the form</p>
           <p>• <strong>Mark Favorites:</strong> Star your most-used templates for quick access at the top</p>
-          <p>• <strong>Track Usage:</strong> Templates show how many times they&apos;ve been used</p>
+          <p>• <strong>Track Usage:</strong> Templates show how many times they&#39;ve been used</p>
           <p>• <strong>Organize:</strong> Sort by usage, favorites, or creation date</p>
         </CardContent>
       </Card>

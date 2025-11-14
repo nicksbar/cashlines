@@ -156,7 +156,7 @@ export default function HouseholdsPage() {
             <CardContent className="space-y-4">
               <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg">
                 <p className="text-sm text-red-800 dark:text-red-200">
-                  Deleting <strong>"{deleteConfirm.name}"</strong> will permanently remove the household and all associated data:
+                  Deleting <strong>&quot;{deleteConfirm.name}&quot;</strong> will permanently remove the household and all associated data:
                 </p>
                 <ul className="text-sm text-red-800 dark:text-red-200 mt-2 ml-4 list-disc space-y-1">
                   <li>All accounts</li>
