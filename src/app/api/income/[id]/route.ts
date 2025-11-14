@@ -53,6 +53,7 @@ export async function PATCH(
     if (validated.netAmount !== undefined) data.netAmount = validated.netAmount
     if (validated.source !== undefined) data.source = validated.source
     if (validated.accountId !== undefined) data.accountId = validated.accountId
+    if (validated.personId !== undefined) data.personId = validated.personId
     if (validated.notes !== undefined) data.notes = validated.notes
     if (validated.tags !== undefined) data.tags = JSON.stringify(validated.tags)
 
