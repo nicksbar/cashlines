@@ -19,7 +19,7 @@ const config: Config = {
     ],
   },
   collectCoverageFrom: [
-    'src/lib/{constants,creditcard,money,sbnl,validation,forecast}.{ts,tsx}',
+    'src/lib/{constants,creditcard,money,sbnl,validation,forecast,date,utils}.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/**/__tests__/**',
     '!src/**/testUtils.ts',

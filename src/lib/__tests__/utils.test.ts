@@ -124,6 +124,15 @@ describe('Utility Functions', () => {
       await expect(handleApiError(mockResponse)).rejects.toThrow('Plain text error message')
     })
 
+    it('should handle response without content-type header', async () => {
+      const mockResponse = new Response(
+        'Error without content type',
+        { status: 400 }
+      )
+
+      await expect(handleApiError(mockResponse)).rejects.toThrow('Error without content type')
+    })
+
     it('should fallback to HTTP status for empty response', async () => {
       const mockResponse = new Response(
         '',
