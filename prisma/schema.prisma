@@ -8,13 +8,12 @@ generator client {
 }
 
 datasource db {
-  // For local development: use "sqlite" with DATABASE_URL="file:./prisma/dev.db"
-  // For Docker/production: use "postgresql" with DATABASE_URL="postgresql://..."
-  // To switch providers: uncomment the line you want and comment the other
-  
+  // Default: SQLite for local development and standalone Docker
+  // For docker-compose: change to "postgresql" and use postgres service
   provider = "sqlite"
   url      = env("DATABASE_URL")
   
+  // Uncomment for docker-compose PostgreSQL:
   // provider = "postgresql"
   // url      = env("DATABASE_URL")
 }
