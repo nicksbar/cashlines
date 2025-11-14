@@ -154,6 +154,7 @@ export function QuickExpenseEntry({
           splits: [
             {
               type: 'need',
+              target: '',
               percent: 100,
             },
           ],
