@@ -67,6 +67,8 @@ docker-compose up -d
 
 App runs at [http://localhost:3000](http://localhost:3000) with persistent data volume.
 
+**Important**: When rebuilding the container, your data is preserved. Seed scripts are idempotent—they only run once when the database is empty. Rebuilding the container won't re-seed existing data.
+
 ## Tech Stack
 
 **Frontend**: Next.js 14+ (App Router), React 18, TypeScript, Tailwind CSS, shadcn/ui  
