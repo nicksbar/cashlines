@@ -33,6 +33,17 @@ export function formatDate(date: Date | string, fmt = 'MMM dd, yyyy'): string {
   return format(d, fmt)
 }
 
+/**
+ * Safe date formatter that handles ISO date strings without timezone shifts
+ * Parses ISO dates (YYYY-MM-DD) and displays them as-is
+ */
+export function formatDateString(dateString: string, fmt = 'MMM dd, yyyy'): string {
+  // Parse ISO date string (YYYY-MM-DD or full ISO string) without timezone conversion
+  const [year, month, day] = dateString.split('T')[0].split('-')
+  const d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+  return format(d, fmt)
+}
+
 export function formatMonth(year: number, month: number): string {
   return format(new Date(year, month - 1, 1), 'MMMM yyyy')
 }

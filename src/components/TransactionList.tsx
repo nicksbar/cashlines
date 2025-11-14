@@ -1,5 +1,7 @@
 'use client'
 
+import { formatDateString } from '@/lib/date'
+
 interface TransactionListProps {
   transactions: any[]
   onRefresh: () => void
@@ -24,7 +26,7 @@ export default function TransactionList({ transactions }: TransactionListProps) 
             <tbody>
               {transactions.map((tx: any) => (
                 <tr key={tx.id} className="border-b hover:bg-slate-50">
-                  <td className="py-2">{new Date(tx.date).toLocaleDateString()}</td>
+                  <td className="py-2">{formatDateString(tx.date)}</td>
                   <td className="py-2">{tx.description}</td>
                   <td className="py-2 capitalize">{tx.method || '-'}</td>
                   <td className="text-right py-2 font-medium text-red-600">-${tx.amount.toFixed(2)}</td>

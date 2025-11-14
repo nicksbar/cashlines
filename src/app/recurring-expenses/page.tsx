@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { InfoTooltip } from '@/components/InfoTooltip'
 import { formatCurrency } from '@/lib/money'
+import { formatDateString } from '@/lib/date'
 import { Trash2, Plus, AlertCircle, Zap } from 'lucide-react'
 import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { useUser } from '@/lib/UserContext'
@@ -465,7 +466,7 @@ export default function RecurringExpensesPage() {
                       <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">{expense.notes}</p>
                     )}
                     <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
-                      Next due: {new Date(expense.nextDueDate).toLocaleDateString()}
+                      Next due: {formatDateString(expense.nextDueDate)}
                     </p>
                   </div>
                   <div className="flex gap-2 ml-4">
