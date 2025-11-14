@@ -221,7 +221,7 @@ export default function TransactionsPage() {
       notes: template.description || '',
       websiteUrl: template.websiteUrl || '',
       tags: '',
-      splits: [{ type: 'need', target: '', percent: 100 }],
+      splits: [{ type: 'need', target: template.accountId || 'Default', percent: 100 }],
     })
     setShowForm(true)
   }

@@ -154,7 +154,7 @@ export function QuickExpenseEntry({
           splits: [
             {
               type: 'need',
-              target: '',
+              target: formData.accountId || 'Default',
               percent: 100,
             },
           ],
