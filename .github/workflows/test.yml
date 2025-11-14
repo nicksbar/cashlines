@@ -15,8 +15,23 @@ jobs:
     name: Lint, Test, and Build
     runs-on: ubuntu-latest
     
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cashlines
+          POSTGRES_PASSWORD: cashlines_secure_password
+          POSTGRES_DB: cashlines
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
     env:
-      DATABASE_URL: "file:./prisma/dev.db"
+      DATABASE_URL: "postgresql://cashlines:cashlines_secure_password@localhost:5432/cashlines?schema=public"
       NODE_ENV: "test"
 
     steps:
