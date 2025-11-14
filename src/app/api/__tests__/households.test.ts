@@ -1,4 +1,4 @@
-import { POST, DELETE, GET } from '@/app/api/households/route'
+import { POST, GET } from '@/app/api/households/route'
 import { DELETE as DELETE_ID } from '@/app/api/households/[id]/route'
 import { prisma } from '@/lib/db'
 import { NextRequest } from 'next/server'
