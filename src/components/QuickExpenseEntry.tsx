@@ -150,7 +150,7 @@ export function QuickExpenseEntry({
           method: formData.method,
           accountId: formData.accountId,
           notes: formData.notes ? `${formData.notes}\n[From recurring: ${selectedExpense.description}]` : `[From recurring: ${selectedExpense.description}]`,
-          tags: 'recurring',
+          tags: ['recurring'],
           splits: [
             {
               type: 'need',

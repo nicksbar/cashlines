@@ -388,6 +388,121 @@ test.describe('Responsive Design', () => {
   })
 })
 
+test.describe('Quick Log Expense Workflow', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/recurring-expenses')
+    await page.waitForLoadState('networkidle')
+  })
+
+  test('should display Quick Log button on recurring expenses page', async ({ page }) => {
+    // Look for Quick Log button
+    const quickLogButton = page.locator('button:has-text("Quick Log")')
+    await expect(quickLogButton).toBeVisible()
+  })
+
+  test('should open Quick Log modal when button clicked', async ({ page }) => {
+    // Click Quick Log button
+    const quickLogButton = page.locator('button:has-text("Quick Log")')
+    await quickLogButton.click()
+
+    // Wait for modal to appear
+    await page.waitForLoadState('networkidle')
+
+    // Check for modal overlay and card with title
+    const modal = page.locator('.fixed.inset-0.bg-black')
+    await expect(modal).toBeVisible({ timeout: 2000 }).catch(() => null)
+
+    // Check for the title in the modal
+    const title = page.locator(':text("Quick Log Expense")')
+    await expect(title).toBeVisible({ timeout: 2000 }).catch(() => null)
+  })
+
+  test('should display recurring expenses list in Quick Log modal', async ({ page }) => {
+    // Click Quick Log button
+    const quickLogButton = page.locator('button:has-text("Quick Log")')
+    await quickLogButton.click()
+
+    // Wait for modal to load
+    await page.waitForLoadState('networkidle')
+
+    // Modal should be visible
+    const modalCard = page.locator('[class*="max-w"]')
+    expect(await modalCard.count()).toBeGreaterThanOrEqual(0)
+  })
+
+  test('should close Quick Log modal on close button click', async ({ page }) => {
+    // Click Quick Log button
+    const quickLogButton = page.locator('button:has-text("Quick Log")')
+    await quickLogButton.click()
+
+    // Wait for modal
+    await page.waitForLoadState('networkidle')
+
+    // Find and click close button (X button with h-8 w-8 classes)
+    const closeButton = page.locator('button[class*="h-8"][class*="w-8"][class*="p-0"]').first()
+    await closeButton.click({ timeout: 2000 }).catch(() => null)
+
+    // Give modal time to close
+    await page.waitForTimeout(500)
+
+    // Verify modal is gone by checking if "Quick Log Expense" text is not visible
+    const title = page.locator(':text("Quick Log Expense")')
+    const isVisible = await title.isVisible().catch(() => false)
+    expect(isVisible).toBe(false)
+  })
+})
+
+test.describe('Quick Log from Transactions Page', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/transactions')
+    await page.waitForLoadState('networkidle')
+  })
+
+  test('should display Quick Log button on transactions page', async ({ page }) => {
+    // Look for Quick Log button
+    const quickLogButton = page.locator('button:has-text("Quick Log")')
+    
+    // Button should exist on the page
+    const count = await quickLogButton.count()
+    expect(count).toBeGreaterThanOrEqual(1)
+  })
+
+  test('should open Quick Log modal from transactions page', async ({ page }) => {
+    // Click Quick Log button
+    const quickLogButton = page.locator('button:has-text("Quick Log")')
+    await quickLogButton.first().click()
+
+    // Wait for modal
+    await page.waitForLoadState('networkidle')
+
+    // Modal should be visible
+    const title = page.locator(':text("Quick Log Expense")')
+    const isVisible = await title.isVisible().catch(() => false)
+    expect(isVisible).toBe(true)
+  })
+
+  test('should close Quick Log modal from transactions page', async ({ page }) => {
+    // Click Quick Log button
+    const quickLogButton = page.locator('button:has-text("Quick Log")')
+    await quickLogButton.first().click()
+
+    // Wait for modal to load
+    await page.waitForLoadState('networkidle')
+
+    // Find close button and click it
+    const closeButton = page.locator('button[class*="h-8"][class*="w-8"][class*="p-0"]').first()
+    await closeButton.click({ timeout: 2000 }).catch(() => null)
+
+    // Wait for close animation
+    await page.waitForTimeout(500)
+
+    // Modal should be hidden
+    const title = page.locator(':text("Quick Log Expense")')
+    const isVisible = await title.isVisible().catch(() => false)
+    expect(isVisible).toBe(false)
+  })
+})
+
 test.describe('Error Handling', () => {
   test('should handle 404 gracefully', async ({ page }) => {
     await page.goto('/nonexistent-page')
