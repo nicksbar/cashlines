@@ -5,10 +5,12 @@ import { ACCOUNT_TYPES, TRANSACTION_METHODS, SPLIT_TYPES } from './constants'
 // This fixes the timezone offset issue where dates are shifted back by 1 day
 const localDateParser = z.string().pipe(
   z.coerce.date().transform(date => {
-    // If we receive a date string like "2025-11-13", JavaScript's Date constructor
-    // treats it as UTC midnight, which can shift the date back by timezone offset.
-    // We need to handle this by checking if it's a date-only string and parse it locally.
-    return date
+    // When we receive a date string like "2025-11-01", z.coerce.date() creates
+    // a Date at UTC midnight. We need to convert this back to the intended local date.
+    // The string is interpreted as YYYY-MM-DD in the user's local timezone.
+    // We subtract the timezone offset to get the intended date in UTC.
+    const offset = date.getTimezoneOffset() * 60 * 1000
+    return new Date(date.getTime() + offset)
   })
 ).or(z.date())
 
@@ -180,7 +182,7 @@ export const transactionCreateSchema = z.object({
   notes: z.string().optional(),
   tags: z.array(z.string()).default([]),
   splits: z.array(splitSchema).default([]),
-  websiteUrl: z.string().url('Invalid URL').optional().nullable(),
+  websiteUrl: z.union([z.literal(''), z.string().url('Invalid URL')]).optional().nullable(),
 })
 
 export const transactionUpdateSchema = z.object({
@@ -198,7 +200,7 @@ export const transactionUpdateSchema = z.object({
   notes: z.string().optional(),
   tags: z.array(z.string()).optional(),
   splits: z.array(splitSchema).optional(),
-  websiteUrl: z.string().url('Invalid URL').optional().nullable(),
+  websiteUrl: z.union([z.literal(''), z.string().url('Invalid URL')]).optional().nullable(),
 })
 
 export type TransactionCreate = z.infer<typeof transactionCreateSchema>
@@ -251,7 +253,7 @@ export const recurringExpenseSchema = z.object({
   frequency: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'semi-annual', 'yearly']),
   dueDay: z.number().min(1).max(31).optional().nullable(), // Day of month for monthly expenses
   notes: z.string().optional(),
-  websiteUrl: z.string().url('Invalid URL').optional().nullable(),
+  websiteUrl: z.union([z.literal(''), z.string().url('Invalid URL')]).optional().nullable(),
 })
 
 export const recurringExpenseUpdateSchema = z.object({
@@ -263,7 +265,7 @@ export const recurringExpenseUpdateSchema = z.object({
   dueDay: z.number().min(1).max(31).optional().nullable(),
   isActive: z.boolean().optional(),
   notes: z.string().optional(),
-  websiteUrl: z.string().url('Invalid URL').optional().nullable(),
+  websiteUrl: z.union([z.literal(''), z.string().url('Invalid URL')]).optional().nullable(),
 })
 
 export type RecurringExpenseCreate = z.infer<typeof recurringExpenseSchema>

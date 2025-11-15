@@ -76,6 +76,16 @@ describe('Date Utilities', () => {
       const formatted = formatDate(date, 'yyyy-MM-dd')
       expect(formatted).toBe('2024-01-15')
     })
+
+    it('should handle ISO date strings from API without timezone shift', () => {
+      // This is critical - API returns dates like "2025-11-01T00:00:00.000Z"
+      // These should display as Nov 01, not Oct 31
+      const isoString = '2025-11-01T00:00:00.000Z'
+      const formatted = formatDate(isoString)
+      expect(formatted).toContain('Nov')
+      expect(formatted).toContain('01')
+      expect(formatted).toContain('2025')
+    })
   })
 
   describe('formatMonth', () => {

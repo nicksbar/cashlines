@@ -144,7 +144,7 @@ export default function TransactionsPage() {
         body: JSON.stringify({
           ...formData,
           amount: parseFloat(formData.amount),
-          date: new Date(formData.date),
+          date: formData.date,
           personId: formData.personId || null,
           tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
           splits: formData.splits.filter(s => s.target),
