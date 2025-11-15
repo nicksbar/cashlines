@@ -1,0 +1,333 @@
+
+> cashlines@1.0.0 test
+> node node_modules/jest/bin/jest.js
+
+PASS src/lib/__tests__/aggregation-ranges.test.ts
+PASS src/app/import/__tests__/import.test.ts
+PASS src/lib/__tests__/creditcard.test.ts
+PASS src/lib/__tests__/forecast.test.ts
+PASS src/app/api/__tests__/income.test.ts
+PASS src/lib/__tests__/sbnl.test.ts
+PASS src/lib/__tests__/financial-calculations.test.ts
+PASS src/app/api/__tests__/households.test.ts
+  ● Console
+
+    console.error
+      Error fetching households: Error: DB Error
+          at /home/nick/git.cashlines/cashlines/src/app/api/__tests__/households.test.ts:50:62
+          at Generator.next (<anonymous>)
+          at /home/nick/git.cashlines/cashlines/src/app/api/__tests__/households.test.ts:8:71
+          at new Promise (<anonymous>)
+          at __awaiter (/home/nick/git.cashlines/cashlines/src/app/api/__tests__/households.test.ts:4:12)
+          at Object.<anonymous> (/home/nick/git.cashlines/cashlines/src/app/api/__tests__/households.test.ts:49:63)
+          at Promise.finally.completed (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:1497:10)
+          at _callCircusTest (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:947:3)
+          at /home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:857:11)
+          at _runTestsForDescribeBlock (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:857:11)
+          at run (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:1918:21)
+          at jestAdapter (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/runner.js:101:19)
+          at runTestInternal (/home/nick/git.cashlines/cashlines/node_modules/jest-runner/build/testWorker.js:275:16)
+          at runTest (/home/nick/git.cashlines/cashlines/node_modules/jest-runner/build/testWorker.js:343:7)
+          at Object.worker (/home/nick/git.cashlines/cashlines/node_modules/jest-runner/build/testWorker.js:497:12)
+
+      22 |     return NextResponse.json(households)
+      23 |   } catch (error) {
+    > 24 |     console.error('Error fetching households:', error)
+         |             ^
+      25 |     return NextResponse.json(
+      26 |       { error: 'Failed to fetch households' },
+      27 |       { status: 500 }
+
+      at src/app/api/households/route.ts:24:13
+          at Generator.throw (<anonymous>)
+      at rejected (src/app/api/households/route.ts:6:65)
+
+    console.error
+      Error creating household: Error: DB Error
+          at /home/nick/git.cashlines/cashlines/src/app/api/__tests__/households.test.ts:121:60
+          at Generator.next (<anonymous>)
+          at /home/nick/git.cashlines/cashlines/src/app/api/__tests__/households.test.ts:8:71
+          at new Promise (<anonymous>)
+          at __awaiter (/home/nick/git.cashlines/cashlines/src/app/api/__tests__/households.test.ts:4:12)
+          at Object.<anonymous> (/home/nick/git.cashlines/cashlines/src/app/api/__tests__/households.test.ts:116:52)
+          at Promise.finally.completed (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:1497:10)
+          at _callCircusTest (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:947:3)
+          at /home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:857:11)
+          at _runTestsForDescribeBlock (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:857:11)
+          at run (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:1918:21)
+          at jestAdapter (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/runner.js:101:19)
+          at runTestInternal (/home/nick/git.cashlines/cashlines/node_modules/jest-runner/build/testWorker.js:275:16)
+          at runTest (/home/nick/git.cashlines/cashlines/node_modules/jest-runner/build/testWorker.js:343:7)
+          at Object.worker (/home/nick/git.cashlines/cashlines/node_modules/jest-runner/build/testWorker.js:497:12)
+
+      64 |     return NextResponse.json(household, { status: 201 })
+      65 |   } catch (error) {
+    > 66 |     console.error('Error creating household:', error)
+         |             ^
+      67 |     return NextResponse.json(
+      68 |       { error: 'Failed to create household' },
+      69 |       { status: 500 }
+
+      at src/app/api/households/route.ts:66:13
+          at Generator.throw (<anonymous>)
+      at rejected (src/app/api/households/route.ts:6:65)
+
+    console.error
+      Error deleting household: Error: DB Error
+          at /home/nick/git.cashlines/cashlines/src/app/api/__tests__/households.test.ts:237:71
+          at Generator.next (<anonymous>)
+          at /home/nick/git.cashlines/cashlines/src/app/api/__tests__/households.test.ts:8:71
+          at new Promise (<anonymous>)
+          at __awaiter (/home/nick/git.cashlines/cashlines/src/app/api/__tests__/households.test.ts:4:12)
+          at Object.<anonymous> (/home/nick/git.cashlines/cashlines/src/app/api/__tests__/households.test.ts:227:68)
+          at Promise.finally.completed (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:1497:10)
+          at _callCircusTest (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:947:3)
+          at /home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:857:11)
+          at _runTestsForDescribeBlock (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:857:11)
+          at run (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/jestAdapterInit.js:1918:21)
+          at jestAdapter (/home/nick/git.cashlines/cashlines/node_modules/jest-circus/build/runner.js:101:19)
+          at runTestInternal (/home/nick/git.cashlines/cashlines/node_modules/jest-runner/build/testWorker.js:275:16)
+          at runTest (/home/nick/git.cashlines/cashlines/node_modules/jest-runner/build/testWorker.js:343:7)
+          at Object.worker (/home/nick/git.cashlines/cashlines/node_modules/jest-runner/build/testWorker.js:497:12)
+
+      83 |     return NextResponse.json({ success: true })
+      84 |   } catch (error) {
+    > 85 |     console.error('Error deleting household:', error)
+         |             ^
+      86 |     return NextResponse.json(
+      87 |       { error: 'Failed to delete household' },
+      88 |       { status: 500 }
+
+      at src/app/api/households/[id]/route.ts:85:13
+          at Generator.throw (<anonymous>)
+      at rejected (src/app/api/households/[id]/route.ts:6:65)
+
+PASS src/app/api/__tests__/accounts.test.ts
+PASS src/__tests__/data-precision-issue.test.ts
+PASS src/app/api/__tests__/transactions.test.ts
+PASS src/__tests__/testUtils.test.ts
+PASS src/lib/__tests__/utils.test.ts
+PASS src/lib/__tests__/money.test.ts
+PASS src/__tests__/data-integrity.test.ts
+PASS src/app/api/__tests__/people.test.ts
+PASS src/lib/__tests__/validation.test.ts
+FAIL src/app/api/__tests__/reset.test.ts
+  ● Console
+
+    console.log
+      prisma:error 
+      Invalid `prisma.user.create()` invocation in
+      /home/nick/git.cashlines/cashlines/src/app/api/__tests__/reset.test.ts:27:36
+      
+        24 beforeAll(async () => {
+        25   // Create a test household
+        26   testEmail = `reset-test-${Date.now()}@test.local`
+      → 27   const user = await prisma.user.create(
+      error: Error validating datasource `db`: the URL must start with the protocol `file:`.
+        -->  schema.prisma:12
+         | 
+      11 |   provider = "sqlite"
+      12 |   url      = env("DATABASE_URL")
+         | 
+      
+      Validation Error Count: 1
+
+      at Object.mc (node_modules/@prisma/client/runtime/library.js:21:432)
+
+    console.log
+      prisma:error 
+      Invalid `prisma.user.delete()` invocation in
+      /home/nick/git.cashlines/cashlines/src/app/api/__tests__/reset.test.ts:39:29
+      
+        36 
+        37 afterAll(async () => {
+        38   // Clean up
+      → 39   await prisma.user.delete(
+      error: Error validating datasource `db`: the URL must start with the protocol `file:`.
+        -->  schema.prisma:12
+         | 
+      11 |   provider = "sqlite"
+      12 |   url      = env("DATABASE_URL")
+         | 
+      
+      Validation Error Count: 1
+
+      at Object.mc (node_modules/@prisma/client/runtime/library.js:21:432)
+
+  ● Data Reset and Seed › Reset deletes all data but preserves user
+
+    PrismaClientInitializationError: 
+    Invalid `prisma.user.create()` invocation in
+    /home/nick/git.cashlines/cashlines/src/app/api/__tests__/reset.test.ts:27:36
+
+      24 beforeAll(async () => {
+      25   // Create a test household
+      26   testEmail = `reset-test-${Date.now()}@test.local`
+    → 27   const user = await prisma.user.create(
+    error: Error validating datasource `db`: the URL must start with the protocol `file:`.
+      -->  schema.prisma:12
+       | 
+    11 |   provider = "sqlite"
+    12 |   url      = env("DATABASE_URL")
+       | 
+
+    Validation Error Count: 1
+
+      at $n.handleRequestError (node_modules/@prisma/client/runtime/library.js:121:7615)
+      at $n.handleAndLogRequestError (node_modules/@prisma/client/runtime/library.js:121:6623)
+      at $n.request (node_modules/@prisma/client/runtime/library.js:121:6307)
+      at l (node_modules/@prisma/client/runtime/library.js:130:9633)
+
+  ● Data Reset and Seed › Reset prevents deletion for production accounts
+
+    PrismaClientInitializationError: 
+    Invalid `prisma.user.create()` invocation in
+    /home/nick/git.cashlines/cashlines/src/app/api/__tests__/reset.test.ts:27:36
+
+      24 beforeAll(async () => {
+      25   // Create a test household
+      26   testEmail = `reset-test-${Date.now()}@test.local`
+    → 27   const user = await prisma.user.create(
+    error: Error validating datasource `db`: the URL must start with the protocol `file:`.
+      -->  schema.prisma:12
+       | 
+    11 |   provider = "sqlite"
+    12 |   url      = env("DATABASE_URL")
+       | 
+
+    Validation Error Count: 1
+
+      at $n.handleRequestError (node_modules/@prisma/client/runtime/library.js:121:7615)
+      at $n.handleAndLogRequestError (node_modules/@prisma/client/runtime/library.js:121:6623)
+      at $n.request (node_modules/@prisma/client/runtime/library.js:121:6307)
+      at l (node_modules/@prisma/client/runtime/library.js:130:9633)
+
+  ● Data Reset and Seed › Reset can be followed by seed without errors
+
+    PrismaClientInitializationError: 
+    Invalid `prisma.user.create()` invocation in
+    /home/nick/git.cashlines/cashlines/src/app/api/__tests__/reset.test.ts:27:36
+
+      24 beforeAll(async () => {
+      25   // Create a test household
+      26   testEmail = `reset-test-${Date.now()}@test.local`
+    → 27   const user = await prisma.user.create(
+    error: Error validating datasource `db`: the URL must start with the protocol `file:`.
+      -->  schema.prisma:12
+       | 
+    11 |   provider = "sqlite"
+    12 |   url      = env("DATABASE_URL")
+       | 
+
+    Validation Error Count: 1
+
+      at $n.handleRequestError (node_modules/@prisma/client/runtime/library.js:121:7615)
+      at $n.handleAndLogRequestError (node_modules/@prisma/client/runtime/library.js:121:6623)
+      at $n.request (node_modules/@prisma/client/runtime/library.js:121:6307)
+      at l (node_modules/@prisma/client/runtime/library.js:130:9633)
+
+PASS src/__tests__/workflows.test.ts
+PASS src/lib/__tests__/accounts.test.ts
+PASS src/lib/__tests__/date.test.ts
+
+Summary of all failing tests
+FAIL src/app/api/__tests__/reset.test.ts
+  ● Data Reset and Seed › Reset deletes all data but preserves user
+
+    PrismaClientInitializationError: 
+    Invalid `prisma.user.create()` invocation in
+    /home/nick/git.cashlines/cashlines/src/app/api/__tests__/reset.test.ts:27:36
+
+      24 beforeAll(async () => {
+      25   // Create a test household
+      26   testEmail = `reset-test-${Date.now()}@test.local`
+    → 27   const user = await prisma.user.create(
+    error: Error validating datasource `db`: the URL must start with the protocol `file:`.
+      -->  schema.prisma:12
+       | 
+    11 |   provider = "sqlite"
+    12 |   url      = env("DATABASE_URL")
+       | 
+
+    Validation Error Count: 1
+
+      at $n.handleRequestError (node_modules/@prisma/client/runtime/library.js:121:7615)
+      at $n.handleAndLogRequestError (node_modules/@prisma/client/runtime/library.js:121:6623)
+      at $n.request (node_modules/@prisma/client/runtime/library.js:121:6307)
+      at l (node_modules/@prisma/client/runtime/library.js:130:9633)
+
+  ● Data Reset and Seed › Reset prevents deletion for production accounts
+
+    PrismaClientInitializationError: 
+    Invalid `prisma.user.create()` invocation in
+    /home/nick/git.cashlines/cashlines/src/app/api/__tests__/reset.test.ts:27:36
+
+      24 beforeAll(async () => {
+      25   // Create a test household
+      26   testEmail = `reset-test-${Date.now()}@test.local`
+    → 27   const user = await prisma.user.create(
+    error: Error validating datasource `db`: the URL must start with the protocol `file:`.
+      -->  schema.prisma:12
+       | 
+    11 |   provider = "sqlite"
+    12 |   url      = env("DATABASE_URL")
+       | 
+
+    Validation Error Count: 1
+
+      at $n.handleRequestError (node_modules/@prisma/client/runtime/library.js:121:7615)
+      at $n.handleAndLogRequestError (node_modules/@prisma/client/runtime/library.js:121:6623)
+      at $n.request (node_modules/@prisma/client/runtime/library.js:121:6307)
+      at l (node_modules/@prisma/client/runtime/library.js:130:9633)
+
+  ● Data Reset and Seed › Reset can be followed by seed without errors
+
+    PrismaClientInitializationError: 
+    Invalid `prisma.user.create()` invocation in
+    /home/nick/git.cashlines/cashlines/src/app/api/__tests__/reset.test.ts:27:36
+
+      24 beforeAll(async () => {
+      25   // Create a test household
+      26   testEmail = `reset-test-${Date.now()}@test.local`
+    → 27   const user = await prisma.user.create(
+    error: Error validating datasource `db`: the URL must start with the protocol `file:`.
+      -->  schema.prisma:12
+       | 
+    11 |   provider = "sqlite"
+    12 |   url      = env("DATABASE_URL")
+       | 
+
+    Validation Error Count: 1
+
+      at $n.handleRequestError (node_modules/@prisma/client/runtime/library.js:121:7615)
+      at $n.handleAndLogRequestError (node_modules/@prisma/client/runtime/library.js:121:6623)
+      at $n.request (node_modules/@prisma/client/runtime/library.js:121:6307)
+      at l (node_modules/@prisma/client/runtime/library.js:130:9633)
+
+
+Test Suites: 1 failed, 20 passed, 21 total
+Tests:       3 failed, 518 passed, 521 total
+Snapshots:   0 total
+Time:        3.056 s
+Ran all test suites.

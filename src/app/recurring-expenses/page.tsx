@@ -39,10 +39,18 @@ interface Account {
   isActive: boolean
 }
 
+interface Person {
+  id: string
+  name: string
+  role?: string
+  color?: string
+}
+
 export default function RecurringExpensesPage() {
   const { currentHousehold } = useUser()
   const [expenses, setExpenses] = useState<RecurringExpense[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [people, setPeople] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -53,6 +61,7 @@ export default function RecurringExpensesPage() {
 
   // Form state
   const [formData, setFormData] = useState({
+    personId: '',
     accountId: '',
     description: '',
     amount: '',
@@ -96,15 +105,32 @@ export default function RecurringExpensesPage() {
     }
   }, [currentHousehold])
 
+  const fetchPeople = useCallback(async function() {
+    if (!currentHousehold) return
+
+    try {
+      const response = await fetch('/api/people', {
+        headers: { 'x-household-id': currentHousehold.id },
+      })
+      if (!response.ok) throw new Error('Failed to fetch people')
+      const data = await response.json()
+      setPeople(data)
+    } catch (err) {
+      console.error('Error fetching people:', err)
+    }
+  }, [currentHousehold])
+
   useEffect(() => {
     if (currentHousehold) {
       fetchExpenses()
       fetchAccounts()
+      fetchPeople()
     }
-  }, [currentHousehold, fetchExpenses, fetchAccounts])
+  }, [currentHousehold, fetchExpenses, fetchAccounts, fetchPeople])
 
   function resetForm() {
     setFormData({
+      personId: '',
       accountId: '',
       description: '',
       amount: '',
@@ -128,6 +154,9 @@ export default function RecurringExpensesPage() {
     }
 
     // Only include optional fields if they have values
+    if (formData.personId) {
+      payload.personId = formData.personId
+    }
     if (formData.accountId) {
       payload.accountId = formData.accountId
     }
@@ -201,6 +230,7 @@ export default function RecurringExpensesPage() {
 
   function handleEdit(expense: RecurringExpense) {
     setFormData({
+      personId: (expense as any).personId || '',
       accountId: expense.accountId || '',
       description: expense.description,
       amount: expense.amount.toString(),
@@ -327,20 +357,38 @@ export default function RecurringExpensesPage() {
                 )}
               </div>
 
-              <div>
-                <Label className="dark:text-slate-300">Account (Optional)</Label>
-                <select
-                  value={formData.accountId}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, accountId: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
-                >
-                  <option value="">-- No Account --</option>
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="dark:text-slate-300">Account (Optional)</Label>
+                  <select
+                    value={formData.accountId}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, accountId: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+                  >
+                    <option value="">-- No Account --</option>
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label className="dark:text-slate-300">Person (Optional)</Label>
+                  <select
+                    value={formData.personId}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, personId: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+                  >
+                    <option value="">-- No Person --</option>
+                    {people.map((person) => (
+                      <option key={person.id} value={person.id}>
+                        {person.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>

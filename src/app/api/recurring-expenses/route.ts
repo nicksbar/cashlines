@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     const expenses = await prisma.recurringExpense.findMany({
       where: { userId: householdId },
-      include: { account: true },
+      include: { account: true, person: true },
       orderBy: { nextDueDate: "asc" },
     });
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { accountId, description, amount, frequency, dueDay, notes, websiteUrl } =
+    const { accountId, personId, description, amount, frequency, dueDay, notes, websiteUrl } =
       validation.data;
 
     // Calculate next due date based on frequency and dueDay
@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
     const expense = await prisma.recurringExpense.create({
       data: {
         userId: householdId,
+        personId: personId || null,
         accountId: accountId || null,
         description,
         amount,
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
         notes: notes || null,
         websiteUrl: websiteUrl || null,
       },
-      include: { account: true },
+      include: { account: true, person: true },
     });
 
     return NextResponse.json(expense, { status: 201 });

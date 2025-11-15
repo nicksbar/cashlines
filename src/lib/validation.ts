@@ -244,6 +244,7 @@ export type RuleUpdate = z.infer<typeof ruleUpdateSchema>
 
 // Recurring Expense schemas
 export const recurringExpenseSchema = z.object({
+  personId: z.string().optional().nullable(),
   accountId: z.string().optional().nullable(),
   description: z.string().min(1, 'Description is required'),
   amount: z.number().positive('Amount must be positive'),
@@ -254,6 +255,7 @@ export const recurringExpenseSchema = z.object({
 })
 
 export const recurringExpenseUpdateSchema = z.object({
+  personId: z.string().optional().nullable(),
   accountId: z.string().optional().nullable(),
   description: z.string().min(1).optional(),
   amount: z.number().positive().optional(),

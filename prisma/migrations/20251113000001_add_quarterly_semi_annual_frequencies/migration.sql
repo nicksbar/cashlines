@@ -1,3 +1,0 @@
--- Update frequency enum documentation
--- Supports: daily, weekly, monthly, quarterly, semi-annual, yearly
--- No SQL changes needed as frequency is already a String field
