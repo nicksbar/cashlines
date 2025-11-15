@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { X, AlertCircle, CheckCircle } from 'lucide-react'
-import { formatCurrency } from '@/lib/money'
+import { formatCurrency, roundAmount } from '@/lib/money'
 
 interface RecurringExpense {
   id: string
@@ -61,7 +61,7 @@ export function QuickExpenseEntry({
   // Form state for the selected expense
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    amount: '',
+    amount: 0,
     description: '',
     personId: '',
     accountId: '',
@@ -130,7 +130,7 @@ export function QuickExpenseEntry({
     setSelectedExpense(expense)
     setFormData({
       date: new Date().toISOString().split('T')[0],
-      amount: expense.amount.toString(),
+      amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount,
       description: expense.description,
       personId: (expense as any).personId || '',
       accountId: expense.accountId || '',
@@ -161,7 +161,7 @@ export function QuickExpenseEntry({
         headers,
         body: JSON.stringify({
           date: formData.date,
-          amount: parseFloat(formData.amount),
+          amount: roundAmount(formData.amount),
           description: formData.description,
           method: formData.method,
           personId: formData.personId || null,
@@ -199,7 +199,7 @@ export function QuickExpenseEntry({
     setSelectedExpense(null)
     setFormData({
       date: new Date().toISOString().split('T')[0],
-      amount: '',
+      amount: 0,
       description: '',
       personId: '',
       accountId: '',
@@ -312,8 +312,8 @@ export function QuickExpenseEntry({
                     id="amount"
                     type="number"
                     step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    value={formData.amount || ''}
+                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
               </div>

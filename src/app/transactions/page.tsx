@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useState, useEffect, useCallback } from 'react'
-import { formatCurrency } from '@/lib/money'
+import { formatCurrency, roundAmount } from '@/lib/money'
 import { formatDate } from '@/lib/date'
 import { Plus, Trash2, Edit2, Download, Zap, CheckCircle, AlertCircle } from 'lucide-react'
 import { useUser } from '@/lib/UserContext'
@@ -75,7 +75,7 @@ export default function TransactionsPage() {
   }>({ type: 'idle', message: '' })
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    amount: '',
+    amount: 0,
     description: '',
     method: 'cc',
     accountId: '',
@@ -143,7 +143,7 @@ export default function TransactionsPage() {
         },
         body: JSON.stringify({
           ...formData,
-          amount: parseFloat(formData.amount),
+          amount: roundAmount(formData.amount),
           date: formData.date,
           personId: formData.personId || null,
           tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -153,7 +153,7 @@ export default function TransactionsPage() {
       if (response.ok) {
         setFormData({
           date: new Date().toISOString().split('T')[0],
-          amount: '',
+          amount: 0,
           description: '',
           method: 'cc',
           accountId: '',
@@ -176,7 +176,7 @@ export default function TransactionsPage() {
     setEditingId(tx.id)
     setFormData({
       date: tx.date.split('T')[0],
-      amount: tx.amount.toString(),
+      amount: typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount,
       description: tx.description,
       method: tx.method,
       accountId: tx.accountId,
@@ -197,7 +197,7 @@ export default function TransactionsPage() {
     setEditingId(null)
     setFormData({
       date: new Date().toISOString().split('T')[0],
-      amount: '',
+      amount: 0,
       description: '',
       method: 'cc',
       accountId: '',
@@ -213,7 +213,7 @@ export default function TransactionsPage() {
   const handleTemplateSelect = (template: any) => {
     setFormData({
       date: new Date().toISOString().split('T')[0],
-      amount: template.amount?.toString() || '',
+      amount: template.amount ? parseFloat(template.amount) : 0,
       description: template.name || '',
       method: template.method || 'cc',
       accountId: template.accountId || '',
@@ -360,7 +360,7 @@ export default function TransactionsPage() {
             body: JSON.stringify({
               name: templateName,
               description: formData.description,
-              amount: parseFloat(formData.amount),
+              amount: formData.amount,
               method: formData.method,
               accountId: formData.accountId,
               notes: formData.notes,
@@ -457,8 +457,8 @@ export default function TransactionsPage() {
                     id="amount"
                     type="number"
                     step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    value={formData.amount || ''}
+                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     required

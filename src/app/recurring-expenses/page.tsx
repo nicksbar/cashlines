@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { InfoTooltip } from '@/components/InfoTooltip'
-import { formatCurrency } from '@/lib/money'
+import { formatCurrency, roundAmount } from '@/lib/money'
 import { formatDateString } from '@/lib/date'
 import { Trash2, Plus, AlertCircle, Zap } from 'lucide-react'
 import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
@@ -64,7 +64,7 @@ export default function RecurringExpensesPage() {
     personId: '',
     accountId: '',
     description: '',
-    amount: '',
+    amount: 0,
     frequency: 'monthly',
     dueDay: '',
     notes: '',
@@ -133,7 +133,7 @@ export default function RecurringExpensesPage() {
       personId: '',
       accountId: '',
       description: '',
-      amount: '',
+      amount: 0,
       frequency: 'monthly',
       dueDay: '',
       notes: '',
@@ -149,7 +149,7 @@ export default function RecurringExpensesPage() {
 
     const payload: any = {
       description: formData.description,
-      amount: parseFloat(formData.amount),
+      amount: roundAmount(formData.amount),
       frequency: formData.frequency,
     }
 
@@ -233,7 +233,7 @@ export default function RecurringExpensesPage() {
       personId: (expense as any).personId || '',
       accountId: expense.accountId || '',
       description: expense.description,
-      amount: expense.amount.toString(),
+      amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount,
       frequency: expense.frequency,
       dueDay: expense.dueDay?.toString() || '',
       notes: expense.notes || '',
@@ -316,8 +316,8 @@ export default function RecurringExpensesPage() {
                   <Input
                     type="number"
                     step="0.01"
-                    value={formData.amount}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, amount: e.target.value })}
+                    value={formData.amount || ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     required
                     className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"

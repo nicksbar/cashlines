@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useState, useEffect, useCallback } from 'react'
-import { formatCurrency, roundAmount, parseAmount } from '@/lib/money'
+import { formatCurrency, roundAmount } from '@/lib/money'
 import { formatDate } from '@/lib/date'
 import { Plus, Trash2, TrendingUp, Edit2, Download } from 'lucide-react'
 import { useUser } from '@/lib/UserContext'
@@ -52,11 +52,11 @@ export default function IncomePage() {
     source: '',
     accountId: '',
     personId: '',
-    grossAmount: '',
-    taxes: '',
-    preTaxDeductions: '',
-    postTaxDeductions: '',
-    netAmount: '',
+    grossAmount: 0,
+    taxes: 0,
+    preTaxDeductions: 0,
+    postTaxDeductions: 0,
+    netAmount: 0,
     notes: '',
     tags: '',
   })
@@ -93,11 +93,19 @@ export default function IncomePage() {
     if (!currentHousehold) return
 
     try {
-      const grossAmount = roundAmount(parseAmount(formData.grossAmount))
-      const taxes = roundAmount(parseAmount(formData.taxes || '0'))
-      const preTaxDeductions = roundAmount(parseAmount(formData.preTaxDeductions || '0'))
-      const postTaxDeductions = roundAmount(parseAmount(formData.postTaxDeductions || '0'))
+      // Values are already numbers in state, just ensure rounding
+      const grossAmount = roundAmount(formData.grossAmount)
+      const taxes = roundAmount(formData.taxes)
+      const preTaxDeductions = roundAmount(formData.preTaxDeductions)
+      const postTaxDeductions = roundAmount(formData.postTaxDeductions)
       const netAmount = roundAmount(grossAmount - taxes - preTaxDeductions - postTaxDeductions)
+
+      // Validate math: net amount should always be positive
+      if (netAmount < 0) {
+        setAlertMessage({ text: 'Net amount cannot be negative. Check your deductions.', type: 'error' })
+        setTimeout(() => setAlertMessage(null), 3000)
+        return
+      }
 
       const method = editingId ? 'PATCH' : 'POST'
       const url = editingId ? `/api/income/${editingId}` : '/api/income'
@@ -128,11 +136,11 @@ export default function IncomePage() {
           source: '',
           accountId: '',
           personId: '',
-          grossAmount: '',
-          taxes: '',
-          preTaxDeductions: '',
-          postTaxDeductions: '',
-          netAmount: '',
+          grossAmount: 0,
+          taxes: 0,
+          preTaxDeductions: 0,
+          postTaxDeductions: 0,
+          netAmount: 0,
           notes: '',
           tags: '',
         })
@@ -152,11 +160,11 @@ export default function IncomePage() {
       source: entry.source,
       accountId: entry.accountId,
       personId: entry.personId || '',
-      grossAmount: entry.grossAmount.toString(),
-      taxes: entry.taxes.toString(),
-      preTaxDeductions: entry.preTaxDeductions.toString(),
-      postTaxDeductions: entry.postTaxDeductions.toString(),
-      netAmount: entry.netAmount.toString(),
+      grossAmount: entry.grossAmount,
+      taxes: entry.taxes,
+      preTaxDeductions: entry.preTaxDeductions,
+      postTaxDeductions: entry.postTaxDeductions,
+      netAmount: entry.netAmount,
       notes: entry.notes || '',
       tags: typeof entry.tags === 'string' ? JSON.parse(entry.tags || '[]').join(', ') : '',
     })
@@ -172,11 +180,11 @@ export default function IncomePage() {
       source: '',
       accountId: '',
       personId: '',
-      grossAmount: '',
-      taxes: '',
-      preTaxDeductions: '',
-      postTaxDeductions: '',
-      netAmount: '',
+      grossAmount: 0,
+      taxes: 0,
+      preTaxDeductions: 0,
+      postTaxDeductions: 0,
+      netAmount: 0,
       notes: '',
       tags: '',
     })
@@ -188,12 +196,11 @@ export default function IncomePage() {
       source: template.name || '',
       accountId: template.accountId || '',
       personId: template.personId || '',
-      grossAmount: template.grossAmount?.toString() || '',
-      taxes: template.federalTaxes || template.stateTaxes ? 
-        ((template.federalTaxes || 0) + (template.stateTaxes || 0) + (template.socialSecurity || 0) + (template.medicare || 0)).toString() : '',
-      preTaxDeductions: template.preDeductions?.toString() || '',
-      postTaxDeductions: template.postDeductions?.toString() || '',
-      netAmount: '',
+      grossAmount: template.grossAmount || 0,
+      taxes: (template.federalTaxes || 0) + (template.stateTaxes || 0) + (template.socialSecurity || 0) + (template.medicare || 0),
+      preTaxDeductions: template.preDeductions || 0,
+      postTaxDeductions: template.postDeductions || 0,
+      netAmount: 0,
       notes: template.description || '',
       tags: '',
     })
@@ -276,13 +283,13 @@ export default function IncomePage() {
               name: templateName,
               description: formData.source,
               accountId: formData.accountId,
-              grossAmount: parseFloat(formData.grossAmount),
-              federalTaxes: parseFloat(formData.taxes) || 0,
+              grossAmount: formData.grossAmount,
+              federalTaxes: formData.taxes || 0,
               stateTaxes: 0,
               socialSecurity: 0,
               medicare: 0,
-              preDeductions: parseFloat(formData.preTaxDeductions) || 0,
-              postDeductions: parseFloat(formData.postTaxDeductions) || 0,
+              preDeductions: formData.preTaxDeductions || 0,
+              postDeductions: formData.postTaxDeductions || 0,
               notes: formData.notes,
             }),
           })
@@ -439,10 +446,10 @@ export default function IncomePage() {
                   <Label htmlFor="grossAmount" className="dark:text-slate-100">Gross Amount (Pre-Tax)</Label>
                   <Input
                     id="grossAmount"
-                    type="text"
-                    inputMode="decimal"
-                    value={formData.grossAmount}
-                    onChange={(e) => setFormData({ ...formData, grossAmount: e.target.value })}
+                    type="number"
+                    step="0.01"
+                    value={formData.grossAmount || ''}
+                    onChange={(e) => setFormData({ ...formData, grossAmount: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     required
@@ -454,10 +461,10 @@ export default function IncomePage() {
                     <Label htmlFor="taxes" className="dark:text-slate-100">Taxes</Label>
                     <Input
                       id="taxes"
-                      type="text"
-                      inputMode="decimal"
-                      value={formData.taxes}
-                      onChange={(e) => setFormData({ ...formData, taxes: e.target.value })}
+                      type="number"
+                      step="0.01"
+                      value={formData.taxes || ''}
+                      onChange={(e) => setFormData({ ...formData, taxes: parseFloat(e.target.value) || 0 })}
                       placeholder="0.00"
                       className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     />
@@ -467,10 +474,10 @@ export default function IncomePage() {
                     <Label htmlFor="preTaxDeductions" className="dark:text-slate-100">Pre-Tax Deductions</Label>
                     <Input
                       id="preTaxDeductions"
-                      type="text"
-                      inputMode="decimal"
-                      value={formData.preTaxDeductions}
-                      onChange={(e) => setFormData({ ...formData, preTaxDeductions: e.target.value })}
+                      type="number"
+                      step="0.01"
+                      value={formData.preTaxDeductions || ''}
+                      onChange={(e) => setFormData({ ...formData, preTaxDeductions: parseFloat(e.target.value) || 0 })}
                       placeholder="0.00"
                       className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     />
@@ -482,10 +489,10 @@ export default function IncomePage() {
                   <Label htmlFor="postTaxDeductions" className="dark:text-slate-100">Post-Tax Deductions</Label>
                   <Input
                     id="postTaxDeductions"
-                    type="text"
-                    inputMode="decimal"
-                    value={formData.postTaxDeductions}
-                    onChange={(e) => setFormData({ ...formData, postTaxDeductions: e.target.value })}
+                    type="number"
+                    step="0.01"
+                    value={formData.postTaxDeductions || ''}
+                    onChange={(e) => setFormData({ ...formData, postTaxDeductions: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                   />
@@ -496,19 +503,19 @@ export default function IncomePage() {
                   <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
                     Net Amount: <span className="text-lg text-green-600 dark:text-green-400">
                       {formatCurrency(
-                        (parseFloat(formData.grossAmount) || 0) -
-                        (parseFloat(formData.taxes) || 0) -
-                        (parseFloat(formData.preTaxDeductions) || 0) -
-                        (parseFloat(formData.postTaxDeductions) || 0)
+                        formData.grossAmount -
+                        formData.taxes -
+                        formData.preTaxDeductions -
+                        formData.postTaxDeductions
                       )}
                     </span>
                   </p>
-                  {parseFloat(formData.grossAmount) > 0 && (
+                  {formData.grossAmount > 0 && (
                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                      Keep {(((parseFloat(formData.grossAmount) || 0) -
-                        (parseFloat(formData.taxes) || 0) -
-                        (parseFloat(formData.preTaxDeductions) || 0) -
-                        (parseFloat(formData.postTaxDeductions) || 0)) / (parseFloat(formData.grossAmount) || 1) * 100).toFixed(1)}% of gross
+                      Keep {(((formData.grossAmount -
+                        formData.taxes -
+                        formData.preTaxDeductions -
+                        formData.postTaxDeductions) / formData.grossAmount) * 100).toFixed(1)}% of gross
                     </p>
                   )}
                 </div>
