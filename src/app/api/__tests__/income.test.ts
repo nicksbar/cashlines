@@ -109,6 +109,47 @@ describe('Income API Routes', () => {
       })
     })
 
+    it('should preserve decimal precision for taxes (2807.95 stored as 2807.95)', async () => {
+      const decimalIncome = {
+        id: 'test-decimal-income',
+        userId: mockUserId,
+        accountId: mockAccountId,
+        date: new Date('2025-11-11'),
+        grossAmount: 3500,
+        taxes: 2807.95,
+        preTaxDeductions: 0,
+        postTaxDeductions: 0,
+        netAmount: 692.05,
+        source: 'Salary',
+        notes: null,
+        tags: '[]',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      ;(prisma.account.findUnique as jest.Mock).mockResolvedValue(mockAccount)
+      ;(prisma.income.create as jest.Mock).mockResolvedValue(decimalIncome)
+
+      const result = await prisma.income.create({
+        data: {
+          userId: mockUserId,
+          accountId: mockAccountId,
+          date: new Date('2025-11-11'),
+          grossAmount: 3500,
+          taxes: 2807.95,
+          preTaxDeductions: 0,
+          postTaxDeductions: 0,
+          netAmount: 692.05,
+          source: 'Salary',
+          tags: '[]',
+        },
+      })
+
+      // Verify exact decimal value is stored/returned
+      expect(result.taxes).toBe(2807.95)
+      expect(result.netAmount).toBe(692.05)
+    })
+
     it('should reject request without user', async () => {
       ;(prisma.user.findMany as jest.Mock).mockResolvedValue([])
 

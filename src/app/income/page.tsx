@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useState, useEffect, useCallback } from 'react'
-import { formatCurrency } from '@/lib/money'
+import { formatCurrency, roundAmount } from '@/lib/money'
 import { formatDate } from '@/lib/date'
 import { Plus, Trash2, TrendingUp, Edit2, Download } from 'lucide-react'
 import { useUser } from '@/lib/UserContext'
@@ -93,11 +93,11 @@ export default function IncomePage() {
     if (!currentHousehold) return
 
     try {
-      const grossAmount = parseFloat(formData.grossAmount)
-      const taxes = parseFloat(formData.taxes || '0')
-      const preTaxDeductions = parseFloat(formData.preTaxDeductions || '0')
-      const postTaxDeductions = parseFloat(formData.postTaxDeductions || '0')
-      const netAmount = grossAmount - taxes - preTaxDeductions - postTaxDeductions
+      const grossAmount = roundAmount(parseFloat(formData.grossAmount))
+      const taxes = roundAmount(parseFloat(formData.taxes || '0'))
+      const preTaxDeductions = roundAmount(parseFloat(formData.preTaxDeductions || '0'))
+      const postTaxDeductions = roundAmount(parseFloat(formData.postTaxDeductions || '0'))
+      const netAmount = roundAmount(grossAmount - taxes - preTaxDeductions - postTaxDeductions)
 
       const method = editingId ? 'PATCH' : 'POST'
       const url = editingId ? `/api/income/${editingId}` : '/api/income'
