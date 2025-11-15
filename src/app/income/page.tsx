@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useState, useEffect, useCallback } from 'react'
-import { formatCurrency, roundAmount } from '@/lib/money'
+import { formatCurrency, roundAmount, parseAmount } from '@/lib/money'
 import { formatDate } from '@/lib/date'
 import { Plus, Trash2, TrendingUp, Edit2, Download } from 'lucide-react'
 import { useUser } from '@/lib/UserContext'
@@ -93,10 +93,10 @@ export default function IncomePage() {
     if (!currentHousehold) return
 
     try {
-      const grossAmount = roundAmount(parseFloat(formData.grossAmount))
-      const taxes = roundAmount(parseFloat(formData.taxes || '0'))
-      const preTaxDeductions = roundAmount(parseFloat(formData.preTaxDeductions || '0'))
-      const postTaxDeductions = roundAmount(parseFloat(formData.postTaxDeductions || '0'))
+      const grossAmount = roundAmount(parseAmount(formData.grossAmount))
+      const taxes = roundAmount(parseAmount(formData.taxes || '0'))
+      const preTaxDeductions = roundAmount(parseAmount(formData.preTaxDeductions || '0'))
+      const postTaxDeductions = roundAmount(parseAmount(formData.postTaxDeductions || '0'))
       const netAmount = roundAmount(grossAmount - taxes - preTaxDeductions - postTaxDeductions)
 
       const method = editingId ? 'PATCH' : 'POST'
@@ -439,8 +439,8 @@ export default function IncomePage() {
                   <Label htmlFor="grossAmount" className="dark:text-slate-100">Gross Amount (Pre-Tax)</Label>
                   <Input
                     id="grossAmount"
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     value={formData.grossAmount}
                     onChange={(e) => setFormData({ ...formData, grossAmount: e.target.value })}
                     placeholder="0.00"
@@ -454,8 +454,8 @@ export default function IncomePage() {
                     <Label htmlFor="taxes" className="dark:text-slate-100">Taxes</Label>
                     <Input
                       id="taxes"
-                      type="number"
-                      step="0.01"
+                      type="text"
+                      inputMode="decimal"
                       value={formData.taxes}
                       onChange={(e) => setFormData({ ...formData, taxes: e.target.value })}
                       placeholder="0.00"
@@ -467,8 +467,8 @@ export default function IncomePage() {
                     <Label htmlFor="preTaxDeductions" className="dark:text-slate-100">Pre-Tax Deductions</Label>
                     <Input
                       id="preTaxDeductions"
-                      type="number"
-                      step="0.01"
+                      type="text"
+                      inputMode="decimal"
                       value={formData.preTaxDeductions}
                       onChange={(e) => setFormData({ ...formData, preTaxDeductions: e.target.value })}
                       placeholder="0.00"
@@ -482,8 +482,8 @@ export default function IncomePage() {
                   <Label htmlFor="postTaxDeductions" className="dark:text-slate-100">Post-Tax Deductions</Label>
                   <Input
                     id="postTaxDeductions"
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     value={formData.postTaxDeductions}
                     onChange={(e) => setFormData({ ...formData, postTaxDeductions: e.target.value })}
                     placeholder="0.00"
