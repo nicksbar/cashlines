@@ -13,12 +13,17 @@ interface RecurringExpense {
   description: string
   amount: number
   accountId: string | null
+  personId?: string | null
   frequency: string
   dueDay: number | null
   nextDueDate: string
   isActive: boolean
   notes: string | null
   account?: {
+    id: string
+    name: string
+  }
+  person?: {
     id: string
     name: string
   }
@@ -132,7 +137,7 @@ export function QuickExpenseEntry({
       date: new Date().toISOString().split('T')[0],
       amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount,
       description: expense.description,
-      personId: (expense as any).personId || '',
+      personId: expense.personId || '',
       accountId: expense.accountId || '',
       method: 'cc',
       notes: expense.notes || '',
@@ -168,13 +173,21 @@ export function QuickExpenseEntry({
           accountId: formData.accountId,
           notes: formData.notes ? `${formData.notes}\n[From recurring: ${selectedExpense.description}]` : `[From recurring: ${selectedExpense.description}]`,
           tags: ['recurring'],
-          splits: [
-            {
-              type: 'need',
-              target: formData.accountId || 'Default',
-              percent: 100,
-            },
-          ],
+          splits: formData.accountId 
+            ? [
+                {
+                  type: 'need',
+                  target: formData.accountId,
+                  percent: 100,
+                },
+              ]
+            : [
+                {
+                  type: 'need',
+                  target: '',
+                  percent: 100,
+                },
+              ],
         }),
       })
 
