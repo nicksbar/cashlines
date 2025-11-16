@@ -318,6 +318,7 @@ export default function RecurringExpensesPage() {
                     step="0.01"
                     value={formData.amount || ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                    onBlur={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     required
                     className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
