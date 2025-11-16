@@ -7,11 +7,12 @@ import { Label } from '@/components/ui/label'
 import { useState, useEffect, useCallback } from 'react'
 import { formatCurrency, roundAmount } from '@/lib/money'
 import { formatDate } from '@/lib/date'
-import { Plus, Trash2, TrendingUp, Edit2, Download } from 'lucide-react'
+import { Plus, Trash2, TrendingUp, Edit2, Download, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useUser } from '@/lib/UserContext'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import { usePromptDialog } from '@/components/PromptDialog'
 import { TemplateSelector } from '@/components/TemplateSelector'
+import { extractErrorMessage } from '@/lib/utils'
 
 interface IncomeEntry {
   id: string
@@ -137,26 +138,35 @@ export default function IncomePage() {
           tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
         }),
       })
-      if (response.ok) {
-        setFormData({
-          date: new Date().toISOString().split('T')[0],
-          source: '',
-          accountId: '',
-          personId: '',
-          grossAmount: 0,
-          taxes: 0,
-          preTaxDeductions: 0,
-          postTaxDeductions: 0,
-          netAmount: 0,
-          notes: '',
-          tags: '',
-        })
-        setShowForm(false)
-        setEditingId(null)
-        fetchData()
+      if (!response.ok) {
+        const errorMessage = await extractErrorMessage(response)
+        setAlertMessage({ text: errorMessage, type: 'error' })
+        setTimeout(() => setAlertMessage(null), 5000)
+        return
       }
+
+      setFormData({
+        date: new Date().toISOString().split('T')[0],
+        source: '',
+        accountId: '',
+        personId: '',
+        grossAmount: 0,
+        taxes: 0,
+        preTaxDeductions: 0,
+        postTaxDeductions: 0,
+        netAmount: 0,
+        notes: '',
+        tags: '',
+      })
+      setShowForm(false)
+      setEditingId(null)
+      setAlertMessage({ text: editingId ? 'Income entry updated successfully' : 'Income entry created successfully', type: 'success' })
+      setTimeout(() => setAlertMessage(null), 3000)
+      fetchData()
     } catch (error) {
       console.error('Error creating income:', error)
+      setAlertMessage({ text: 'An unexpected error occurred. Please try again.', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     }
   }
 
@@ -223,14 +233,23 @@ export default function IncomePage() {
       isDestructive: true,
       onConfirm: async () => {
         try {
-          const response = await fetch(`/api/income/${id}`, { method: 'DELETE' })
-          if (response.ok) {
-            fetchData()
-            setAlertMessage({ text: 'Income entry deleted', type: 'success' })
-            setTimeout(() => setAlertMessage(null), 2000)
+          const response = await fetch(`/api/income/${id}`, { 
+            method: 'DELETE',
+            headers: { 'x-household-id': currentHousehold?.id || '' }
+          })
+          if (!response.ok) {
+            const errorMessage = await extractErrorMessage(response)
+            setAlertMessage({ text: errorMessage, type: 'error' })
+            setTimeout(() => setAlertMessage(null), 5000)
+            return
           }
+          fetchData()
+          setAlertMessage({ text: 'Income entry deleted successfully', type: 'success' })
+          setTimeout(() => setAlertMessage(null), 3000)
         } catch (error) {
           console.error('Error deleting income:', error)
+          setAlertMessage({ text: 'An unexpected error occurred while deleting.', type: 'error' })
+          setTimeout(() => setAlertMessage(null), 5000)
         }
       },
     })
@@ -327,6 +346,26 @@ export default function IncomePage() {
         <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Income</h1>
         <p className="text-slate-600 dark:text-slate-400 mt-2">Track income with full deduction breakdown</p>
       </div>
+
+      {alertMessage && (
+        <div className={`p-4 rounded-lg flex items-start gap-3 ${
+          alertMessage.type === 'success'
+            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900'
+            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900'
+        }`}>
+          {alertMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          )}
+          <p className={alertMessage.type === 'success'
+            ? 'text-green-800 dark:text-green-300'
+            : 'text-red-800 dark:text-red-300'
+          }>
+            {alertMessage.text}
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Summary</h2>

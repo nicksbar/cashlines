@@ -146,9 +146,17 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(income, { status: 201 })
   } catch (error) {
+    // Validation errors
+    if (error instanceof Error && error.message.includes('validation')) {
+      return NextResponse.json(
+        { error: 'Invalid income data. Please check your amounts.' },
+        { status: 400 }
+      )
+    }
+
     console.error('Error creating income:', error)
     return NextResponse.json(
-      { error: 'Failed to create income' },
+      { error: 'Failed to create income entry. Please try again.' },
       { status: 500 }
     )
   }

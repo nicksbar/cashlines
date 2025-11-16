@@ -108,6 +108,14 @@ export async function PATCH(
 
     return NextResponse.json(account)
   } catch (error) {
+    // Prisma unique constraint violation  
+    if (error instanceof Error && error.message.includes('Unique constraint failed')) {
+      return NextResponse.json(
+        { error: 'An account with this name already exists in your household. Please use a different name.' },
+        { status: 409 }
+      )
+    }
+    
     if (error instanceof Error && error.message.includes('not found')) {
       return NextResponse.json(
         { error: 'Account not found' },
@@ -116,7 +124,7 @@ export async function PATCH(
     }
     console.error('Error updating account:', error)
     return NextResponse.json(
-      { error: 'Failed to update account' },
+      { error: 'Failed to update account. Please try again.' },
       { status: 500 }
     )
   }

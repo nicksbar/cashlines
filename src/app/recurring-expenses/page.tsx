@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label'
 import { InfoTooltip } from '@/components/InfoTooltip'
 import { formatCurrency, roundAmount } from '@/lib/money'
 import { formatDateString } from '@/lib/date'
-import { Trash2, Plus, AlertCircle, Zap } from 'lucide-react'
+import { Trash2, Plus, AlertCircle, Zap, CheckCircle2 } from 'lucide-react'
 import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { useUser } from '@/lib/UserContext'
+import { extractErrorMessage } from '@/lib/utils'
 
 interface RecurringExpense {
   id: string
@@ -52,7 +53,7 @@ export default function RecurringExpensesPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [people, setPeople] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [alertMessage, setAlertMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [showQuickEntry, setShowQuickEntry] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -82,9 +83,9 @@ export default function RecurringExpensesPage() {
       if (!response.ok) throw new Error('Failed to fetch expenses')
       const data = await response.json()
       setExpenses(data)
-      setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setAlertMessage({ text: err instanceof Error ? err.message : 'Failed to load expenses', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     } finally {
       setLoading(false)
     }
@@ -184,8 +185,10 @@ export default function RecurringExpensesPage() {
           body: JSON.stringify(payload),
         })
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || 'Failed to update expense')
+          const errorMessage = await extractErrorMessage(response)
+          setAlertMessage({ text: errorMessage, type: 'error' })
+          setTimeout(() => setAlertMessage(null), 5000)
+          return
         }
       } else {
         // Create
@@ -198,14 +201,19 @@ export default function RecurringExpensesPage() {
           }),
         })
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || 'Failed to create expense')
+          const errorMessage = await extractErrorMessage(response)
+          setAlertMessage({ text: errorMessage, type: 'error' })
+          setTimeout(() => setAlertMessage(null), 5000)
+          return
         }
       }
       await fetchExpenses()
       resetForm()
+      setAlertMessage({ text: editingId ? 'Expense updated successfully' : 'Expense created successfully', type: 'success' })
+      setTimeout(() => setAlertMessage(null), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setAlertMessage({ text: err instanceof Error ? err.message : 'An error occurred. Please try again.', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     }
   }
 
@@ -221,8 +229,12 @@ export default function RecurringExpensesPage() {
       if (!response.ok) throw new Error('Failed to delete expense')
       await fetchExpenses()
       setDeleteConfirm(null)
+      setAlertMessage({ text: 'Expense deleted successfully', type: 'success' })
+      setTimeout(() => setAlertMessage(null), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while deleting.'
+      setAlertMessage({ text: errorMessage, type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     } finally {
       setIsDeleting(false)
     }
@@ -284,10 +296,23 @@ export default function RecurringExpensesPage() {
         </div>
       </div>
 
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-4 py-3 rounded flex gap-2">
-          <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-          <p>{error}</p>
+      {alertMessage && (
+        <div className={`p-4 rounded-lg flex items-start gap-3 ${
+          alertMessage.type === 'success'
+            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900'
+            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900'
+        }`}>
+          {alertMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          )}
+          <p className={alertMessage.type === 'success'
+            ? 'text-green-800 dark:text-green-300'
+            : 'text-red-800 dark:text-red-300'
+          }>
+            {alertMessage.text}
+          </p>
         </div>
       )}
 

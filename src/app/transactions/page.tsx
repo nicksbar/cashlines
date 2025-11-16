@@ -7,12 +7,13 @@ import { Label } from '@/components/ui/label'
 import { useState, useEffect, useCallback } from 'react'
 import { formatCurrency, roundAmount } from '@/lib/money'
 import { formatDate } from '@/lib/date'
-import { Plus, Trash2, Edit2, Download, Zap, CheckCircle, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, Edit2, Download, Zap, CheckCircle, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useUser } from '@/lib/UserContext'
 import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import { usePromptDialog } from '@/components/PromptDialog'
 import { TemplateSelector } from '@/components/TemplateSelector'
+import { extractErrorMessage } from '@/lib/utils'
 
 interface Split {
   id: string
@@ -150,25 +151,34 @@ export default function TransactionsPage() {
           splits: formData.splits.filter(s => s.target),
         }),
       })
-      if (response.ok) {
-        setFormData({
-          date: new Date().toISOString().split('T')[0],
-          amount: 0,
-          description: '',
-          method: 'cc',
-          accountId: '',
-          personId: '',
-          notes: '',
-          websiteUrl: '',
-          tags: '',
-          splits: [{ type: 'need', target: '', percent: 100 }],
-        })
-        setEditingId(null)
-        setShowForm(false)
-        fetchData()
+      if (!response.ok) {
+        const errorMessage = await extractErrorMessage(response)
+        setAlertMessage({ text: errorMessage, type: 'error' })
+        setTimeout(() => setAlertMessage(null), 5000)
+        return
       }
+
+      setFormData({
+        date: new Date().toISOString().split('T')[0],
+        amount: 0,
+        description: '',
+        method: 'cc',
+        accountId: '',
+        personId: '',
+        notes: '',
+        websiteUrl: '',
+        tags: '',
+        splits: [{ type: 'need', target: '', percent: 100 }],
+      })
+      setEditingId(null)
+      setShowForm(false)
+      setAlertMessage({ text: editingId ? 'Transaction updated successfully' : 'Transaction created successfully', type: 'success' })
+      setTimeout(() => setAlertMessage(null), 3000)
+      fetchData()
     } catch (error) {
       console.error('Error saving transaction:', error)
+      setAlertMessage({ text: 'An unexpected error occurred. Please try again.', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     }
   }
 
@@ -235,14 +245,23 @@ export default function TransactionsPage() {
       isDestructive: true,
       onConfirm: async () => {
         try {
-          const response = await fetch(`/api/transactions/${id}`, { method: 'DELETE' })
-          if (response.ok) {
-            fetchData()
-            setAlertMessage({ text: 'Transaction deleted', type: 'success' })
-            setTimeout(() => setAlertMessage(null), 2000)
+          const response = await fetch(`/api/transactions/${id}`, { 
+            method: 'DELETE',
+            headers: { 'x-household-id': currentHousehold?.id || '' }
+          })
+          if (!response.ok) {
+            const errorMessage = await extractErrorMessage(response)
+            setAlertMessage({ text: errorMessage, type: 'error' })
+            setTimeout(() => setAlertMessage(null), 5000)
+            return
           }
+          fetchData()
+          setAlertMessage({ text: 'Transaction deleted successfully', type: 'success' })
+          setTimeout(() => setAlertMessage(null), 3000)
         } catch (error) {
           console.error('Error deleting transaction:', error)
+          setAlertMessage({ text: 'An unexpected error occurred while deleting.', type: 'error' })
+          setTimeout(() => setAlertMessage(null), 5000)
         }
       },
     })
