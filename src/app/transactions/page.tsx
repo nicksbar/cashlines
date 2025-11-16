@@ -132,6 +132,20 @@ export default function TransactionsPage() {
     e.preventDefault()
     if (!currentHousehold) return
 
+    // Validate account selection
+    if (!formData.accountId) {
+      setAlertMessage({ text: 'Please select an account', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
+      return
+    }
+
+    // Validate amount
+    if (formData.amount <= 0) {
+      setAlertMessage({ text: 'Amount must be greater than $0', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
+      return
+    }
+
     try {
       const url = editingId ? `/api/transactions/${editingId}` : '/api/transactions'
       const method = editingId ? 'PATCH' : 'POST'
@@ -535,20 +549,25 @@ export default function TransactionsPage() {
                 </div>
                 <div>
                   <Label htmlFor="accountId">Account</Label>
-                  <select
-                    id="accountId"
-                    value={formData.accountId}
-                    onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Select account...</option>
-                    {getFilteredAccounts(formData.method).map((acc) => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name}
-                      </option>
-                    ))}
-                  </select>
+                  {getFilteredAccounts(formData.method).length === 0 ? (
+                    <div className="w-full px-3 py-2 border border-red-300 dark:border-red-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm">
+                      No {formData.method === 'cash' ? 'cash' : formData.method === 'cc' ? 'credit card' : 'checking/savings'} accounts available. Create one first.
+                    </div>
+                  ) : (
+                    <select
+                      id="accountId"
+                      value={formData.accountId}
+                      onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select account...</option>
+                      {getFilteredAccounts(formData.method).map((acc) => (
+                        <option key={acc.id} value={acc.id}>
+                          {acc.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
 
