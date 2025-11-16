@@ -360,7 +360,7 @@ export default function TransactionsPage() {
             body: JSON.stringify({
               name: templateName,
               description: formData.description,
-              amount: formData.amount,
+              amount: roundAmount(formData.amount),
               method: formData.method,
               accountId: formData.accountId,
               notes: formData.notes,
