@@ -86,7 +86,7 @@ export default function IncomePage() {
     if (currentHousehold) {
       fetchData()
     }
-  }, [currentHousehold, fetchData])
+  }, [currentHousehold])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

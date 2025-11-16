@@ -111,7 +111,7 @@ export default function TransactionsPage() {
     if (currentHousehold) {
       fetchData()
     }
-  }, [currentHousehold, fetchData])
+  }, [currentHousehold])
 
   const getFilteredAccounts = (method: string) => {
     const methodToTypeMap: { [key: string]: string[] } = {

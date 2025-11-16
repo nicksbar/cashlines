@@ -126,7 +126,7 @@ export default function RecurringExpensesPage() {
       fetchAccounts()
       fetchPeople()
     }
-  }, [currentHousehold, fetchExpenses, fetchAccounts, fetchPeople])
+  }, [currentHousehold])
 
   function resetForm() {
     setFormData({

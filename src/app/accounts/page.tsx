@@ -105,7 +105,7 @@ export default function AccountsPage() {
     if (currentHousehold) {
       fetchData()
     }
-  }, [currentHousehold, fetchData])
+  }, [currentHousehold])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

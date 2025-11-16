@@ -70,7 +70,7 @@ export default function TemplatesPage() {
     if (currentHousehold) {
       fetchTemplates()
     }
-  }, [currentHousehold, fetchTemplates])
+  }, [currentHousehold])
 
   const handleDelete = async (id: string, type: string) => {
     confirm({

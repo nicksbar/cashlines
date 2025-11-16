@@ -58,7 +58,7 @@ export default function SettingsPage() {
     if (currentHousehold) {
       fetchSettings()
     }
-  }, [currentHousehold, fetchSettings])
+  }, [currentHousehold])
 
   const handleSave = async () => {
     if (!currentHousehold || !settings) return
