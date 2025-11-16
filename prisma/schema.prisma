@@ -288,6 +288,7 @@ model Template {
   // Shared template data (JSON strings for flexibility)
   tags        String?       // JSON: ["tag1", "tag2"]
   notes       String?       // Additional notes
+  splits      String?       // JSON: [{ type: "need", target: "...", percent: 100 }]
   
   // Template metadata
   isFavorite  Boolean @default(false)

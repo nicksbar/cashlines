@@ -221,6 +221,26 @@ export default function TransactionsPage() {
   }
 
   const handleTemplateSelect = (template: any) => {
+    // Parse splits from template if they exist, otherwise default to need with account
+    let splits = [{ type: 'need', target: '', percent: 100 }]
+    if (template.splits) {
+      try {
+        const parsedSplits = typeof template.splits === 'string' 
+          ? JSON.parse(template.splits) 
+          : template.splits
+        if (Array.isArray(parsedSplits) && parsedSplits.length > 0) {
+          splits = parsedSplits.map((s: any) => ({
+            type: s.type || 'need',
+            target: s.target || '',
+            percent: s.percent || 100,
+          }))
+        }
+      } catch (e) {
+        // If parsing fails, use default
+        splits = [{ type: 'need', target: '', percent: 100 }]
+      }
+    }
+
     setFormData({
       date: new Date().toISOString().split('T')[0],
       amount: template.amount ? parseFloat(template.amount) : 0,
@@ -231,7 +251,7 @@ export default function TransactionsPage() {
       notes: template.description || '',
       websiteUrl: template.websiteUrl || '',
       tags: '',
-      splits: [{ type: 'need', target: template.accountId || 'Default', percent: 100 }],
+      splits,
     })
     setShowForm(true)
   }
@@ -384,6 +404,7 @@ export default function TransactionsPage() {
               accountId: formData.accountId,
               notes: formData.notes,
               tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+              splits: formData.splits.filter(s => s.target),
             }),
           })
 
