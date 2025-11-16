@@ -450,7 +450,6 @@ export default function IncomePage() {
                     step="0.01"
                     value={formData.grossAmount || ''}
                     onChange={(e) => setFormData({ ...formData, grossAmount: parseFloat(e.target.value) || 0 })}
-                    onBlur={(e) => setFormData({ ...formData, grossAmount: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     required
@@ -466,7 +465,6 @@ export default function IncomePage() {
                       step="0.01"
                       value={formData.taxes || ''}
                       onChange={(e) => setFormData({ ...formData, taxes: parseFloat(e.target.value) || 0 })}
-                      onBlur={(e) => setFormData({ ...formData, taxes: parseFloat(e.target.value) || 0 })}
                       placeholder="0.00"
                       className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     />
@@ -480,7 +478,6 @@ export default function IncomePage() {
                       step="0.01"
                       value={formData.preTaxDeductions || ''}
                       onChange={(e) => setFormData({ ...formData, preTaxDeductions: parseFloat(e.target.value) || 0 })}
-                      onBlur={(e) => setFormData({ ...formData, preTaxDeductions: parseFloat(e.target.value) || 0 })}
                       placeholder="0.00"
                       className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     />
@@ -496,7 +493,6 @@ export default function IncomePage() {
                     step="0.01"
                     value={formData.postTaxDeductions || ''}
                     onChange={(e) => setFormData({ ...formData, postTaxDeductions: parseFloat(e.target.value) || 0 })}
-                    onBlur={(e) => setFormData({ ...formData, postTaxDeductions: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                   />

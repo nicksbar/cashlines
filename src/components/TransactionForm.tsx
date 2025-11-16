@@ -153,7 +153,6 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
               step="0.01"
               value={formData.amount || ''}
               onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-              onBlur={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
               required
               className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />

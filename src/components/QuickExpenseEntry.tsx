@@ -314,7 +314,6 @@ export function QuickExpenseEntry({
                     step="0.01"
                     value={formData.amount || ''}
                     onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-                    onBlur={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
               </div>
