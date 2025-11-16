@@ -49,6 +49,7 @@ model Person {
   incomes            Income[]
   transactions       Transaction[]
   recurringExpenses  RecurringExpense[]
+  templates          Template[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -261,6 +262,9 @@ model Template {
   
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  personId String?
+  person   Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
   
   // Basic info
   name        String

@@ -100,6 +100,13 @@ export default function IncomePage() {
       const postTaxDeductions = roundAmount(formData.postTaxDeductions)
       const netAmount = roundAmount(grossAmount - taxes - preTaxDeductions - postTaxDeductions)
 
+      // Validate: gross amount must be positive
+      if (grossAmount <= 0) {
+        setAlertMessage({ text: 'Gross amount must be greater than $0', type: 'error' })
+        setTimeout(() => setAlertMessage(null), 3000)
+        return
+      }
+
       // Validate math: net amount should always be positive
       if (netAmount < 0) {
         setAlertMessage({ text: 'Net amount cannot be negative. Check your deductions.', type: 'error' })
@@ -283,6 +290,7 @@ export default function IncomePage() {
               name: templateName,
               description: formData.source,
               accountId: formData.accountId,
+              personId: formData.personId || null,
               grossAmount: roundAmount(formData.grossAmount),
               federalTaxes: roundAmount(formData.taxes || 0),
               stateTaxes: 0,
