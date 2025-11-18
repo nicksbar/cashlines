@@ -12,6 +12,7 @@ import { useUser } from '@/lib/UserContext'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import { usePromptDialog } from '@/components/PromptDialog'
 import { TemplateSelector } from '@/components/TemplateSelector'
+import { FilterableTable } from '@/components/FilterableTable'
 import { extractErrorMessage } from '@/lib/utils'
 
 interface IncomeEntry {
@@ -615,88 +616,146 @@ export default function IncomePage() {
           <CardTitle className="text-slate-900 dark:text-slate-100">Income Entries</CardTitle>
           <CardDescription className="text-slate-600 dark:text-slate-400">{income.length} entries</CardDescription>
         </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-slate-500 dark:text-slate-400">Loading...</p>
-          ) : income.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-                    <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Date</th>
-                    <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Source</th>
-                    <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Person</th>
-                    <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Account</th>
-                    <th className="text-right py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Gross</th>
-                    <th className="text-right py-3 px-2 font-semibold text-red-600 dark:text-red-400">Taxes</th>
-                    <th className="text-right py-3 px-2 font-semibold text-orange-600 dark:text-orange-400">Deductions</th>
-                    <th className="text-right py-3 px-2 font-semibold text-green-600 dark:text-green-400">Net</th>
-                    <th className="text-right py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Ratio</th>
-                    <th className="text-center py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {income.map((entry) => {
-                    const deductions = entry.preTaxDeductions + entry.postTaxDeductions
-                    const ratio = entry.grossAmount > 0 ? ((entry.netAmount / entry.grossAmount) * 100) : 0
-                    return (
-                      <tr key={entry.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                        <td className="py-3 px-2 text-slate-900 dark:text-slate-100">{formatDate(entry.date)}</td>
-                        <td className="py-3 px-2 font-medium text-slate-900 dark:text-slate-100">{entry.source}</td>
-                        <td className="py-3 px-2">
-                          {entry.person ? (
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: entry.person.color || '#4ECDC4' }}
-                              />
-                              <span className="text-slate-900 dark:text-slate-100">{entry.person.name}</span>
-                            </div>
-                          ) : (
-                            <span className="text-slate-500 dark:text-slate-400 text-sm">—</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-2 text-slate-600 dark:text-slate-400">{entry.account.name}</td>
-                        <td className="py-3 px-2 text-right font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(entry.grossAmount)}</td>
-                        <td className="py-3 px-2 text-right text-red-600 dark:text-red-400">{formatCurrency(entry.taxes)}</td>
-                        <td className="py-3 px-2 text-right text-orange-600 dark:text-orange-400">{formatCurrency(deductions)}</td>
-                        <td className="py-3 px-2 text-right font-semibold text-green-600 dark:text-green-400">{formatCurrency(entry.netAmount)}</td>
-                        <td className="py-3 px-2 text-right text-slate-600 dark:text-slate-400 font-mono text-xs">{ratio.toFixed(1)}%</td>
-                        <td className="py-3 px-2 text-center">
-                          <div className="flex gap-1 justify-center">
-                            <button
-                              onClick={() => handleEdit(entry)}
-                              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                              title="Edit"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(entry.id)}
-                              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                  <tr className="bg-slate-100 dark:bg-slate-800 font-bold border-t-2 border-slate-300 dark:border-slate-700">
-                    <td colSpan={3} className="py-3 px-2 text-slate-900 dark:text-slate-100">TOTAL</td>
-                    <td className="py-3 px-2 text-right text-slate-900 dark:text-slate-100">{formatCurrency(totalGross)}</td>
-                    <td className="py-3 px-2 text-right text-red-600 dark:text-red-400">{formatCurrency(totalTaxes)}</td>
-                    <td className="py-3 px-2 text-right text-orange-600 dark:text-orange-400">{formatCurrency(totalPreTaxDed + totalPostTaxDed)}</td>
-                    <td className="py-3 px-2 text-right text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</td>
-                    <td className="py-3 px-2 text-right text-slate-900 dark:text-slate-100">{keepRatio.toFixed(1)}%</td>
-                    <td></td>
-                  </tr>
-                </tbody>
-              </table>
+        <CardContent className="space-y-4">
+          <FilterableTable
+            data={income}
+            loading={loading}
+            emptyMessage="No income entries yet. Create one to get started!"
+            filters={[
+              {
+                key: 'source',
+                label: 'Source',
+                type: 'text',
+                placeholder: 'Filter by source...',
+              },
+              {
+                key: 'personId',
+                label: 'Person',
+                type: 'select',
+                options: people.map((p) => ({ value: p.id, label: p.name })),
+              },
+              {
+                key: 'accountId',
+                label: 'Account',
+                type: 'select',
+                options: accounts.map((acc) => ({ value: acc.id, label: acc.name })),
+              },
+            ]}
+            columns={[
+              {
+                key: 'date',
+                label: 'Date',
+                sortable: true,
+                render: (value) => formatDate(value),
+              },
+              {
+                key: 'source',
+                label: 'Source',
+                sortable: true,
+                filterable: true,
+              },
+              {
+                key: 'personId',
+                label: 'Person',
+                sortable: true,
+                render: (_, row) =>
+                  row.person ? (
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: row.person.color || '#4ECDC4' }}
+                      />
+                      <span>{row.person.name}</span>
+                    </div>
+                  ) : (
+                    '—'
+                  ),
+              },
+              {
+                key: 'accountId',
+                label: 'Account',
+                sortable: true,
+                render: (_, row) => row.account?.name || '—',
+              },
+              {
+                key: 'grossAmount',
+                label: 'Gross',
+                align: 'right',
+                sortable: true,
+                render: (value) => <span className="font-semibold">{formatCurrency(value)}</span>,
+              },
+              {
+                key: 'taxes',
+                label: 'Taxes',
+                align: 'right',
+                sortable: true,
+                render: (value) => <span className="text-red-600 dark:text-red-400">{formatCurrency(value)}</span>,
+              },
+              {
+                key: 'preTaxDeductions',
+                label: 'Pre-Tax Ded.',
+                align: 'right',
+                sortable: true,
+                render: (value, row) => {
+                  const deductions = value + (row.postTaxDeductions || 0)
+                  return <span className="text-orange-600 dark:text-orange-400">{formatCurrency(deductions)}</span>
+                },
+              },
+              {
+                key: 'netAmount',
+                label: 'Net',
+                align: 'right',
+                sortable: true,
+                render: (value) => <span className="text-green-600 dark:text-green-400 font-semibold">{formatCurrency(value)}</span>,
+              },
+              {
+                key: 'grossAmount',
+                label: 'Ratio',
+                align: 'right',
+                sortable: false,
+                render: (_, row) => {
+                  const ratio = row.grossAmount > 0 ? ((row.netAmount / row.grossAmount) * 100) : 0
+                  return <span className="font-mono text-xs text-slate-600 dark:text-slate-400">{ratio.toFixed(1)}%</span>
+                },
+              },
+              {
+                key: 'id',
+                label: 'Actions',
+                align: 'center',
+                render: (value, row) => (
+                  <div className="flex gap-1 justify-center">
+                    <button
+                      onClick={() => handleEdit(row)}
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                      title="Edit"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(value)}
+                      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+          />
+
+          {/* Summary Row */}
+          {income.length > 0 && (
+            <div className="mt-4 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="grid grid-cols-6 gap-4 font-bold text-sm">
+                <div className="text-slate-900 dark:text-slate-100">TOTALS:</div>
+                <div className="text-right text-slate-900 dark:text-slate-100">{formatCurrency(totalGross)}</div>
+                <div className="text-right text-red-600 dark:text-red-400">{formatCurrency(totalTaxes)}</div>
+                <div className="text-right text-orange-600 dark:text-orange-400">{formatCurrency(totalPreTaxDed + totalPostTaxDed)}</div>
+                <div className="text-right text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</div>
+                <div className="text-right text-slate-900 dark:text-slate-100">{keepRatio.toFixed(1)}%</div>
+              </div>
             </div>
-          ) : (
-            <p className="text-slate-500 dark:text-slate-400">No income entries yet. Create one to get started!</p>
           )}
         </CardContent>
       </Card>

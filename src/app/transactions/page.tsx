@@ -13,6 +13,7 @@ import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import { usePromptDialog } from '@/components/PromptDialog'
 import { TemplateSelector } from '@/components/TemplateSelector'
+import { FilterableTable } from '@/components/FilterableTable'
 import { extractErrorMessage } from '@/lib/utils'
 
 interface Split {
@@ -708,87 +709,129 @@ export default function TransactionsPage() {
           <CardDescription className="text-slate-600 dark:text-slate-400">{transactions.length} entries</CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <p className="text-slate-500 dark:text-slate-400">Loading...</p>
-          ) : transactions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Date</th>
-                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Description</th>
-                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Method</th>
-                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Account</th>
-                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Person</th>
-                    <th className="text-right py-2 px-2 text-slate-900 dark:text-slate-100">Amount</th>
-                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Routing</th>
-                    <th className="text-center py-2 px-2 text-slate-900 dark:text-slate-100">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((tx) => (
-                    <tr key={tx.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                      <td className="py-3 px-2 text-slate-900 dark:text-slate-100">{formatDate(tx.date)}</td>
-                      <td className="py-3 px-2 font-medium text-slate-900 dark:text-slate-100">{tx.description}</td>
-                      <td className="py-3 px-2 text-slate-600 dark:text-slate-400">{METHOD_LABELS[tx.method]}</td>
-                      <td className="py-3 px-2 text-slate-600 dark:text-slate-400">{tx.account.name}</td>
-                      <td className="py-3 px-2">
-                        {tx.person ? (
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: tx.person.color || '#4ECDC4' }}
-                            />
-                            <span className="text-slate-900 dark:text-slate-100">{tx.person.name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-500 dark:text-slate-400 text-sm">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-2 text-right font-semibold text-red-600 dark:text-red-400">
-                        {formatCurrency(tx.amount)}
-                      </td>
-                      <td className="py-3 px-2">
-                        <div className="space-y-1">
-                          {tx.splits.map((split) => (
-                            <div key={split.id} className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
-                              <span className="font-medium">{split.type}</span>: {split.target}{' '}
-                              {split.percent && `(${split.percent}%)`}
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="py-3 px-2 text-center space-x-2 flex justify-center">
-                        <button
-                          onClick={() => handleEdit(tx)}
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                          title="Edit transaction"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => openConvertModal(tx)}
-                          className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
-                          title="Convert to recurring"
-                        >
-                          <Zap className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(tx.id)}
-                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                          title="Delete transaction"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-slate-500 dark:text-slate-400">No transactions yet. Create one to get started!</p>
-          )}
+          <FilterableTable
+            data={transactions}
+            loading={loading}
+            emptyMessage="No transactions yet. Create one to get started!"
+            filters={[
+              {
+                key: 'method',
+                label: 'Payment Method',
+                type: 'select',
+                options: [
+                  { value: 'cc', label: 'Credit Card' },
+                  { value: 'cash', label: 'Cash' },
+                  { value: 'ach', label: 'ACH' },
+                  { value: 'other', label: 'Other' },
+                ],
+              },
+              {
+                key: 'accountId',
+                label: 'Account',
+                type: 'select',
+                options: accounts.map((acc) => ({ value: acc.id, label: acc.name })),
+              },
+              {
+                key: 'personId',
+                label: 'Person',
+                type: 'select',
+                options: people.map((p) => ({ value: p.id, label: p.name })),
+              },
+            ]}
+            columns={[
+              {
+                key: 'date',
+                label: 'Date',
+                sortable: true,
+                render: (value) => formatDate(value),
+              },
+              {
+                key: 'description',
+                label: 'Description',
+                sortable: true,
+                filterable: true,
+              },
+              {
+                key: 'method',
+                label: 'Method',
+                sortable: true,
+                render: (value) => METHOD_LABELS[value] || value,
+              },
+              {
+                key: 'accountId',
+                label: 'Account',
+                sortable: true,
+                render: (_, row) => row.account?.name || '—',
+              },
+              {
+                key: 'personId',
+                label: 'Person',
+                sortable: true,
+                render: (value, row) =>
+                  row.person ? (
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: row.person.color || '#4ECDC4' }}
+                      />
+                      <span>{row.person.name}</span>
+                    </div>
+                  ) : (
+                    '—'
+                  ),
+              },
+              {
+                key: 'amount',
+                label: 'Amount',
+                align: 'right',
+                sortable: true,
+                render: (value) => <span className="text-red-600 dark:text-red-400 font-semibold">{formatCurrency(value)}</span>,
+              },
+              {
+                key: 'splits',
+                label: 'Routing',
+                render: (_, row) => (
+                  <div className="space-y-1">
+                    {row.splits.map((split: any) => (
+                      <div key={split.id} className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
+                        <span className="font-medium">{split.type}</span>: {split.target} {split.percent && `(${split.percent}%)`}
+                      </div>
+                    ))}
+                  </div>
+                ),
+              },
+              {
+                key: 'id',
+                label: 'Actions',
+                align: 'center',
+                render: (value, row) => (
+                  <div className="space-x-2 flex justify-center">
+                    <button
+                      onClick={() => handleEdit(row)}
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                      title="Edit transaction"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => openConvertModal(row)}
+                      className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                      title="Convert to recurring"
+                    >
+                      <Zap className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(value)}
+                      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                      title="Delete transaction"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+          />
         </CardContent>
       </Card>
 
