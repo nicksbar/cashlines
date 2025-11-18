@@ -254,6 +254,7 @@ export const recurringExpenseSchema = z.object({
   dueDay: z.number().min(1).max(31).optional().nullable(), // Day of month for monthly expenses
   notes: z.string().optional(),
   websiteUrl: z.union([z.literal(''), z.string().url('Invalid URL')]).optional().nullable(),
+  splits: z.string().optional().nullable(), // JSON: [{type: "need", target: "...", percent: 100}]
 })
 
 export const recurringExpenseUpdateSchema = z.object({
@@ -266,6 +267,7 @@ export const recurringExpenseUpdateSchema = z.object({
   isActive: z.boolean().optional(),
   notes: z.string().optional(),
   websiteUrl: z.union([z.literal(''), z.string().url('Invalid URL')]).optional().nullable(),
+  splits: z.string().optional().nullable(), // JSON: [{type: "need", target: "...", percent: 100}]
 })
 
 export type RecurringExpenseCreate = z.infer<typeof recurringExpenseSchema>

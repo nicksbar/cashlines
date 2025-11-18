@@ -19,6 +19,7 @@ interface RecurringExpense {
   nextDueDate: string
   isActive: boolean
   notes: string | null
+  splits?: string | null // JSON: [{type: "need", target: "...", percent: 100}]
   account?: {
     id: string
     name: string
@@ -161,6 +162,24 @@ export function QuickExpenseEntry({
         headers['x-household-id'] = householdId
       }
 
+      // Parse splits from recurring expense, fallback to need/accountId
+      let splitsArray = []
+      if (selectedExpense.splits) {
+        try {
+          splitsArray = JSON.parse(selectedExpense.splits)
+        } catch (e) {
+          // If splits can't be parsed, use default
+          splitsArray = formData.accountId 
+            ? [{ type: 'need', target: formData.accountId, percent: 100 }]
+            : [{ type: 'need', target: '', percent: 100 }]
+        }
+      } else {
+        // No splits configured, use default
+        splitsArray = formData.accountId 
+          ? [{ type: 'need', target: formData.accountId, percent: 100 }]
+          : [{ type: 'need', target: '', percent: 100 }]
+      }
+
       const response = await fetch('/api/transactions', {
         method: 'POST',
         headers,
@@ -173,21 +192,7 @@ export function QuickExpenseEntry({
           accountId: formData.accountId,
           notes: formData.notes ? `${formData.notes}\n[From recurring: ${selectedExpense.description}]` : `[From recurring: ${selectedExpense.description}]`,
           tags: ['recurring'],
-          splits: formData.accountId 
-            ? [
-                {
-                  type: 'need',
-                  target: formData.accountId,
-                  percent: 100,
-                },
-              ]
-            : [
-                {
-                  type: 'need',
-                  target: '',
-                  percent: 100,
-                },
-              ],
+          splits: splitsArray,
         }),
       })
 

@@ -359,6 +359,7 @@ model RecurringExpense {
   isActive       Boolean @default(true)
   notes          String?
   websiteUrl     String?  // Link to bill payment or vendor website
+  splits         String?  // JSON: [{type: "need", target: "...", percent: 100}] - split configuration for this recurring expense
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
