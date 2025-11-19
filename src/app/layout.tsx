@@ -6,6 +6,7 @@ import { ThemeProviderWrapper } from '@/components/ThemeProvider'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { UserProvider } from '@/lib/UserContext'
 import { HouseholdSelector } from '@/components/HouseholdSelector'
+import { Navigation } from '@/components/Navigation'
 
 export const metadata: Metadata = {
   title: "Cashlines - Money Tracking",
@@ -24,28 +25,15 @@ export default function RootLayout({
           <UserProvider>
             <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 transition-colors">
               {/* Header / Navigation */}
-              <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+              <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="flex justify-between items-center h-16">
-                    <Link href="/" className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                    <Link href="/" className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex-shrink-0">
                       💰 Cashlines
                     </Link>
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2 sm:gap-4">
                       <HouseholdSelector />
-                      <nav className="flex gap-6">
-                        <NavLink href="/">Dashboard</NavLink>
-                        <NavLink href="/people">People</NavLink>
-                        <NavLink href="/accounts">Accounts</NavLink>
-                        <NavLink href="/income">Income</NavLink>
-                        <NavLink href="/transactions">Expenses</NavLink>
-                        <NavLink href="/routes">Routes</NavLink>
-                        <NavLink href="/rules">Rules</NavLink>
-                        <NavLink href="/insights">Insights</NavLink>
-                        <NavLink href="/templates">Templates</NavLink>
-                        <NavLink href="/import">Import</NavLink>
-                        <NavLink href="/settings">Settings</NavLink>
-                        <NavLink href="/data-management">Data</NavLink>
-                      </nav>
+                      <Navigation />
                       <ThemeToggle />
                     </div>
                   </div>
@@ -78,16 +66,5 @@ export default function RootLayout({
         </ThemeProviderWrapper>
       </body>
     </html>
-  )
-}
-
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-    >
-      {children}
-    </Link>
   )
 }

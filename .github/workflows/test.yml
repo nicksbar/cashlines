@@ -1,4 +1,4 @@
-name: CI
+name: 'CI: Lint, Test & Build'
 
 on:
   push:
@@ -6,13 +6,33 @@ on:
   pull_request:
     branches: [main, development]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: Lint, Test, and Build
     runs-on: ubuntu-latest
     
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cashlines
+          POSTGRES_PASSWORD: cashlines_secure_password
+          POSTGRES_DB: cashlines
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
     env:
-      DATABASE_URL: "file:./prisma/dev.db"
+      DATABASE_URL: "postgresql://cashlines:cashlines_secure_password@localhost:5432/cashlines?schema=public"
+      NODE_ENV: "test"
 
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +46,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate Prisma schema
+        run: DATABASE_URL="postgresql://cashlines:cashlines_secure_password@localhost:5432/cashlines?schema=public" npx prisma validate
+
       - name: Initialize database schema
         run: npx prisma db push --skip-generate
 
@@ -35,8 +58,20 @@ jobs:
       - name: Run linter
         run: npm run lint
 
+      - name: Check TypeScript
+        run: npx tsc --noEmit
+
       - name: Run tests
         run: npm test -- --coverage
+
+      - name: Check coverage thresholds
+        run: |
+          if npm test -- --coverage --passWithNoTests 2>&1 | grep -q "Coverage thresholds were not met"; then
+            echo "❌ Coverage thresholds not met"
+            exit 1
+          else
+            echo "✅ Coverage thresholds met"
+          fi
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -44,6 +79,37 @@ jobs:
           files: ./coverage/coverage-final.json
           flags: unittests
           name: codecov-umbrella
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright browsers and dependencies
+        run: |
+          npx playwright install --with-deps chromium firefox webkit
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload E2E test results (trace)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 30
 
       - name: Build Next.js production bundle
         run: npm run build
@@ -57,33 +123,21 @@ jobs:
           echo "✅ Next.js build verified"
 
   docker:
-    name: Build Docker Image
+    name: Build and Test Docker Image
     runs-on: ubuntu-latest
     needs: validate
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-    
-    env:
-      DATABASE_URL: "file:./prisma/dev.db"
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development')
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate Prisma client
-        run: npx prisma generate
-
       - name: Build Docker image
-        run: docker build -t cashlines:latest .
+        run: docker build -t cashlines:ci --target runner .
 
       - name: Verify Docker image
         run: |
-          docker run --rm cashlines:latest node --version
+          docker run --rm cashlines:ci node --version
           echo "✅ Docker image built successfully"
+
+      - name: Validate docker-compose.yml
+        run: docker-compose config > /dev/null && echo "✅ docker-compose.yml is valid"

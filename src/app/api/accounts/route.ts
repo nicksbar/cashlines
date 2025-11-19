@@ -108,15 +108,25 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(account, { status: 201 })
   } catch (error) {
-    if (error instanceof Error && error.message.includes('unique constraint')) {
+    // Prisma unique constraint violation
+    if (error instanceof Error && error.message.includes('Unique constraint failed')) {
       return NextResponse.json(
-        { error: 'Account with this name already exists' },
+        { error: 'An account with this name already exists in your household. Please use a different name.' },
+        { status: 409 }
+      )
+    }
+    
+    // Validation errors from Zod
+    if (error instanceof Error && error.message.includes('validation')) {
+      return NextResponse.json(
+        { error: 'Invalid account data. Please check your input.' },
         { status: 400 }
       )
     }
+    
     console.error('Error creating account:', error)
     return NextResponse.json(
-      { error: 'Failed to create account' },
+      { error: 'Failed to create account. Please try again.' },
       { status: 500 }
     )
   }

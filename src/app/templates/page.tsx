@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { formatCurrency } from '@/lib/money'
 import { Trash2, Star } from 'lucide-react'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
@@ -37,13 +37,7 @@ export default function TemplatesPage() {
   const [filter, setFilter] = useState<'all' | 'transaction' | 'income'>('all')
   const [sortBy, setSortBy] = useState<'usage' | 'favorites' | 'recent'>('usage')
 
-  useEffect(() => {
-    if (currentHousehold) {
-      fetchTemplates()
-    }
-  }, [currentHousehold])
-
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     if (!currentHousehold) return
     
     try {
@@ -70,7 +64,13 @@ export default function TemplatesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentHousehold])
+
+  useEffect(() => {
+    if (currentHousehold) {
+      fetchTemplates()
+    }
+  }, [currentHousehold])
 
   const handleDelete = async (id: string, type: string) => {
     confirm({
@@ -266,10 +266,10 @@ export default function TemplatesPage() {
           <CardTitle className="text-base text-blue-900 dark:text-blue-100">💡 Template Tips</CardTitle>
         </CardHeader>
         <CardContent className="text-sm space-y-2 text-blue-900 dark:text-blue-100">
-          <p>• <strong>Save as Template:</strong> Create an entry, click &quot;Save as Template&quot;, and give it a name</p>
+          <p>• <strong>Save as Template:</strong> Create an entry, click &ldquo;Save as Template&rdquo;, and give it a name</p>
           <p>• <strong>Use Templates:</strong> When creating a new entry, select a template to pre-fill the form</p>
           <p>• <strong>Mark Favorites:</strong> Star your most-used templates for quick access at the top</p>
-          <p>• <strong>Track Usage:</strong> Templates show how many times they&apos;ve been used</p>
+          <p>• <strong>Track Usage:</strong> Templates show how many times they&#39;ve been used</p>
           <p>• <strong>Organize:</strong> Sort by usage, favorites, or creation date</p>
         </CardContent>
       </Card>

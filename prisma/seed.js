@@ -1,6 +1,8 @@
 /**
  * Seed script for demo data
  * Run with: node prisma/seed.js
+ * 
+ * Only seeds if database is empty. Safe to run multiple times.
  */
 
 const { PrismaClient } = require('@prisma/client')
@@ -8,6 +10,13 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
 async function main() {
+  // Check if database already has users
+  const userCount = await prisma.user.count()
+  if (userCount > 0) {
+    console.log(`✓ Database already has ${userCount} user(s). Skipping seed.`)
+    return
+  }
+
   console.log('Seeding database...')
 
   // Create a demo user

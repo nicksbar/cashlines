@@ -13,15 +13,15 @@ RUN npm ci
 FROM base AS builder
 RUN apk add --no-cache libc6-compat openssl openssl-dev
 WORKDIR /app
-ENV DATABASE_URL="file:./prisma/dev.db"
+ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/cashlines"
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Build Next.js
-RUN npm run build
+# Build Next.js (skip prisma db push - will run at runtime via entrypoint)
+RUN npx next build
 
 # Production image, copy all the files and run next
 FROM base AS runner
@@ -31,7 +31,7 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-RUN apk add --no-cache libc6-compat openssl dumb-init
+RUN apk add --no-cache libc6-compat openssl dumb-init netcat-openbsd
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

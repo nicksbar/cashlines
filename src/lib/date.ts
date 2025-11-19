@@ -28,8 +28,41 @@ export function getYearRange(year: number): { start: Date; end: Date } {
   }
 }
 
-export function formatDate(date: Date | string, fmt = 'MMM dd, yyyy'): string {
-  const d = typeof date === 'string' ? new Date(date) : date
+export function formatDate(dateInput: Date | string, fmt = 'MMM dd, yyyy'): string {
+  let dateStr: string
+  
+  if (typeof dateInput === 'string') {
+    // ISO string like "2025-11-01T00:00:00.000Z" - extract the date part
+    dateStr = dateInput.split('T')[0]
+  } else {
+    // Date object - convert to ISO and extract date part
+    dateStr = dateInput.toISOString().split('T')[0]
+  }
+  
+  // Parse YYYY-MM-DD string using date-fns to avoid timezone shifts
+  const d = parse(dateStr, 'yyyy-MM-dd', new Date())
+  return format(d, fmt)
+}
+
+/**
+ * Safe date formatter that extracts the date portion from ISO strings
+ */
+export function formatDateString(dateInput: string | Date, fmt = 'MMM dd, yyyy'): string {
+  let dateStr: string
+  
+  if (typeof dateInput === 'string') {
+    // ISO string like "2025-11-01T00:00:00.000Z" - extract the date part
+    dateStr = dateInput.split('T')[0]
+  } else {
+    // Date object - convert to ISO and extract date part
+    dateStr = dateInput.toISOString().split('T')[0]
+  }
+  
+  // Parse YYYY-MM-DD string
+  const [year, month, day] = dateStr.split('-').map(Number)
+  
+  // Create a date object and format it
+  const d = parse(dateStr, 'yyyy-MM-dd', new Date())
   return format(d, fmt)
 }
 

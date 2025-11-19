@@ -4,7 +4,7 @@
 
 **Purpose**: Understand your money flow. Track income from multiple sources, split expenses across categories (Need/Want/Debt/Tax/Savings), create routing rules for automation, and analyze monthly reports—all privately on your own hardware.
 
-[![CI Status](https://github.com/nicksbar/cashlines/actions/workflows/test.yml/badge.svg?branch=development)](https://github.com/nicksbar/cashlines/actions/workflows/test.yml) [![Tests](https://img.shields.io/badge/tests-318%2F318-brightgreen)](#) [![License](https://img.shields.io/badge/license-MIT-blue)](#license)
+[![CI Status](https://github.com/nicksbar/cashlines/actions/workflows/test.yml/badge.svg?branch=development)](https://github.com/nicksbar/cashlines/actions/workflows/test.yml) [![Tests](https://img.shields.io/badge/tests-489%2F489-brightgreen)](#) [![License](https://img.shields.io/badge/license-MIT-blue)](#license)
 
 ## Features
 
@@ -66,6 +66,8 @@ docker-compose up -d
 ```
 
 App runs at [http://localhost:3000](http://localhost:3000) with persistent data volume.
+
+**Important**: When rebuilding the container, your data is preserved. Seed scripts are idempotent—they only run once when the database is empty. Rebuilding the container won't re-seed existing data.
 
 ## Tech Stack
 
@@ -165,16 +167,49 @@ Complete docs in `/docs/`:
 - **[Development Guide](./docs/DEVELOPMENT.md)** - Developer setup and workflows
 - **[Deployment](./docs/DEPLOYMENT.md)** - Docker, LXC, production setups
 - **[Agent Instructions](./AGENTS.md)** - Development guidelines
-- **[Session Notes](./SESSION_NOTES.md)** - Latest improvements and roadmap
+
+## Testing
+
+Cashlines includes comprehensive automated testing at all levels:
+
+```bash
+# Unit and API tests (Jest) - 402 tests
+npm test                    # Run all tests
+npm test -- --watch        # Watch mode for development
+npm test -- --coverage     # Coverage report
+
+# E2E tests (Playwright) - 87 tests across 3 browsers
+npm run test:e2e           # Run E2E tests (headless)
+npm run test:e2e:ui        # Interactive test UI (recommended for development)
+npm run test:e2e:debug     # Step through tests with DevTools
+
+# Run all tests together
+npm run test:all           # Jest (402) + Playwright (87)
+```
+
+**Test Coverage:**
+- ✅ **402 unit/API tests** (Jest) - Core functionality, APIs, utilities
+- ✅ **87 E2E tests** (Playwright) - Dashboard, workflows, navigation, responsive design, performance
+- ✅ **489 total tests** - 100% pass rate across Chromium, Firefox, and WebKit
+- ✅ **0 TypeScript errors**
+
+**Coverage Enforcement:**
+- ✅ Global thresholds: 50% statements, 65% branches, 80% functions
+- ✅ Utilities (`src/lib/`): 90% statements, 85% branches, 95% functions
+- ✅ APIs (`src/app/api/`): 75% statements, 70% branches, 85% functions
+- ✅ Build fails if coverage drops below thresholds
+- ✅ Codecov integration tracks historical trends
+
+[**Coverage Policy →**](./docs/COVERAGE.md) - Detailed coverage thresholds and best practices
 
 ## Status
 
 ✅ **MVP complete**: 12 core features fully implemented  
-✅ **399 tests passing** (100% success rate)  
+✅ **489 tests passing** (402 unit/API + 87 E2E) - 100% success rate  
 ✅ **Production-ready**: Builds successfully with zero TypeScript errors  
 ✅ **Dark mode**: Full light/dark/auto theme support  
 ✅ **Self-hosted**: Docker and LXC deployment ready  
-✅ **Well-documented**: Complete dev guide and session notes
+✅ **CI/CD integrated**: Automated testing on every commit
 
 ## Privacy & Security
 

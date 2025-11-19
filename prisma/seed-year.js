@@ -3,6 +3,8 @@
  * Family of 4: ~$150k/year income, mortgage, 2 cars, kids expenses
  * 12 months of realistic spending patterns
  * Run with: node prisma/seed-year.js
+ * 
+ * Only seeds if user doesn't already exist. Safe to run multiple times.
  */
 
 const { PrismaClient } = require('@prisma/client')
@@ -40,6 +42,13 @@ function variance(base, percent = 0.1) {
 }
 
 async function seedYear() {
+  // Check if data already exists
+  const userCount = await prisma.user.count()
+  if (userCount > 0) {
+    console.log(`✓ Database already has ${userCount} user(s). Skipping seed.`)
+    return
+  }
+
   console.log('🏠 Seeding one year of realistic household data...')
 
   // Get the household that was created via API

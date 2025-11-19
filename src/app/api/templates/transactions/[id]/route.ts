@@ -42,6 +42,7 @@ export async function PATCH(
     if (data.accountId) updateData.accountId = data.accountId;
     if (typeof data.tags !== 'undefined') updateData.tags = data.tags;
     if (data.notes !== undefined) updateData.notes = data.notes;
+    if (typeof data.splits !== 'undefined') updateData.splits = data.splits ? JSON.stringify(data.splits) : null;
     if (typeof data.isFavorite !== 'undefined') updateData.isFavorite = data.isFavorite;
     
     // Usage tracking

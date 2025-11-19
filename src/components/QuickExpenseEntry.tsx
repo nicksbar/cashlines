@@ -6,19 +6,25 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { X, AlertCircle, CheckCircle } from 'lucide-react'
-import { formatCurrency } from '@/lib/money'
+import { formatCurrency, roundAmount } from '@/lib/money'
 
 interface RecurringExpense {
   id: string
   description: string
   amount: number
   accountId: string | null
+  personId?: string | null
   frequency: string
   dueDay: number | null
   nextDueDate: string
   isActive: boolean
   notes: string | null
+  splits?: string | null // JSON: [{type: "need", target: "...", percent: 100}]
   account?: {
+    id: string
+    name: string
+  }
+  person?: {
     id: string
     name: string
   }
@@ -29,6 +35,13 @@ interface Account {
   name: string
   type: string
   isActive: boolean
+}
+
+interface Person {
+  id: string
+  name: string
+  role?: string
+  color?: string
 }
 
 interface QuickExpenseEntryProps {
@@ -44,6 +57,7 @@ export function QuickExpenseEntry({
 }: QuickExpenseEntryProps) {
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [people, setPeople] = useState<Person[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedExpense, setSelectedExpense] = useState<RecurringExpense | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -53,8 +67,9 @@ export function QuickExpenseEntry({
   // Form state for the selected expense
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    amount: '',
+    amount: 0,
     description: '',
+    personId: '',
     accountId: '',
     method: 'cc',
     notes: '',
@@ -83,9 +98,10 @@ export function QuickExpenseEntry({
         ? { 'x-household-id': householdId }
         : {}
 
-      const [expensesRes, accountsRes] = await Promise.all([
+      const [expensesRes, accountsRes, peopleRes] = await Promise.all([
         fetch('/api/recurring-expenses', { headers }),
         fetch('/api/accounts', { headers }),
+        fetch('/api/people', { headers }),
       ])
 
       if (expensesRes.ok) {
@@ -97,6 +113,11 @@ export function QuickExpenseEntry({
       if (accountsRes.ok) {
         const accts = await accountsRes.json()
         setAccounts(accts.filter((a: Account) => a.isActive))
+      }
+
+      if (peopleRes.ok) {
+        const peopleData = await peopleRes.json()
+        setPeople(peopleData)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data')
@@ -115,8 +136,9 @@ export function QuickExpenseEntry({
     setSelectedExpense(expense)
     setFormData({
       date: new Date().toISOString().split('T')[0],
-      amount: expense.amount.toString(),
+      amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount,
       description: expense.description,
+      personId: expense.personId || '',
       accountId: expense.accountId || '',
       method: 'cc',
       notes: expense.notes || '',
@@ -140,23 +162,37 @@ export function QuickExpenseEntry({
         headers['x-household-id'] = householdId
       }
 
+      // Parse splits from recurring expense, fallback to need/accountId
+      let splitsArray = []
+      if (selectedExpense.splits) {
+        try {
+          splitsArray = JSON.parse(selectedExpense.splits)
+        } catch (e) {
+          // If splits can't be parsed, use default
+          splitsArray = formData.accountId 
+            ? [{ type: 'need', target: formData.accountId, percent: 100 }]
+            : [{ type: 'need', target: '', percent: 100 }]
+        }
+      } else {
+        // No splits configured, use default
+        splitsArray = formData.accountId 
+          ? [{ type: 'need', target: formData.accountId, percent: 100 }]
+          : [{ type: 'need', target: '', percent: 100 }]
+      }
+
       const response = await fetch('/api/transactions', {
         method: 'POST',
         headers,
         body: JSON.stringify({
           date: formData.date,
-          amount: parseFloat(formData.amount),
+          amount: roundAmount(formData.amount),
           description: formData.description,
           method: formData.method,
+          personId: formData.personId || null,
           accountId: formData.accountId,
           notes: formData.notes ? `${formData.notes}\n[From recurring: ${selectedExpense.description}]` : `[From recurring: ${selectedExpense.description}]`,
-          tags: 'recurring',
-          splits: [
-            {
-              type: 'need',
-              percent: 100,
-            },
-          ],
+          tags: ['recurring'],
+          splits: splitsArray,
         }),
       })
 
@@ -181,8 +217,9 @@ export function QuickExpenseEntry({
     setSelectedExpense(null)
     setFormData({
       date: new Date().toISOString().split('T')[0],
-      amount: '',
+      amount: 0,
       description: '',
+      personId: '',
       accountId: '',
       method: 'cc',
       notes: '',
@@ -293,8 +330,8 @@ export function QuickExpenseEntry({
                     id="amount"
                     type="number"
                     step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    value={formData.amount || ''}
+                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
               </div>
@@ -340,6 +377,23 @@ export function QuickExpenseEntry({
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="personId">Person (Optional)</Label>
+                <select
+                  id="personId"
+                  value={formData.personId}
+                  onChange={(e) => setFormData({ ...formData, personId: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm"
+                >
+                  <option value="">-- No Person --</option>
+                  {people.map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

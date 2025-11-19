@@ -146,6 +146,7 @@ export async function POST(request: NextRequest) {
         method: validated.method,
         notes: validated.notes,
         tags: JSON.stringify(validated.tags),
+        websiteUrl: validated.websiteUrl,
         splits: {
           create: validated.splits.map(split => ({
             type: split.type,

@@ -43,7 +43,7 @@ export async function PATCH(
     const updated = await prisma.recurringExpense.update({
       where: { id },
       data: validation.data,
-      include: { account: true },
+      include: { account: true, person: true },
     });
 
     return NextResponse.json(updated);

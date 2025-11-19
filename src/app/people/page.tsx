@@ -83,7 +83,7 @@ export default function PeoplePage() {
     if (currentHousehold) {
       fetchPeople()
     }
-  }, [currentHousehold, fetchPeople])
+  }, [currentHousehold])
 
   const handleAddPerson = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Trash2, Edit2, Check, X } from 'lucide-react'
+import { Plus, Trash2, Edit2, Check, X, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/money'
 import { useUser } from '@/lib/UserContext'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
+import { extractErrorMessage } from '@/lib/utils'
 
 const ACCOUNT_TYPES = [
   { value: 'checking', label: 'Checking' },
@@ -56,6 +57,7 @@ export default function AccountsPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [alertMessage, setAlertMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     type: 'checking',
@@ -105,7 +107,7 @@ export default function AccountsPage() {
     if (currentHousehold) {
       fetchData()
     }
-  }, [currentHousehold, fetchData])
+  }, [currentHousehold])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -149,7 +151,12 @@ export default function AccountsPage() {
         body: JSON.stringify(payload),
       })
 
-      if (!response.ok) throw new Error('Failed to save account')
+      if (!response.ok) {
+        const errorMessage = await extractErrorMessage(response)
+        setAlertMessage({ text: errorMessage, type: 'error' })
+        setTimeout(() => setAlertMessage(null), 5000)
+        return
+      }
 
       setFormData({ 
         name: '', type: 'checking', personId: '', isActive: true, notes: '', 
@@ -160,9 +167,13 @@ export default function AccountsPage() {
       })
       setShowForm(false)
       setEditingId(null)
+      setAlertMessage({ text: editingId ? 'Account updated successfully' : 'Account created successfully', type: 'success' })
+      setTimeout(() => setAlertMessage(null), 3000)
       fetchData()
     } catch (error) {
       console.error('Error saving account:', error)
+      setAlertMessage({ text: 'An unexpected error occurred. Please try again.', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     }
   }
 
@@ -201,11 +212,23 @@ export default function AccountsPage() {
       isDestructive: true,
       onConfirm: async () => {
         try {
-          const response = await fetch(`/api/accounts/${id}`, { method: 'DELETE' })
-          if (!response.ok) throw new Error('Failed to delete')
+          const response = await fetch(`/api/accounts/${id}`, { 
+            method: 'DELETE',
+            headers: { 'x-household-id': currentHousehold?.id || '' }
+          })
+          if (!response.ok) {
+            const errorMessage = await extractErrorMessage(response)
+            setAlertMessage({ text: errorMessage, type: 'error' })
+            setTimeout(() => setAlertMessage(null), 5000)
+            return
+          }
+          setAlertMessage({ text: 'Account deleted successfully', type: 'success' })
+          setTimeout(() => setAlertMessage(null), 3000)
           fetchData()
         } catch (error) {
           console.error('Error deleting account:', error)
+          setAlertMessage({ text: 'An unexpected error occurred while deleting.', type: 'error' })
+          setTimeout(() => setAlertMessage(null), 5000)
         }
       },
     })
@@ -226,9 +249,29 @@ export default function AccountsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Accounts</h1>
-        <p className="text-slate-600 mt-2">Manage your accounts and funding sources</p>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Accounts</h1>
+        <p className="text-slate-600 dark:text-slate-400 mt-2">Manage your accounts and funding sources</p>
       </div>
+
+      {alertMessage && (
+        <div className={`p-4 rounded-lg flex items-start gap-3 ${
+          alertMessage.type === 'success'
+            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900'
+            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900'
+        }`}>
+          {alertMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          )}
+          <p className={alertMessage.type === 'success'
+            ? 'text-green-800 dark:text-green-300'
+            : 'text-red-800 dark:text-red-300'
+          }>
+            {alertMessage.text}
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-end">
         <Button onClick={() => setShowForm(!showForm)}>

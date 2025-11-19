@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { recordTemplateUsage } from '@/lib/templates'
+import { roundAmount } from '@/lib/money'
 
 interface Person {
   id: string
@@ -29,7 +30,7 @@ interface IncomeFormProps {
 export default function IncomeForm({ onClose, onSuccess, initialData }: IncomeFormProps) {
   const [formData, setFormData] = useState({
     source: initialData?.source || '',
-    amount: initialData?.amount || '',
+    amount: initialData?.amount ? parseFloat(initialData.amount) : 0,
     date: new Date().toISOString().split('T')[0],
     accountId: initialData?.accountId || '',
     personId: initialData?.personId || '',
@@ -62,7 +63,7 @@ export default function IncomeForm({ onClose, onSuccess, initialData }: IncomeFo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           source: formData.source,
-          amount: parseFloat(formData.amount),
+          amount: roundAmount(formData.amount),
           date: formData.date,
           accountId: formData.accountId || 'default',
           personId: formData.personId || null,
@@ -105,8 +106,8 @@ export default function IncomeForm({ onClose, onSuccess, initialData }: IncomeFo
               id="amount"
               type="number"
               step="0.01"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              value={formData.amount || ''}
+              onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
               required
               className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />
