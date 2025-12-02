@@ -12,16 +12,16 @@ services:
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    # Use host network for development (simpler, works with Docker and Podman in WSL)
-    network_mode: host
+    ports:
+      - "5432:5432"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U cashlines"]
       interval: 10s
       timeout: 5s
       retries: 5
-    # Security: don't use host network in production
-    # For production, use bridge networks for isolation
+    networks:
+      - cashlines-network
 
   # Cashlines web app (uses PostgreSQL)
   cashlines:
