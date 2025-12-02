@@ -43,6 +43,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Delete all user data in correct order (respecting foreign keys)
+    // Start with dependent models, work backwards to accounts
+    
     await prisma.split.deleteMany({
       where: {
         transaction: {
@@ -71,6 +73,12 @@ export async function POST(request: NextRequest) {
       where: { userId: user.id },
     })
 
+    // BalanceSnapshot depends on Account
+    await prisma.balanceSnapshot.deleteMany({
+      where: { userId: user.id },
+    })
+
+    // Then delete accounts and people
     await prisma.account.deleteMany({
       where: { userId: user.id },
     })

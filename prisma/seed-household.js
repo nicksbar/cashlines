@@ -2,6 +2,8 @@
  * Seed script for realistic household test data
  * Family of 4: ~$150k/year income, mortgage, 2 cars, kids expenses
  * Run with: node prisma/seed-household.js
+ * 
+ * Only seeds if database is empty. Safe to run multiple times.
  */
 
 const { PrismaClient } = require('@prisma/client')
@@ -17,6 +19,13 @@ function getDateInMonth(day, month, year) {
 }
 
 async function main() {
+  // Check if database already has users
+  const userCount = await prisma.user.count()
+  if (userCount > 0) {
+    console.log(`✓ Database already has ${userCount} user(s). Skipping seed.`)
+    return
+  }
+
   console.log('🏠 Seeding realistic household data...')
 
   // Create user

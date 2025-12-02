@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { recordTemplateUsage } from '@/lib/templates'
+import { roundAmount } from '@/lib/money'
 
 interface Person {
   id: string
@@ -31,18 +32,21 @@ interface TransactionFormProps {
     notes?: string
     personId?: string
     templateId?: string
+    websiteUrl?: string
   }
 }
 
 export default function TransactionForm({ onClose, onSuccess, initialData }: TransactionFormProps) {
   const [formData, setFormData] = useState({
     description: initialData?.description || '',
-    amount: initialData?.amount || '',
+    amount: initialData?.amount ? parseFloat(initialData.amount) : 0,
     date: new Date().toISOString().split('T')[0],
     accountId: initialData?.accountId || '',
     personId: initialData?.personId || '',
+    payingAccountId: '', // Account being paid (e.g., credit card)
     method: initialData?.method || 'cc',
     notes: initialData?.notes || '',
+    websiteUrl: initialData?.websiteUrl || '',
   })
 
   const [templateId, setTemplateId] = useState(initialData?.templateId || '')
@@ -94,6 +98,13 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
     )
   }
 
+  // Get accounts that can be paid (credit cards, loans)
+  const getPayableAccounts = () => {
+    return accounts.filter(
+      (account) => account.isActive && ['credit_card', 'loan'].includes(account.type)
+    )
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -102,12 +113,14 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           description: formData.description,
-          amount: parseFloat(formData.amount),
+          amount: roundAmount(formData.amount),
           date: formData.date,
           accountId: formData.accountId || 'default',
           personId: formData.personId || null,
+          payingAccountId: formData.payingAccountId || null,
           method: formData.method,
           notes: formData.notes,
+          websiteUrl: formData.websiteUrl || null,
           tags: [],
           splits: [],
         }),
@@ -147,8 +160,8 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
               id="amount"
               type="number"
               step="0.01"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              value={formData.amount || ''}
+              onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
               required
               className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />
@@ -214,11 +227,43 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
             </select>
           </div>
           <div>
+            <Label htmlFor="payingAccount" className="text-slate-900 dark:text-slate-100">
+              Paying Account (Optional)
+            </Label>
+            <select
+              id="payingAccount"
+              value={formData.payingAccountId}
+              onChange={(e) => setFormData({ ...formData, payingAccountId: e.target.value })}
+              className="w-full h-10 px-3 py-2 rounded-md border border-slate-300 bg-white text-slate-900 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+            >
+              <option value="">None (regular expense)</option>
+              {getPayableAccounts().map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.name} ({account.type === 'credit_card' ? 'Credit Card' : 'Loan'})
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Select if this transaction is paying off a credit card or loan
+            </p>
+          </div>
+          <div>
             <Label htmlFor="notes" className="text-slate-900 dark:text-slate-100">Notes</Label>
             <Input
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+            />
+          </div>
+          <div>
+            <Label htmlFor="websiteUrl" className="text-slate-900 dark:text-slate-100">Website URL</Label>
+            <Input
+              id="websiteUrl"
+              type="url"
+              value={formData.websiteUrl}
+              onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+              placeholder="https://example.com"
               className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             />
           </div>

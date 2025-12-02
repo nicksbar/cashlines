@@ -8,7 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -45,9 +45,11 @@ model Person {
   role  String? // "primary", "spouse", "child", "dependent", "other" - for tracking context
   color String? // Hex color for UI display (#FF5733)
   
-  accounts     Account[]
-  incomes      Income[]
-  transactions Transaction[]
+  accounts           Account[]
+  incomes            Income[]
+  transactions       Transaction[]
+  recurringExpenses  RecurringExpense[]
+  templates          Template[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -95,10 +97,11 @@ model Account {
   // Balance tracking
   balanceSnapshots BalanceSnapshot[]
   
-  incomes           Income[]
-  transactions      Transaction[]
-  templates         Template[] @relation("TemplateAccount")
-  recurringExpenses RecurringExpense[]
+  incomes            Income[]
+  transactions       Transaction[]
+  paymentsReceived   Transaction[] @relation("PaymentToAccount")
+  templates          Template[] @relation("TemplateAccount")
+  recurringExpenses  RecurringExpense[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -176,12 +179,17 @@ model Transaction {
   accountId   String
   account     Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
   
+  // Optional: If this transaction is a payment TO another account (e.g., paying off a credit card)
+  payingAccountId String?
+  payingAccount   Account? @relation("PaymentToAccount", fields: [payingAccountId], references: [id], onDelete: SetNull)
+  
   date        DateTime
   amount      Float
   description String
   method      String // "cc", "cash", "ach", "other"
   notes       String?
   tags        String // JSON array: ["groceries", "recurring"]
+  websiteUrl  String? // Link to merchant/vendor website
   
   splits Split[]
   
@@ -191,6 +199,7 @@ model Transaction {
   @@index([userId])
   @@index([personId])
   @@index([accountId])
+  @@index([payingAccountId])
   @@index([date])
   @@index([method])
 }
@@ -260,6 +269,9 @@ model Template {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   
+  personId String?
+  person   Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
+  
   // Basic info
   name        String
   description String?
@@ -282,6 +294,7 @@ model Template {
   // Shared template data (JSON strings for flexibility)
   tags        String?       // JSON: ["tag1", "tag2"]
   notes       String?       // Additional notes
+  splits      String?       // JSON: [{ type: "need", target: "...", percent: 100 }]
   
   // Template metadata
   isFavorite  Boolean @default(false)
@@ -338,21 +351,27 @@ model RecurringExpense {
   userId   String
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   
+  personId String?
+  person   Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
+  
   accountId String?
   account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   
   description    String   // e.g., "T-Mobile Bill", "Rent", "Insurance"
-  amount         Float    // Monthly/recurring amount
-  frequency      String   // "daily", "weekly", "monthly", "yearly"
+  amount         Float    // Recurring amount
+  frequency      String   // "daily", "weekly", "monthly", "quarterly", "semi-annual", "yearly"
   dueDay         Int?     // Day of month for monthly expenses (1-31)
   nextDueDate    DateTime // Next expected charge date
   isActive       Boolean @default(true)
   notes          String?
+  websiteUrl     String?  // Link to bill payment or vendor website
+  splits         String?  // JSON: [{type: "need", target: "...", percent: 100}] - split configuration for this recurring expense
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   @@index([userId])
+  @@index([personId])
   @@index([accountId])
   @@index([isActive])
   @@index([nextDueDate])

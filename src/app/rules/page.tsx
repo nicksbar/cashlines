@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Edit2, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, Edit2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { InfoTooltip } from '@/components/InfoTooltip'
+import { extractErrorMessage } from '@/lib/utils'
 
 interface Rule {
   id: string
@@ -30,6 +31,7 @@ export default function RulesPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [alertMessage, setAlertMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     matchSource: '',
@@ -74,12 +76,21 @@ export default function RulesPage() {
         }),
       })
 
-      if (response.ok) {
-        resetForm()
-        fetchRules()
+      if (!response.ok) {
+        const errorMessage = await extractErrorMessage(response)
+        setAlertMessage({ text: errorMessage, type: 'error' })
+        setTimeout(() => setAlertMessage(null), 5000)
+        return
       }
+
+      resetForm()
+      setAlertMessage({ text: editingId ? 'Rule updated successfully' : 'Rule created successfully', type: 'success' })
+      setTimeout(() => setAlertMessage(null), 3000)
+      fetchRules()
     } catch (error) {
       console.error('Error saving rule:', error)
+      setAlertMessage({ text: 'An unexpected error occurred. Please try again.', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     }
   }
 
@@ -87,9 +98,19 @@ export default function RulesPage() {
     if (!confirm('Delete this rule?')) return
     try {
       const response = await fetch(`/api/rules/${id}`, { method: 'DELETE' })
-      if (response.ok) fetchRules()
+      if (!response.ok) {
+        const errorMessage = await extractErrorMessage(response)
+        setAlertMessage({ text: errorMessage, type: 'error' })
+        setTimeout(() => setAlertMessage(null), 5000)
+        return
+      }
+      setAlertMessage({ text: 'Rule deleted successfully', type: 'success' })
+      setTimeout(() => setAlertMessage(null), 3000)
+      fetchRules()
     } catch (error) {
       console.error('Error deleting rule:', error)
+      setAlertMessage({ text: 'An unexpected error occurred while deleting.', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     }
   }
 
@@ -130,6 +151,26 @@ export default function RulesPage() {
         <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Routing Rules</h1>
         <p className="text-slate-600 dark:text-slate-400 mt-2">Create rules to automatically route income and transactions</p>
       </div>
+
+      {alertMessage && (
+        <div className={`p-4 rounded-lg flex items-start gap-3 ${
+          alertMessage.type === 'success'
+            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900'
+            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900'
+        }`}>
+          {alertMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          )}
+          <p className={alertMessage.type === 'success'
+            ? 'text-green-800 dark:text-green-300'
+            : 'text-red-800 dark:text-red-300'
+          }>
+            {alertMessage.text}
+          </p>
+        </div>
+      )}
 
       {/* Help Section */}
       <Card className="border-l-4 border-l-blue-500 bg-blue-50 dark:bg-blue-900/20">

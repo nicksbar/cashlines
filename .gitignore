@@ -38,4 +38,41 @@ next-env.d.ts
 # prisma
 prisma/*.db
 prisma/*.db-journal
+prisma/**/*.db
+prisma/**/*.db-journal
 /data
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# logs
+*.log
+*.log.*
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# test outputs
+/coverage/
+/.nyc_output/
+/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# temporary files
+*.tmp
+*.temp
+.cache/
+

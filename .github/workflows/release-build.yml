@@ -6,6 +6,10 @@ on:
       - main
       - development
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,7 +18,23 @@ jobs:
       packages: write
     
     env:
-      DATABASE_URL: "file:./prisma/dev.db"
+      DATABASE_URL: "postgresql://cashlines:cashlines_secure_password@localhost:5432/cashlines?schema=public"
+      NODE_ENV: test
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cashlines
+          POSTGRES_PASSWORD: cashlines_secure_password
+          POSTGRES_DB: cashlines
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +49,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Validate Prisma schema
+        run: DATABASE_URL="postgresql://cashlines:cashlines_secure_password@localhost:5432/cashlines?schema=public" npx prisma validate
 
       - name: Initialize database schema
         run: npx prisma db push --skip-generate
@@ -170,7 +193,8 @@ jobs:
           ## Build Verification
 
           - ✅ Linting passed
-          - ✅ 289 tests passed
+          - ✅ 521 unit tests passed
+          - ✅ 216 E2E tests (648 across 3 browsers)
           - ✅ Production build successful
           - ✅ Docker image built and verified
           - **Node.js**: 20.x

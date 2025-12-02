@@ -27,6 +27,10 @@ export function getMonthlyAmount(expense: RecurringExpense): number {
       return expense.amount * (52 / 12) // Average weeks per month
     case 'monthly':
       return expense.amount
+    case 'quarterly':
+      return expense.amount / 3 // Every 3 months
+    case 'semi-annual':
+      return expense.amount / 6 // Every 6 months
     case 'yearly':
       return expense.amount / 12 // Annual divided by 12 months
     default:
@@ -59,6 +63,23 @@ export function getExpectedMonthlyTotal(
         // Monthly expenses occur once per month
         return total + expense.amount
 
+      case 'quarterly':
+        // Quarterly expenses occur every 3 months
+        // Check if this month is a quarter month (0, 3, 6, 9, 12, etc.)
+        const nextDueQuarterly = new Date(expense.nextDueDate)
+        if (nextDueQuarterly.getFullYear() === year && nextDueQuarterly.getMonth() === month) {
+          return total + expense.amount
+        }
+        return total
+
+      case 'semi-annual':
+        // Semi-annual expenses occur every 6 months
+        const nextDueSemiAnnual = new Date(expense.nextDueDate)
+        if (nextDueSemiAnnual.getFullYear() === year && nextDueSemiAnnual.getMonth() === month) {
+          return total + expense.amount
+        }
+        return total
+
       case 'yearly':
         // Yearly expenses occur once per year
         // Only count if this is the correct month
@@ -76,7 +97,7 @@ export function getExpectedMonthlyTotal(
 
 /**
  * Calculate the next due date for a recurring expense
- * @param frequency - 'daily', 'weekly', 'monthly', or 'yearly'
+ * @param frequency - 'daily', 'weekly', 'monthly', 'quarterly', 'semi-annual', or 'yearly'
  * @param dueDay - Day of month (1-31) for monthly expenses
  * @param fromDate - Date to calculate from (defaults to today)
  */
@@ -108,6 +129,14 @@ export function calculateNextDueDate(
         // Default to same day next month
         nextDate.setMonth(nextDate.getMonth() + 1)
       }
+      break
+
+    case 'quarterly':
+      nextDate.setMonth(nextDate.getMonth() + 3)
+      break
+
+    case 'semi-annual':
+      nextDate.setMonth(nextDate.getMonth() + 6)
       break
 
     case 'yearly':

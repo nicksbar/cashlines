@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
       method: data.method,
       tags: data.tags ? JSON.stringify(data.tags) : null,
       notes: data.notes,
+      splits: data.splits ? JSON.stringify(data.splits) : null,
       isFavorite: data.isFavorite || false,
     };
 

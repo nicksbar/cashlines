@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useState, useEffect, useCallback } from 'react'
-import { formatCurrency } from '@/lib/money'
+import { formatCurrency, roundAmount } from '@/lib/money'
 import { formatDate } from '@/lib/date'
-import { Plus, Trash2, TrendingUp, Edit2, Download } from 'lucide-react'
+import { Plus, Trash2, TrendingUp, Edit2, Download, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useUser } from '@/lib/UserContext'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import { usePromptDialog } from '@/components/PromptDialog'
 import { TemplateSelector } from '@/components/TemplateSelector'
+import { FilterableTable } from '@/components/FilterableTable'
+import { extractErrorMessage } from '@/lib/utils'
 
 interface IncomeEntry {
   id: string
@@ -52,11 +54,11 @@ export default function IncomePage() {
     source: '',
     accountId: '',
     personId: '',
-    grossAmount: '',
-    taxes: '',
-    preTaxDeductions: '',
-    postTaxDeductions: '',
-    netAmount: '',
+    grossAmount: 0,
+    taxes: 0,
+    preTaxDeductions: 0,
+    postTaxDeductions: 0,
+    netAmount: 0,
     notes: '',
     tags: '',
   })
@@ -86,18 +88,33 @@ export default function IncomePage() {
     if (currentHousehold) {
       fetchData()
     }
-  }, [currentHousehold, fetchData])
+  }, [currentHousehold])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!currentHousehold) return
 
     try {
-      const grossAmount = parseFloat(formData.grossAmount)
-      const taxes = parseFloat(formData.taxes || '0')
-      const preTaxDeductions = parseFloat(formData.preTaxDeductions || '0')
-      const postTaxDeductions = parseFloat(formData.postTaxDeductions || '0')
-      const netAmount = grossAmount - taxes - preTaxDeductions - postTaxDeductions
+      // Values are already numbers in state, just ensure rounding
+      const grossAmount = roundAmount(formData.grossAmount)
+      const taxes = roundAmount(formData.taxes)
+      const preTaxDeductions = roundAmount(formData.preTaxDeductions)
+      const postTaxDeductions = roundAmount(formData.postTaxDeductions)
+      const netAmount = roundAmount(grossAmount - taxes - preTaxDeductions - postTaxDeductions)
+
+      // Validate: gross amount must be positive
+      if (grossAmount <= 0) {
+        setAlertMessage({ text: 'Gross amount must be greater than $0', type: 'error' })
+        setTimeout(() => setAlertMessage(null), 3000)
+        return
+      }
+
+      // Validate math: net amount should always be positive
+      if (netAmount < 0) {
+        setAlertMessage({ text: 'Net amount cannot be negative. Check your deductions.', type: 'error' })
+        setTimeout(() => setAlertMessage(null), 3000)
+        return
+      }
 
       const method = editingId ? 'PATCH' : 'POST'
       const url = editingId ? `/api/income/${editingId}` : '/api/income'
@@ -122,26 +139,35 @@ export default function IncomePage() {
           tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
         }),
       })
-      if (response.ok) {
-        setFormData({
-          date: new Date().toISOString().split('T')[0],
-          source: '',
-          accountId: '',
-          personId: '',
-          grossAmount: '',
-          taxes: '',
-          preTaxDeductions: '',
-          postTaxDeductions: '',
-          netAmount: '',
-          notes: '',
-          tags: '',
-        })
-        setShowForm(false)
-        setEditingId(null)
-        fetchData()
+      if (!response.ok) {
+        const errorMessage = await extractErrorMessage(response)
+        setAlertMessage({ text: errorMessage, type: 'error' })
+        setTimeout(() => setAlertMessage(null), 5000)
+        return
       }
+
+      setFormData({
+        date: new Date().toISOString().split('T')[0],
+        source: '',
+        accountId: '',
+        personId: '',
+        grossAmount: 0,
+        taxes: 0,
+        preTaxDeductions: 0,
+        postTaxDeductions: 0,
+        netAmount: 0,
+        notes: '',
+        tags: '',
+      })
+      setShowForm(false)
+      setEditingId(null)
+      setAlertMessage({ text: editingId ? 'Income entry updated successfully' : 'Income entry created successfully', type: 'success' })
+      setTimeout(() => setAlertMessage(null), 3000)
+      fetchData()
     } catch (error) {
       console.error('Error creating income:', error)
+      setAlertMessage({ text: 'An unexpected error occurred. Please try again.', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     }
   }
 
@@ -152,11 +178,11 @@ export default function IncomePage() {
       source: entry.source,
       accountId: entry.accountId,
       personId: entry.personId || '',
-      grossAmount: entry.grossAmount.toString(),
-      taxes: entry.taxes.toString(),
-      preTaxDeductions: entry.preTaxDeductions.toString(),
-      postTaxDeductions: entry.postTaxDeductions.toString(),
-      netAmount: entry.netAmount.toString(),
+      grossAmount: entry.grossAmount,
+      taxes: entry.taxes,
+      preTaxDeductions: entry.preTaxDeductions,
+      postTaxDeductions: entry.postTaxDeductions,
+      netAmount: entry.netAmount,
       notes: entry.notes || '',
       tags: typeof entry.tags === 'string' ? JSON.parse(entry.tags || '[]').join(', ') : '',
     })
@@ -172,11 +198,11 @@ export default function IncomePage() {
       source: '',
       accountId: '',
       personId: '',
-      grossAmount: '',
-      taxes: '',
-      preTaxDeductions: '',
-      postTaxDeductions: '',
-      netAmount: '',
+      grossAmount: 0,
+      taxes: 0,
+      preTaxDeductions: 0,
+      postTaxDeductions: 0,
+      netAmount: 0,
       notes: '',
       tags: '',
     })
@@ -188,12 +214,11 @@ export default function IncomePage() {
       source: template.name || '',
       accountId: template.accountId || '',
       personId: template.personId || '',
-      grossAmount: template.grossAmount?.toString() || '',
-      taxes: template.federalTaxes || template.stateTaxes ? 
-        ((template.federalTaxes || 0) + (template.stateTaxes || 0) + (template.socialSecurity || 0) + (template.medicare || 0)).toString() : '',
-      preTaxDeductions: template.preDeductions?.toString() || '',
-      postTaxDeductions: template.postDeductions?.toString() || '',
-      netAmount: '',
+      grossAmount: template.grossAmount || 0,
+      taxes: (template.federalTaxes || 0) + (template.stateTaxes || 0) + (template.socialSecurity || 0) + (template.medicare || 0),
+      preTaxDeductions: template.preDeductions || 0,
+      postTaxDeductions: template.postDeductions || 0,
+      netAmount: 0,
       notes: template.description || '',
       tags: '',
     })
@@ -209,14 +234,23 @@ export default function IncomePage() {
       isDestructive: true,
       onConfirm: async () => {
         try {
-          const response = await fetch(`/api/income/${id}`, { method: 'DELETE' })
-          if (response.ok) {
-            fetchData()
-            setAlertMessage({ text: 'Income entry deleted', type: 'success' })
-            setTimeout(() => setAlertMessage(null), 2000)
+          const response = await fetch(`/api/income/${id}`, { 
+            method: 'DELETE',
+            headers: { 'x-household-id': currentHousehold?.id || '' }
+          })
+          if (!response.ok) {
+            const errorMessage = await extractErrorMessage(response)
+            setAlertMessage({ text: errorMessage, type: 'error' })
+            setTimeout(() => setAlertMessage(null), 5000)
+            return
           }
+          fetchData()
+          setAlertMessage({ text: 'Income entry deleted successfully', type: 'success' })
+          setTimeout(() => setAlertMessage(null), 3000)
         } catch (error) {
           console.error('Error deleting income:', error)
+          setAlertMessage({ text: 'An unexpected error occurred while deleting.', type: 'error' })
+          setTimeout(() => setAlertMessage(null), 5000)
         }
       },
     })
@@ -276,13 +310,14 @@ export default function IncomePage() {
               name: templateName,
               description: formData.source,
               accountId: formData.accountId,
-              grossAmount: parseFloat(formData.grossAmount),
-              federalTaxes: parseFloat(formData.taxes) || 0,
+              personId: formData.personId || null,
+              grossAmount: roundAmount(formData.grossAmount),
+              federalTaxes: roundAmount(formData.taxes || 0),
               stateTaxes: 0,
               socialSecurity: 0,
               medicare: 0,
-              preDeductions: parseFloat(formData.preTaxDeductions) || 0,
-              postDeductions: parseFloat(formData.postTaxDeductions) || 0,
+              preDeductions: roundAmount(formData.preTaxDeductions || 0),
+              postDeductions: roundAmount(formData.postTaxDeductions || 0),
               notes: formData.notes,
             }),
           })
@@ -312,6 +347,26 @@ export default function IncomePage() {
         <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Income</h1>
         <p className="text-slate-600 dark:text-slate-400 mt-2">Track income with full deduction breakdown</p>
       </div>
+
+      {alertMessage && (
+        <div className={`p-4 rounded-lg flex items-start gap-3 ${
+          alertMessage.type === 'success'
+            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900'
+            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900'
+        }`}>
+          {alertMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          )}
+          <p className={alertMessage.type === 'success'
+            ? 'text-green-800 dark:text-green-300'
+            : 'text-red-800 dark:text-red-300'
+          }>
+            {alertMessage.text}
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Summary</h2>
@@ -441,8 +496,8 @@ export default function IncomePage() {
                     id="grossAmount"
                     type="number"
                     step="0.01"
-                    value={formData.grossAmount}
-                    onChange={(e) => setFormData({ ...formData, grossAmount: e.target.value })}
+                    value={formData.grossAmount || ''}
+                    onChange={(e) => setFormData({ ...formData, grossAmount: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     required
@@ -456,8 +511,8 @@ export default function IncomePage() {
                       id="taxes"
                       type="number"
                       step="0.01"
-                      value={formData.taxes}
-                      onChange={(e) => setFormData({ ...formData, taxes: e.target.value })}
+                      value={formData.taxes || ''}
+                      onChange={(e) => setFormData({ ...formData, taxes: parseFloat(e.target.value) || 0 })}
                       placeholder="0.00"
                       className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     />
@@ -469,8 +524,8 @@ export default function IncomePage() {
                       id="preTaxDeductions"
                       type="number"
                       step="0.01"
-                      value={formData.preTaxDeductions}
-                      onChange={(e) => setFormData({ ...formData, preTaxDeductions: e.target.value })}
+                      value={formData.preTaxDeductions || ''}
+                      onChange={(e) => setFormData({ ...formData, preTaxDeductions: parseFloat(e.target.value) || 0 })}
                       placeholder="0.00"
                       className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     />
@@ -484,8 +539,8 @@ export default function IncomePage() {
                     id="postTaxDeductions"
                     type="number"
                     step="0.01"
-                    value={formData.postTaxDeductions}
-                    onChange={(e) => setFormData({ ...formData, postTaxDeductions: e.target.value })}
+                    value={formData.postTaxDeductions || ''}
+                    onChange={(e) => setFormData({ ...formData, postTaxDeductions: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                   />
@@ -496,19 +551,19 @@ export default function IncomePage() {
                   <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
                     Net Amount: <span className="text-lg text-green-600 dark:text-green-400">
                       {formatCurrency(
-                        (parseFloat(formData.grossAmount) || 0) -
-                        (parseFloat(formData.taxes) || 0) -
-                        (parseFloat(formData.preTaxDeductions) || 0) -
-                        (parseFloat(formData.postTaxDeductions) || 0)
+                        formData.grossAmount -
+                        formData.taxes -
+                        formData.preTaxDeductions -
+                        formData.postTaxDeductions
                       )}
                     </span>
                   </p>
-                  {parseFloat(formData.grossAmount) > 0 && (
+                  {formData.grossAmount > 0 && (
                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                      Keep {(((parseFloat(formData.grossAmount) || 0) -
-                        (parseFloat(formData.taxes) || 0) -
-                        (parseFloat(formData.preTaxDeductions) || 0) -
-                        (parseFloat(formData.postTaxDeductions) || 0)) / (parseFloat(formData.grossAmount) || 1) * 100).toFixed(1)}% of gross
+                      Keep {(((formData.grossAmount -
+                        formData.taxes -
+                        formData.preTaxDeductions -
+                        formData.postTaxDeductions) / formData.grossAmount) * 100).toFixed(1)}% of gross
                     </p>
                   )}
                 </div>
@@ -561,88 +616,146 @@ export default function IncomePage() {
           <CardTitle className="text-slate-900 dark:text-slate-100">Income Entries</CardTitle>
           <CardDescription className="text-slate-600 dark:text-slate-400">{income.length} entries</CardDescription>
         </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-slate-500 dark:text-slate-400">Loading...</p>
-          ) : income.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-                    <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Date</th>
-                    <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Source</th>
-                    <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Person</th>
-                    <th className="text-left py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Account</th>
-                    <th className="text-right py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Gross</th>
-                    <th className="text-right py-3 px-2 font-semibold text-red-600 dark:text-red-400">Taxes</th>
-                    <th className="text-right py-3 px-2 font-semibold text-orange-600 dark:text-orange-400">Deductions</th>
-                    <th className="text-right py-3 px-2 font-semibold text-green-600 dark:text-green-400">Net</th>
-                    <th className="text-right py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Ratio</th>
-                    <th className="text-center py-3 px-2 font-semibold text-slate-900 dark:text-slate-100">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {income.map((entry) => {
-                    const deductions = entry.preTaxDeductions + entry.postTaxDeductions
-                    const ratio = entry.grossAmount > 0 ? ((entry.netAmount / entry.grossAmount) * 100) : 0
-                    return (
-                      <tr key={entry.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                        <td className="py-3 px-2 text-slate-900 dark:text-slate-100">{formatDate(entry.date)}</td>
-                        <td className="py-3 px-2 font-medium text-slate-900 dark:text-slate-100">{entry.source}</td>
-                        <td className="py-3 px-2">
-                          {entry.person ? (
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: entry.person.color || '#4ECDC4' }}
-                              />
-                              <span className="text-slate-900 dark:text-slate-100">{entry.person.name}</span>
-                            </div>
-                          ) : (
-                            <span className="text-slate-500 dark:text-slate-400 text-sm">—</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-2 text-slate-600 dark:text-slate-400">{entry.account.name}</td>
-                        <td className="py-3 px-2 text-right font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(entry.grossAmount)}</td>
-                        <td className="py-3 px-2 text-right text-red-600 dark:text-red-400">{formatCurrency(entry.taxes)}</td>
-                        <td className="py-3 px-2 text-right text-orange-600 dark:text-orange-400">{formatCurrency(deductions)}</td>
-                        <td className="py-3 px-2 text-right font-semibold text-green-600 dark:text-green-400">{formatCurrency(entry.netAmount)}</td>
-                        <td className="py-3 px-2 text-right text-slate-600 dark:text-slate-400 font-mono text-xs">{ratio.toFixed(1)}%</td>
-                        <td className="py-3 px-2 text-center">
-                          <div className="flex gap-1 justify-center">
-                            <button
-                              onClick={() => handleEdit(entry)}
-                              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                              title="Edit"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(entry.id)}
-                              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                  <tr className="bg-slate-100 dark:bg-slate-800 font-bold border-t-2 border-slate-300 dark:border-slate-700">
-                    <td colSpan={3} className="py-3 px-2 text-slate-900 dark:text-slate-100">TOTAL</td>
-                    <td className="py-3 px-2 text-right text-slate-900 dark:text-slate-100">{formatCurrency(totalGross)}</td>
-                    <td className="py-3 px-2 text-right text-red-600 dark:text-red-400">{formatCurrency(totalTaxes)}</td>
-                    <td className="py-3 px-2 text-right text-orange-600 dark:text-orange-400">{formatCurrency(totalPreTaxDed + totalPostTaxDed)}</td>
-                    <td className="py-3 px-2 text-right text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</td>
-                    <td className="py-3 px-2 text-right text-slate-900 dark:text-slate-100">{keepRatio.toFixed(1)}%</td>
-                    <td></td>
-                  </tr>
-                </tbody>
-              </table>
+        <CardContent className="space-y-4">
+          <FilterableTable
+            data={income}
+            loading={loading}
+            emptyMessage="No income entries yet. Create one to get started!"
+            filters={[
+              {
+                key: 'source',
+                label: 'Source',
+                type: 'text',
+                placeholder: 'Filter by source...',
+              },
+              {
+                key: 'personId',
+                label: 'Person',
+                type: 'select',
+                options: people.map((p) => ({ value: p.id, label: p.name })),
+              },
+              {
+                key: 'accountId',
+                label: 'Account',
+                type: 'select',
+                options: accounts.map((acc) => ({ value: acc.id, label: acc.name })),
+              },
+            ]}
+            columns={[
+              {
+                key: 'date',
+                label: 'Date',
+                sortable: true,
+                render: (value) => formatDate(value),
+              },
+              {
+                key: 'source',
+                label: 'Source',
+                sortable: true,
+                filterable: true,
+              },
+              {
+                key: 'personId',
+                label: 'Person',
+                sortable: true,
+                render: (_, row) =>
+                  row.person ? (
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: row.person.color || '#4ECDC4' }}
+                      />
+                      <span>{row.person.name}</span>
+                    </div>
+                  ) : (
+                    '—'
+                  ),
+              },
+              {
+                key: 'accountId',
+                label: 'Account',
+                sortable: true,
+                render: (_, row) => row.account?.name || '—',
+              },
+              {
+                key: 'grossAmount',
+                label: 'Gross',
+                align: 'right',
+                sortable: true,
+                render: (value) => <span className="font-semibold">{formatCurrency(value)}</span>,
+              },
+              {
+                key: 'taxes',
+                label: 'Taxes',
+                align: 'right',
+                sortable: true,
+                render: (value) => <span className="text-red-600 dark:text-red-400">{formatCurrency(value)}</span>,
+              },
+              {
+                key: 'preTaxDeductions',
+                label: 'Pre-Tax Ded.',
+                align: 'right',
+                sortable: true,
+                render: (value, row) => {
+                  const deductions = value + (row.postTaxDeductions || 0)
+                  return <span className="text-orange-600 dark:text-orange-400">{formatCurrency(deductions)}</span>
+                },
+              },
+              {
+                key: 'netAmount',
+                label: 'Net',
+                align: 'right',
+                sortable: true,
+                render: (value) => <span className="text-green-600 dark:text-green-400 font-semibold">{formatCurrency(value)}</span>,
+              },
+              {
+                key: 'grossAmount',
+                label: 'Ratio',
+                align: 'right',
+                sortable: false,
+                render: (_, row) => {
+                  const ratio = row.grossAmount > 0 ? ((row.netAmount / row.grossAmount) * 100) : 0
+                  return <span className="font-mono text-xs text-slate-600 dark:text-slate-400">{ratio.toFixed(1)}%</span>
+                },
+              },
+              {
+                key: 'id',
+                label: 'Actions',
+                align: 'center',
+                render: (value, row) => (
+                  <div className="flex gap-1 justify-center">
+                    <button
+                      onClick={() => handleEdit(row)}
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                      title="Edit"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(value)}
+                      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+          />
+
+          {/* Summary Row */}
+          {income.length > 0 && (
+            <div className="mt-4 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="grid grid-cols-6 gap-4 font-bold text-sm">
+                <div className="text-slate-900 dark:text-slate-100">TOTALS:</div>
+                <div className="text-right text-slate-900 dark:text-slate-100">{formatCurrency(totalGross)}</div>
+                <div className="text-right text-red-600 dark:text-red-400">{formatCurrency(totalTaxes)}</div>
+                <div className="text-right text-orange-600 dark:text-orange-400">{formatCurrency(totalPreTaxDed + totalPostTaxDed)}</div>
+                <div className="text-right text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</div>
+                <div className="text-right text-slate-900 dark:text-slate-100">{keepRatio.toFixed(1)}%</div>
+              </div>
             </div>
-          ) : (
-            <p className="text-slate-500 dark:text-slate-400">No income entries yet. Create one to get started!</p>
           )}
         </CardContent>
       </Card>

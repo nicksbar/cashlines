@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { InfoTooltip } from '@/components/InfoTooltip'
-import { formatCurrency } from '@/lib/money'
-import { Trash2, Plus, AlertCircle, Zap } from 'lucide-react'
+import { formatCurrency, roundAmount } from '@/lib/money'
+import { formatDateString } from '@/lib/date'
+import { Trash2, Plus, AlertCircle, Zap, CheckCircle2 } from 'lucide-react'
 import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { useUser } from '@/lib/UserContext'
+import { extractErrorMessage } from '@/lib/utils'
 
 interface RecurringExpense {
   id: string
@@ -22,6 +24,7 @@ interface RecurringExpense {
   nextDueDate: string
   isActive: boolean
   notes: string | null
+  websiteUrl?: string | null
   account?: {
     id: string
     name: string
@@ -37,12 +40,20 @@ interface Account {
   isActive: boolean
 }
 
+interface Person {
+  id: string
+  name: string
+  role?: string
+  color?: string
+}
+
 export default function RecurringExpensesPage() {
   const { currentHousehold } = useUser()
   const [expenses, setExpenses] = useState<RecurringExpense[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [people, setPeople] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [alertMessage, setAlertMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [showQuickEntry, setShowQuickEntry] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -51,12 +62,14 @@ export default function RecurringExpensesPage() {
 
   // Form state
   const [formData, setFormData] = useState({
+    personId: '',
     accountId: '',
     description: '',
-    amount: '',
+    amount: 0,
     frequency: 'monthly',
     dueDay: '',
     notes: '',
+    websiteUrl: '',
   })
 
   const fetchExpenses = useCallback(async function() {
@@ -70,9 +83,9 @@ export default function RecurringExpensesPage() {
       if (!response.ok) throw new Error('Failed to fetch expenses')
       const data = await response.json()
       setExpenses(data)
-      setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setAlertMessage({ text: err instanceof Error ? err.message : 'Failed to load expenses', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     } finally {
       setLoading(false)
     }
@@ -93,21 +106,39 @@ export default function RecurringExpensesPage() {
     }
   }, [currentHousehold])
 
+  const fetchPeople = useCallback(async function() {
+    if (!currentHousehold) return
+
+    try {
+      const response = await fetch('/api/people', {
+        headers: { 'x-household-id': currentHousehold.id },
+      })
+      if (!response.ok) throw new Error('Failed to fetch people')
+      const data = await response.json()
+      setPeople(data)
+    } catch (err) {
+      console.error('Error fetching people:', err)
+    }
+  }, [currentHousehold])
+
   useEffect(() => {
     if (currentHousehold) {
       fetchExpenses()
       fetchAccounts()
+      fetchPeople()
     }
-  }, [currentHousehold, fetchExpenses, fetchAccounts])
+  }, [currentHousehold])
 
   function resetForm() {
     setFormData({
+      personId: '',
       accountId: '',
       description: '',
-      amount: '',
+      amount: 0,
       frequency: 'monthly',
       dueDay: '',
       notes: '',
+      websiteUrl: '',
     })
     setEditingId(null)
     setShowForm(false)
@@ -119,11 +150,14 @@ export default function RecurringExpensesPage() {
 
     const payload: any = {
       description: formData.description,
-      amount: parseFloat(formData.amount),
+      amount: roundAmount(formData.amount),
       frequency: formData.frequency,
     }
 
     // Only include optional fields if they have values
+    if (formData.personId) {
+      payload.personId = formData.personId
+    }
     if (formData.accountId) {
       payload.accountId = formData.accountId
     }
@@ -132,6 +166,9 @@ export default function RecurringExpensesPage() {
     }
     if (formData.notes) {
       payload.notes = formData.notes
+    }
+    if (formData.websiteUrl) {
+      payload.websiteUrl = formData.websiteUrl
     }
 
     try {
@@ -148,8 +185,10 @@ export default function RecurringExpensesPage() {
           body: JSON.stringify(payload),
         })
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || 'Failed to update expense')
+          const errorMessage = await extractErrorMessage(response)
+          setAlertMessage({ text: errorMessage, type: 'error' })
+          setTimeout(() => setAlertMessage(null), 5000)
+          return
         }
       } else {
         // Create
@@ -162,14 +201,19 @@ export default function RecurringExpensesPage() {
           }),
         })
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || 'Failed to create expense')
+          const errorMessage = await extractErrorMessage(response)
+          setAlertMessage({ text: errorMessage, type: 'error' })
+          setTimeout(() => setAlertMessage(null), 5000)
+          return
         }
       }
       await fetchExpenses()
       resetForm()
+      setAlertMessage({ text: editingId ? 'Expense updated successfully' : 'Expense created successfully', type: 'success' })
+      setTimeout(() => setAlertMessage(null), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setAlertMessage({ text: err instanceof Error ? err.message : 'An error occurred. Please try again.', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     }
   }
 
@@ -185,8 +229,12 @@ export default function RecurringExpensesPage() {
       if (!response.ok) throw new Error('Failed to delete expense')
       await fetchExpenses()
       setDeleteConfirm(null)
+      setAlertMessage({ text: 'Expense deleted successfully', type: 'success' })
+      setTimeout(() => setAlertMessage(null), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while deleting.'
+      setAlertMessage({ text: errorMessage, type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     } finally {
       setIsDeleting(false)
     }
@@ -194,12 +242,14 @@ export default function RecurringExpensesPage() {
 
   function handleEdit(expense: RecurringExpense) {
     setFormData({
+      personId: (expense as any).personId || '',
       accountId: expense.accountId || '',
       description: expense.description,
-      amount: expense.amount.toString(),
+      amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount,
       frequency: expense.frequency,
       dueDay: expense.dueDay?.toString() || '',
       notes: expense.notes || '',
+      websiteUrl: expense.websiteUrl || '',
     })
     setEditingId(expense.id)
     setShowForm(true)
@@ -246,10 +296,23 @@ export default function RecurringExpensesPage() {
         </div>
       </div>
 
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-4 py-3 rounded flex gap-2">
-          <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-          <p>{error}</p>
+      {alertMessage && (
+        <div className={`p-4 rounded-lg flex items-start gap-3 ${
+          alertMessage.type === 'success'
+            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900'
+            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900'
+        }`}>
+          {alertMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          )}
+          <p className={alertMessage.type === 'success'
+            ? 'text-green-800 dark:text-green-300'
+            : 'text-red-800 dark:text-red-300'
+          }>
+            {alertMessage.text}
+          </p>
         </div>
       )}
 
@@ -278,8 +341,8 @@ export default function RecurringExpensesPage() {
                   <Input
                     type="number"
                     step="0.01"
-                    value={formData.amount}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, amount: e.target.value })}
+                    value={formData.amount || ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     required
                     className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
@@ -298,6 +361,8 @@ export default function RecurringExpensesPage() {
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly (Every 3 Months)</option>
+                    <option value="semi-annual">Semi-Annual (Every 6 Months)</option>
                     <option value="yearly">Yearly</option>
                   </select>
                 </div>
@@ -317,20 +382,38 @@ export default function RecurringExpensesPage() {
                 )}
               </div>
 
-              <div>
-                <Label className="dark:text-slate-300">Account (Optional)</Label>
-                <select
-                  value={formData.accountId}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, accountId: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
-                >
-                  <option value="">-- No Account --</option>
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="dark:text-slate-300">Account (Optional)</Label>
+                  <select
+                    value={formData.accountId}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, accountId: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+                  >
+                    <option value="">-- No Account --</option>
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label className="dark:text-slate-300">Person (Optional)</Label>
+                  <select
+                    value={formData.personId}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, personId: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+                  >
+                    <option value="">-- No Person --</option>
+                    {people.map((person) => (
+                      <option key={person.id} value={person.id}>
+                        {person.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -340,6 +423,17 @@ export default function RecurringExpensesPage() {
                   value={formData.notes}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Additional notes..."
+                  className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-400"
+                />
+              </div>
+
+              <div>
+                <Label className="dark:text-slate-300">Website URL (Optional)</Label>
+                <Input
+                  type="url"
+                  value={formData.websiteUrl}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                  placeholder="https://example.com"
                   className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-400"
                 />
               </div>
@@ -410,6 +504,17 @@ export default function RecurringExpensesPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold dark:text-slate-100">{expense.description}</h3>
+                      {expense.websiteUrl && (
+                        <a
+                          href={expense.websiteUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
+                          title="Visit website"
+                        >
+                          🔗
+                        </a>
+                      )}
                       {!expense.isActive && (
                         <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded">
                           Inactive
@@ -434,7 +539,7 @@ export default function RecurringExpensesPage() {
                       <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">{expense.notes}</p>
                     )}
                     <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
-                      Next due: {new Date(expense.nextDueDate).toLocaleDateString()}
+                      Next due: {formatDateString(expense.nextDueDate)}
                     </p>
                   </div>
                   <div className="flex gap-2 ml-4">
@@ -504,6 +609,7 @@ export default function RecurringExpensesPage() {
       <QuickExpenseEntry
         isOpen={showQuickEntry}
         onClose={() => setShowQuickEntry(false)}
+        onSuccess={fetchExpenses}
         householdId={currentHousehold?.id}
       />
     </div>

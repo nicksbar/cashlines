@@ -15,8 +15,8 @@ For GitHub Copilot agents and automated development tools.
 ## Quick Facts
 
 - **12 Main Features**: Dashboard, Accounts, Income, Transactions, Routes, Rules, Templates, Import, People, Recurring Expenses, Insights, Data Management
-- **Recent Additions**: DateRangeSelector component, Financial Insights with analytics, People/Household support, Recurring Expenses forecasting
-- **Test Coverage**: 399 tests (100% passing)
+- **Recent Additions**: Payment Account Tracking (debt payment analytics), DateRangeSelector component, Financial Insights with analytics, People/Household support, Recurring Expenses forecasting
+- **Test Coverage**: 545 tests (100% passing)
 - **Build Status**: Successful (19 pages)
 - **Dark Mode**: Full support throughout entire application
 - **Import Path**: Fixed tsconfig with '@/*' resolving to './src/*' for clean imports
@@ -162,7 +162,15 @@ npm run dev              # Development server
 
 ## Recently Completed
 
-### DateRangeSelector Component (Latest)
+### Payment Account Tracking & Analytics (Latest)
+- **Feature**: Track which accounts are being paid (credit cards, loans)
+- **Database**: `payingAccountId` field on Transaction model
+- **Dashboard**: Debt Payments card showing CC payments, loan payments, debt reduction rate
+- **Analytics**: Payment analysis with insights and recommendations
+- **Tests**: 12 unit tests + 11 e2e tests for payment tracking
+- **Status**: Fully integrated into dashboard, insights, and financial analysis
+
+### DateRangeSelector Component
 - **Location**: `src/components/DateRangeSelector.tsx`
 - **Type-safe**: Exports `DateRangeType` and `DateRange` interfaces
 - **Features**:
@@ -336,7 +344,7 @@ eb15b69 Add template system for quick entry creation
 ### Financial Data
 - `/api/accounts/*` - Account CRUD
 - `/api/income/*` - Income entry management
-- `/api/transactions/*` - Transaction management
+- `/api/transactions/*` - Transaction management (includes payingAccountId field)
 - `/api/rules/*` - Routing rules
 - `/api/recurring-expenses/*` - Recurring expense management
 - `/api/reports/summary` - Monthly summaries

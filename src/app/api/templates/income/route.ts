@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
       ],
       include: {
         account: true,
+        person: true,
       },
     });
 
@@ -64,6 +65,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate personId if provided
+    let validPersonId: string | null = null;
+    if (data.personId && data.personId.trim()) {
+      const person = await prisma.person.findFirst({
+        where: {
+          id: data.personId,
+          userId,
+        },
+      });
+      
+      if (person) {
+        validPersonId = data.personId;
+      }
+    }
+
     // Build the data object
     const createData: any = {
       type: "income",
@@ -87,10 +103,16 @@ export async function POST(request: NextRequest) {
       createData.accountId = validAccountId;
     }
 
+    // Only add personId if it's valid
+    if (validPersonId) {
+      createData.personId = validPersonId;
+    }
+
     const template = await prisma.template.create({
       data: createData,
       include: {
         account: true,
+        person: true,
       },
     });
 

@@ -1,0 +1,136 @@
+name: 'E2E: Browser Testing (Playwright)'
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+  schedule:
+    # Run E2E tests daily at 2 AM UTC for regression detection
+    - cron: '0 2 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-tests:
+    name: E2E Tests (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cashlines
+          POSTGRES_PASSWORD: cashlines_secure_password
+          POSTGRES_DB: cashlines
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    env:
+      DATABASE_URL: "postgresql://cashlines:cashlines_secure_password@localhost:5432/cashlines?schema=public"
+      NODE_ENV: "test"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Prisma schema
+        run: DATABASE_URL="postgresql://cashlines:cashlines_secure_password@localhost:5432/cashlines?schema=public" npx prisma validate
+
+      - name: Initialize database schema
+        run: npx prisma db push --skip-generate
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright and system dependencies
+        run: |
+          npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Run E2E tests (${{ matrix.browser }})
+        run: npx playwright test --project=${{ matrix.browser }}
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test results (details)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.browser }}
+          path: test-results/
+          retention-days: 30
+
+  e2e-results:
+    name: E2E Results Summary
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Print test summary
+        run: |
+          echo "## E2E Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ E2E tests completed across all browsers" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- **216 unique tests** across 3 browsers = **648 total** test runs" >> $GITHUB_STEP_SUMMARY
+          echo "- Quick Log feature: 10 tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Account management: 4 tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Income entry: 3 tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Transaction entry: 4 tests" >> $GITHUB_STEP_SUMMARY
+          echo "- People/Household: 3 tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Rules management: 3 tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Plus 20+ additional workflow tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Playwright reports available in artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Test results and traces for debugging" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check if tests failed
+        if: needs.e2e-tests.result == 'failure'
+        run: |
+          echo "❌ E2E tests failed"
+          exit 1

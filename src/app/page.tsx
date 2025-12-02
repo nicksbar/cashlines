@@ -5,13 +5,14 @@ import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
-import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownLeft, Percent, Target } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownLeft, Percent, Target, CreditCard } from 'lucide-react'
 import { formatCurrency } from '@/lib/money'
 import { formatMonth, getCurrentMonthYear, getMonthsInRange } from '@/lib/date'
 import { useUser } from '@/lib/UserContext'
 import { RecurringExpensesForecast } from '@/components/RecurringExpensesForecast'
 import { DateRangeSelector, type DateRange as DateRangeValue } from '@/components/DateRangeSelector'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { analyzePayments, type PaymentAnalysis } from '@/lib/financial-analysis'
 
 interface Summary {
   month: number
@@ -38,6 +39,7 @@ export default function Dashboard() {
   const [prevSummary, setPrevSummary] = useState<Summary | null>(null)
   const [people, setPeople] = useState<Person[]>([])
   const [personMetrics, setPersonMetrics] = useState<Record<string, { income: number; expenses: number }>>({})
+  const [paymentAnalysis, setPaymentAnalysis] = useState<PaymentAnalysis | null>(null)
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState<DateRangeValue>({
     type: 'month',
@@ -64,8 +66,6 @@ export default function Dashboard() {
     return months
   }
 
-  const rangeMonths = getMonthsFromDateRange(dateRange.startDate, dateRange.endDate)
-
   useEffect(() => {
     if (currentHousehold) {
       fetchSummaries()
@@ -79,6 +79,9 @@ export default function Dashboard() {
     try {
       setLoading(true)
       const headers = { 'x-household-id': currentHousehold.id }
+
+      // Calculate months for current date range
+      const rangeMonths = getMonthsFromDateRange(dateRange.startDate, dateRange.endDate)
 
       // Fetch summaries for all months in range
       const summaries = await Promise.all(
@@ -168,6 +171,14 @@ export default function Dashboard() {
         })
 
         setPersonMetrics(metrics)
+        
+        // Fetch accounts for payment analysis
+        const accountsRes = await fetch('/api/accounts', { headers })
+        const accounts = accountsRes.ok ? await accountsRes.json() : []
+        
+        // Analyze payment patterns
+        const paymentData = analyzePayments(txData, accounts, aggregated.totalExpense, rangeMonths.length)
+        setPaymentAnalysis(paymentData)
       }
     } catch (error) {
       console.error('Error fetching summary:', error)
@@ -351,6 +362,73 @@ export default function Dashboard() {
 
         <RecurringExpensesForecast actualCCSpending={ccExpense} />
       </div>
+
+      {/* Debt Payments Card - NEW */}
+      {paymentAnalysis && paymentAnalysis.totalDebtPayments > 0 && (
+        <Card className="border-l-4 border-l-purple-500">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-slate-900 dark:text-slate-100">Debt Payments</CardTitle>
+                <CardDescription className="text-slate-600 dark:text-slate-400">Tracking your debt reduction progress</CardDescription>
+              </div>
+              <CreditCard className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Credit Card Payments</p>
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    {formatCurrency(paymentAnalysis.totalCreditCardPayments)}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {Object.values(paymentAnalysis.paymentsByAccount).filter(p => p.accountName.toLowerCase().includes('credit')).reduce((sum, p) => sum + p.count, 0)} payments
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Loan Payments</p>
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    {formatCurrency(paymentAnalysis.totalLoanPayments)}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {Object.values(paymentAnalysis.paymentsByAccount).filter(p => p.accountName.toLowerCase().includes('loan')).reduce((sum, p) => sum + p.count, 0)} payments
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Debt Reduction Rate</p>
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    {paymentAnalysis.debtReductionRate.toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    of expenses
+                  </p>
+                </div>
+              </div>
+              
+              {Object.keys(paymentAnalysis.paymentsByAccount).length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Payments by Account</p>
+                  {Object.entries(paymentAnalysis.paymentsByAccount)
+                    .sort(([, a], [, b]) => b.amount - a.amount)
+                    .map(([accountId, data]) => (
+                      <div key={accountId} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded">
+                        <div>
+                          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{data.accountName}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{data.count} payments</p>
+                        </div>
+                        <p className="text-sm font-bold text-purple-600 dark:text-purple-400">{formatCurrency(data.amount)}</p>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Payment Method Breakdown - as Gauge Cards */}
       {methodEntries.length > 0 && (

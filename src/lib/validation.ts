@@ -1,6 +1,19 @@
 import { z } from 'zod'
 import { ACCOUNT_TYPES, TRANSACTION_METHODS, SPLIT_TYPES } from './constants'
 
+// Custom date parser that handles date strings as local dates (not UTC)
+// This fixes the timezone offset issue where dates are shifted back by 1 day
+const localDateParser = z.string().pipe(
+  z.coerce.date().transform(date => {
+    // When we receive a date string like "2025-11-01", z.coerce.date() creates
+    // a Date at UTC midnight. We need to convert this back to the intended local date.
+    // The string is interpreted as YYYY-MM-DD in the user's local timezone.
+    // We subtract the timezone offset to get the intended date in UTC.
+    const offset = date.getTimezoneOffset() * 60 * 1000
+    return new Date(date.getTime() + offset)
+  })
+).or(z.date())
+
 // User schemas
 export const userCreateSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -105,7 +118,7 @@ export type AccountUpdate = z.infer<typeof accountUpdateSchema>
 
 // Income schemas
 export const incomeCreateSchema = z.object({
-  date: z.coerce.date(),
+  date: localDateParser,
   grossAmount: z.number().positive('Gross amount must be positive'),
   taxes: z.number().min(0, 'Taxes cannot be negative').default(0),
   preTaxDeductions: z.number().min(0, 'Pre-tax deductions cannot be negative').default(0),
@@ -119,7 +132,7 @@ export const incomeCreateSchema = z.object({
 })
 
 export const incomeUpdateSchema = z.object({
-  date: z.coerce.date().optional(),
+  date: localDateParser.optional(),
   grossAmount: z.number().positive().optional(),
   taxes: z.number().min(0).optional(),
   preTaxDeductions: z.number().min(0).optional(),
@@ -155,11 +168,12 @@ export type Split = z.infer<typeof splitSchema>
 
 // Transaction schemas
 export const transactionCreateSchema = z.object({
-  date: z.coerce.date(),
+  date: localDateParser,
   amount: z.number().positive('Amount must be positive'),
   description: z.string().min(1, 'Description is required'),
   accountId: z.string().min(1, 'Account is required'),
   personId: z.string().nullable().optional(),
+  payingAccountId: z.string().nullable().optional(), // Optional: account being paid (e.g., credit card payment)
   method: z.enum([
     TRANSACTION_METHODS.CREDIT_CARD,
     TRANSACTION_METHODS.CASH,
@@ -169,14 +183,16 @@ export const transactionCreateSchema = z.object({
   notes: z.string().optional(),
   tags: z.array(z.string()).default([]),
   splits: z.array(splitSchema).default([]),
+  websiteUrl: z.union([z.literal(''), z.string().url('Invalid URL')]).optional().nullable(),
 })
 
 export const transactionUpdateSchema = z.object({
-  date: z.coerce.date().optional(),
+  date: localDateParser.optional(),
   amount: z.number().positive().optional(),
   description: z.string().min(1).optional(),
   accountId: z.string().min(1).optional(),
   personId: z.string().nullable().optional(),
+  payingAccountId: z.string().nullable().optional(), // Optional: account being paid (e.g., credit card payment)
   method: z.enum([
     TRANSACTION_METHODS.CREDIT_CARD,
     TRANSACTION_METHODS.CASH,
@@ -186,6 +202,7 @@ export const transactionUpdateSchema = z.object({
   notes: z.string().optional(),
   tags: z.array(z.string()).optional(),
   splits: z.array(splitSchema).optional(),
+  websiteUrl: z.union([z.literal(''), z.string().url('Invalid URL')]).optional().nullable(),
 })
 
 export type TransactionCreate = z.infer<typeof transactionCreateSchema>
@@ -231,22 +248,28 @@ export type RuleUpdate = z.infer<typeof ruleUpdateSchema>
 
 // Recurring Expense schemas
 export const recurringExpenseSchema = z.object({
+  personId: z.string().optional().nullable(),
   accountId: z.string().optional().nullable(),
   description: z.string().min(1, 'Description is required'),
   amount: z.number().positive('Amount must be positive'),
-  frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+  frequency: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'semi-annual', 'yearly']),
   dueDay: z.number().min(1).max(31).optional().nullable(), // Day of month for monthly expenses
   notes: z.string().optional(),
+  websiteUrl: z.union([z.literal(''), z.string().url('Invalid URL')]).optional().nullable(),
+  splits: z.string().optional().nullable(), // JSON: [{type: "need", target: "...", percent: 100}]
 })
 
 export const recurringExpenseUpdateSchema = z.object({
+  personId: z.string().optional().nullable(),
   accountId: z.string().optional().nullable(),
   description: z.string().min(1).optional(),
   amount: z.number().positive().optional(),
-  frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']).optional(),
+  frequency: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'semi-annual', 'yearly']).optional(),
   dueDay: z.number().min(1).max(31).optional().nullable(),
   isActive: z.boolean().optional(),
   notes: z.string().optional(),
+  websiteUrl: z.union([z.literal(''), z.string().url('Invalid URL')]).optional().nullable(),
+  splits: z.string().optional().nullable(), // JSON: [{type: "need", target: "...", percent: 100}]
 })
 
 export type RecurringExpenseCreate = z.infer<typeof recurringExpenseSchema>

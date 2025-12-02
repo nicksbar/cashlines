@@ -5,14 +5,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useState, useEffect, useCallback } from 'react'
-import { formatCurrency } from '@/lib/money'
+import { formatCurrency, roundAmount } from '@/lib/money'
 import { formatDate } from '@/lib/date'
-import { Plus, Trash2, Edit2, Download, Zap, CheckCircle, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, Edit2, Download, Zap, CheckCircle, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useUser } from '@/lib/UserContext'
 import { QuickExpenseEntry } from '@/components/QuickExpenseEntry'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import { usePromptDialog } from '@/components/PromptDialog'
 import { TemplateSelector } from '@/components/TemplateSelector'
+import { FilterableTable } from '@/components/FilterableTable'
+import { extractErrorMessage } from '@/lib/utils'
 
 interface Split {
   id: string
@@ -75,12 +77,14 @@ export default function TransactionsPage() {
   }>({ type: 'idle', message: '' })
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    amount: '',
+    amount: 0,
     description: '',
     method: 'cc',
     accountId: '',
     personId: '',
+    payingAccountId: '',
     notes: '',
+    websiteUrl: '',
     tags: '',
     splits: [{ type: 'need', target: '', percent: 100 }],
   })
@@ -110,7 +114,7 @@ export default function TransactionsPage() {
     if (currentHousehold) {
       fetchData()
     }
-  }, [currentHousehold, fetchData])
+  }, [currentHousehold])
 
   const getFilteredAccounts = (method: string) => {
     const methodToTypeMap: { [key: string]: string[] } = {
@@ -130,6 +134,20 @@ export default function TransactionsPage() {
     e.preventDefault()
     if (!currentHousehold) return
 
+    // Validate account selection
+    if (!formData.accountId) {
+      setAlertMessage({ text: 'Please select an account', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
+      return
+    }
+
+    // Validate amount
+    if (formData.amount <= 0) {
+      setAlertMessage({ text: 'Amount must be greater than $0', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
+      return
+    }
+
     try {
       const url = editingId ? `/api/transactions/${editingId}` : '/api/transactions'
       const method = editingId ? 'PATCH' : 'POST'
@@ -142,31 +160,43 @@ export default function TransactionsPage() {
         },
         body: JSON.stringify({
           ...formData,
-          amount: parseFloat(formData.amount),
-          date: new Date(formData.date),
+          amount: roundAmount(formData.amount),
+          date: formData.date,
           personId: formData.personId || null,
+          payingAccountId: formData.payingAccountId || null,
           tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
           splits: formData.splits.filter(s => s.target),
         }),
       })
-      if (response.ok) {
-        setFormData({
-          date: new Date().toISOString().split('T')[0],
-          amount: '',
-          description: '',
-          method: 'cc',
-          accountId: '',
-          personId: '',
-          notes: '',
-          tags: '',
-          splits: [{ type: 'need', target: '', percent: 100 }],
-        })
-        setEditingId(null)
-        setShowForm(false)
-        fetchData()
+      if (!response.ok) {
+        const errorMessage = await extractErrorMessage(response)
+        setAlertMessage({ text: errorMessage, type: 'error' })
+        setTimeout(() => setAlertMessage(null), 5000)
+        return
       }
+
+      setFormData({
+        date: new Date().toISOString().split('T')[0],
+        amount: 0,
+        description: '',
+        method: 'cc',
+        accountId: '',
+        personId: '',
+        payingAccountId: '',
+        notes: '',
+        websiteUrl: '',
+        tags: '',
+        splits: [{ type: 'need', target: '', percent: 100 }],
+      })
+      setEditingId(null)
+      setShowForm(false)
+      setAlertMessage({ text: editingId ? 'Transaction updated successfully' : 'Transaction created successfully', type: 'success' })
+      setTimeout(() => setAlertMessage(null), 3000)
+      fetchData()
     } catch (error) {
       console.error('Error saving transaction:', error)
+      setAlertMessage({ text: 'An unexpected error occurred. Please try again.', type: 'error' })
+      setTimeout(() => setAlertMessage(null), 5000)
     }
   }
 
@@ -174,12 +204,14 @@ export default function TransactionsPage() {
     setEditingId(tx.id)
     setFormData({
       date: tx.date.split('T')[0],
-      amount: tx.amount.toString(),
+      amount: typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount,
       description: tx.description,
       method: tx.method,
       accountId: tx.accountId,
       personId: tx.personId || '',
+      payingAccountId: (tx as any).payingAccountId || '',
       notes: tx.notes || '',
+      websiteUrl: (tx as any).websiteUrl || '',
       tags: typeof tx.tags === 'string' ? JSON.parse(tx.tags).join(', ') : (tx.tags as any).join(', '),
       splits: tx.splits.map(s => ({
         type: s.type,
@@ -194,12 +226,14 @@ export default function TransactionsPage() {
     setEditingId(null)
     setFormData({
       date: new Date().toISOString().split('T')[0],
-      amount: '',
+      amount: 0,
       description: '',
       method: 'cc',
       accountId: '',
       personId: '',
+      payingAccountId: '',
       notes: '',
+      websiteUrl: '',
       tags: '',
       splits: [{ type: 'need', target: '', percent: 100 }],
     })
@@ -207,16 +241,38 @@ export default function TransactionsPage() {
   }
 
   const handleTemplateSelect = (template: any) => {
+    // Parse splits from template if they exist, otherwise default to need with account
+    let splits = [{ type: 'need', target: '', percent: 100 }]
+    if (template.splits) {
+      try {
+        const parsedSplits = typeof template.splits === 'string' 
+          ? JSON.parse(template.splits) 
+          : template.splits
+        if (Array.isArray(parsedSplits) && parsedSplits.length > 0) {
+          splits = parsedSplits.map((s: any) => ({
+            type: s.type || 'need',
+            target: s.target || '',
+            percent: s.percent || 100,
+          }))
+        }
+      } catch (e) {
+        // If parsing fails, use default
+        splits = [{ type: 'need', target: '', percent: 100 }]
+      }
+    }
+
     setFormData({
       date: new Date().toISOString().split('T')[0],
-      amount: template.amount?.toString() || '',
+      amount: template.amount ? parseFloat(template.amount) : 0,
       description: template.name || '',
       method: template.method || 'cc',
       accountId: template.accountId || '',
       personId: template.personId || '',
+      payingAccountId: '',
       notes: template.description || '',
+      websiteUrl: template.websiteUrl || '',
       tags: '',
-      splits: [{ type: 'need', target: '', percent: 100 }],
+      splits,
     })
     setShowForm(true)
   }
@@ -230,14 +286,23 @@ export default function TransactionsPage() {
       isDestructive: true,
       onConfirm: async () => {
         try {
-          const response = await fetch(`/api/transactions/${id}`, { method: 'DELETE' })
-          if (response.ok) {
-            fetchData()
-            setAlertMessage({ text: 'Transaction deleted', type: 'success' })
-            setTimeout(() => setAlertMessage(null), 2000)
+          const response = await fetch(`/api/transactions/${id}`, { 
+            method: 'DELETE',
+            headers: { 'x-household-id': currentHousehold?.id || '' }
+          })
+          if (!response.ok) {
+            const errorMessage = await extractErrorMessage(response)
+            setAlertMessage({ text: errorMessage, type: 'error' })
+            setTimeout(() => setAlertMessage(null), 5000)
+            return
           }
+          fetchData()
+          setAlertMessage({ text: 'Transaction deleted successfully', type: 'success' })
+          setTimeout(() => setAlertMessage(null), 3000)
         } catch (error) {
           console.error('Error deleting transaction:', error)
+          setAlertMessage({ text: 'An unexpected error occurred while deleting.', type: 'error' })
+          setTimeout(() => setAlertMessage(null), 5000)
         }
       },
     })
@@ -355,11 +420,12 @@ export default function TransactionsPage() {
             body: JSON.stringify({
               name: templateName,
               description: formData.description,
-              amount: parseFloat(formData.amount),
+              amount: roundAmount(formData.amount),
               method: formData.method,
               accountId: formData.accountId,
               notes: formData.notes,
               tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+              splits: formData.splits.filter(s => s.target),
             }),
           })
 
@@ -452,8 +518,8 @@ export default function TransactionsPage() {
                     id="amount"
                     type="number"
                     step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    value={formData.amount || ''}
+                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                     required
@@ -490,20 +556,25 @@ export default function TransactionsPage() {
                 </div>
                 <div>
                   <Label htmlFor="accountId">Account</Label>
-                  <select
-                    id="accountId"
-                    value={formData.accountId}
-                    onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Select account...</option>
-                    {getFilteredAccounts(formData.method).map((acc) => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name}
-                      </option>
-                    ))}
-                  </select>
+                  {getFilteredAccounts(formData.method).length === 0 ? (
+                    <div className="w-full px-3 py-2 border border-red-300 dark:border-red-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm">
+                      No {formData.method === 'cash' ? 'cash' : formData.method === 'cc' ? 'credit card' : 'checking/savings'} accounts available. Create one first.
+                    </div>
+                  ) : (
+                    <select
+                      id="accountId"
+                      value={formData.accountId}
+                      onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select account...</option>
+                      {getFilteredAccounts(formData.method).map((acc) => (
+                        <option key={acc.id} value={acc.id}>
+                          {acc.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -525,12 +596,44 @@ export default function TransactionsPage() {
               </div>
 
               <div>
+                <Label htmlFor="payingAccountId">Paying Account (Optional)</Label>
+                <select
+                  id="payingAccountId"
+                  value={formData.payingAccountId}
+                  onChange={(e) => setFormData({ ...formData, payingAccountId: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">None (regular expense)</option>
+                  {accounts.filter(acc => acc.isActive && ['credit_card', 'loan'].includes(acc.type)).map((acc) => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.name} ({acc.type === 'credit_card' ? 'Credit Card' : 'Loan'})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Select if this transaction is paying off a credit card or loan
+                </p>
+              </div>
+
+              <div>
                 <Label htmlFor="notes">Notes</Label>
                 <Input
                   id="notes"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Optional notes"
+                  className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="websiteUrl">Website URL</Label>
+                <Input
+                  id="websiteUrl"
+                  type="url"
+                  value={formData.websiteUrl}
+                  onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                  placeholder="https://example.com"
                   className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                 />
               </div>
@@ -632,87 +735,129 @@ export default function TransactionsPage() {
           <CardDescription className="text-slate-600 dark:text-slate-400">{transactions.length} entries</CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <p className="text-slate-500 dark:text-slate-400">Loading...</p>
-          ) : transactions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Date</th>
-                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Description</th>
-                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Method</th>
-                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Account</th>
-                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Person</th>
-                    <th className="text-right py-2 px-2 text-slate-900 dark:text-slate-100">Amount</th>
-                    <th className="text-left py-2 px-2 text-slate-900 dark:text-slate-100">Routing</th>
-                    <th className="text-center py-2 px-2 text-slate-900 dark:text-slate-100">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((tx) => (
-                    <tr key={tx.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                      <td className="py-3 px-2 text-slate-900 dark:text-slate-100">{formatDate(tx.date)}</td>
-                      <td className="py-3 px-2 font-medium text-slate-900 dark:text-slate-100">{tx.description}</td>
-                      <td className="py-3 px-2 text-slate-600 dark:text-slate-400">{METHOD_LABELS[tx.method]}</td>
-                      <td className="py-3 px-2 text-slate-600 dark:text-slate-400">{tx.account.name}</td>
-                      <td className="py-3 px-2">
-                        {tx.person ? (
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: tx.person.color || '#4ECDC4' }}
-                            />
-                            <span className="text-slate-900 dark:text-slate-100">{tx.person.name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-500 dark:text-slate-400 text-sm">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-2 text-right font-semibold text-red-600 dark:text-red-400">
-                        {formatCurrency(tx.amount)}
-                      </td>
-                      <td className="py-3 px-2">
-                        <div className="space-y-1">
-                          {tx.splits.map((split) => (
-                            <div key={split.id} className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
-                              <span className="font-medium">{split.type}</span>: {split.target}{' '}
-                              {split.percent && `(${split.percent}%)`}
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="py-3 px-2 text-center space-x-2 flex justify-center">
-                        <button
-                          onClick={() => handleEdit(tx)}
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                          title="Edit transaction"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => openConvertModal(tx)}
-                          className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
-                          title="Convert to recurring"
-                        >
-                          <Zap className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(tx.id)}
-                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                          title="Delete transaction"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-slate-500 dark:text-slate-400">No transactions yet. Create one to get started!</p>
-          )}
+          <FilterableTable
+            data={transactions}
+            loading={loading}
+            emptyMessage="No transactions yet. Create one to get started!"
+            filters={[
+              {
+                key: 'method',
+                label: 'Payment Method',
+                type: 'select',
+                options: [
+                  { value: 'cc', label: 'Credit Card' },
+                  { value: 'cash', label: 'Cash' },
+                  { value: 'ach', label: 'ACH' },
+                  { value: 'other', label: 'Other' },
+                ],
+              },
+              {
+                key: 'accountId',
+                label: 'Account',
+                type: 'select',
+                options: accounts.map((acc) => ({ value: acc.id, label: acc.name })),
+              },
+              {
+                key: 'personId',
+                label: 'Person',
+                type: 'select',
+                options: people.map((p) => ({ value: p.id, label: p.name })),
+              },
+            ]}
+            columns={[
+              {
+                key: 'date',
+                label: 'Date',
+                sortable: true,
+                render: (value) => formatDate(value),
+              },
+              {
+                key: 'description',
+                label: 'Description',
+                sortable: true,
+                filterable: true,
+              },
+              {
+                key: 'method',
+                label: 'Method',
+                sortable: true,
+                render: (value) => METHOD_LABELS[value] || value,
+              },
+              {
+                key: 'accountId',
+                label: 'Account',
+                sortable: true,
+                render: (_, row) => row.account?.name || '—',
+              },
+              {
+                key: 'personId',
+                label: 'Person',
+                sortable: true,
+                render: (value, row) =>
+                  row.person ? (
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: row.person.color || '#4ECDC4' }}
+                      />
+                      <span>{row.person.name}</span>
+                    </div>
+                  ) : (
+                    '—'
+                  ),
+              },
+              {
+                key: 'amount',
+                label: 'Amount',
+                align: 'right',
+                sortable: true,
+                render: (value) => <span className="text-red-600 dark:text-red-400 font-semibold">{formatCurrency(value)}</span>,
+              },
+              {
+                key: 'splits',
+                label: 'Routing',
+                render: (_, row) => (
+                  <div className="space-y-1">
+                    {row.splits.map((split: any) => (
+                      <div key={split.id} className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
+                        <span className="font-medium">{split.type}</span>: {split.target} {split.percent && `(${split.percent}%)`}
+                      </div>
+                    ))}
+                  </div>
+                ),
+              },
+              {
+                key: 'id',
+                label: 'Actions',
+                align: 'center',
+                render: (value, row) => (
+                  <div className="space-x-2 flex justify-center">
+                    <button
+                      onClick={() => handleEdit(row)}
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                      title="Edit transaction"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => openConvertModal(row)}
+                      className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                      title="Convert to recurring"
+                    >
+                      <Zap className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(value)}
+                      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                      title="Delete transaction"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+          />
         </CardContent>
       </Card>
 
@@ -828,6 +973,7 @@ export default function TransactionsPage() {
       <QuickExpenseEntry
         isOpen={showQuickEntry}
         onClose={() => setShowQuickEntry(false)}
+        onSuccess={fetchData}
         householdId={currentHousehold?.id}
       />
 

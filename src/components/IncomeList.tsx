@@ -1,5 +1,7 @@
 'use client'
 
+import { formatDateString } from '@/lib/date'
+
 interface IncomeListProps {
   income: any[]
   onRefresh: () => void
@@ -23,7 +25,7 @@ export default function IncomeList({ income }: IncomeListProps) {
             <tbody>
               {income.map((item: any) => (
                 <tr key={item.id} className="border-b hover:bg-slate-50">
-                  <td className="py-2">{new Date(item.date).toLocaleDateString()}</td>
+                  <td className="py-2">{formatDateString(item.date)}</td>
                   <td className="py-2">{item.source || '-'}</td>
                   <td className="text-right py-2 font-medium">${item.amount.toFixed(2)}</td>
                 </tr>
