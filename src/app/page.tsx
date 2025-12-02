@@ -66,8 +66,6 @@ export default function Dashboard() {
     return months
   }
 
-  const rangeMonths = getMonthsFromDateRange(dateRange.startDate, dateRange.endDate)
-
   useEffect(() => {
     if (currentHousehold) {
       fetchSummaries()
@@ -81,6 +79,9 @@ export default function Dashboard() {
     try {
       setLoading(true)
       const headers = { 'x-household-id': currentHousehold.id }
+
+      // Calculate months for current date range
+      const rangeMonths = getMonthsFromDateRange(dateRange.startDate, dateRange.endDate)
 
       // Fetch summaries for all months in range
       const summaries = await Promise.all(

@@ -47,12 +47,14 @@ interface Person {
 interface QuickExpenseEntryProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void
   householdId?: string
 }
 
 export function QuickExpenseEntry({
   isOpen,
   onClose,
+  onSuccess,
   householdId,
 }: QuickExpenseEntryProps) {
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([])
@@ -201,6 +203,7 @@ export function QuickExpenseEntry({
       }
 
       setSubmitted(true)
+      onSuccess?.() // Refresh parent data
       setTimeout(() => {
         handleReset()
         onClose()

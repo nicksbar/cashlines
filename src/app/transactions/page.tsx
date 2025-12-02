@@ -973,6 +973,7 @@ export default function TransactionsPage() {
       <QuickExpenseEntry
         isOpen={showQuickEntry}
         onClose={() => setShowQuickEntry(false)}
+        onSuccess={fetchData}
         householdId={currentHousehold?.id}
       />
 

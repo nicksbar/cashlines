@@ -609,6 +609,7 @@ export default function RecurringExpensesPage() {
       <QuickExpenseEntry
         isOpen={showQuickEntry}
         onClose={() => setShowQuickEntry(false)}
+        onSuccess={fetchExpenses}
         householdId={currentHousehold?.id}
       />
     </div>
