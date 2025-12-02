@@ -195,6 +195,7 @@ GET /api/transactions?month=11&year=2025
     "amount": 125.50,
     "method": "cc",
     "accountId": "...",
+    "payingAccountId": null,
     "account": {
       "id": "...",
       "name": "Chase Credit Card"
@@ -213,6 +214,8 @@ GET /api/transactions?month=11&year=2025
 ]
 ```
 
+**Note:** The `payingAccountId` field is used to track debt payments. When set, it links the transaction to the account being paid (e.g., credit card payment from checking account).
+
 ### Create Transaction
 
 ```
@@ -225,6 +228,7 @@ Content-Type: application/json
   "date": "2025-11-20",
   "method": "cc",
   "accountId": "...",
+  "payingAccountId": null,
   "notes": "Weekly groceries",
   "tags": ["groceries", "food"],
   "splits": [
@@ -556,6 +560,36 @@ curl -X POST http://localhost:3000/api/transactions \
     ]
   }'
 ```
+
+### Track Debt Payment
+
+To record a payment to a credit card or loan, set the `payingAccountId` field:
+
+```bash
+curl -X POST http://localhost:3000/api/transactions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "description": "Credit Card Payment",
+    "amount": 500.00,
+    "date": "2025-12-01",
+    "method": "ach",
+    "accountId": "checking_account_id",
+    "payingAccountId": "credit_card_account_id",
+    "splits": [
+      {
+        "type": "debt",
+        "target": "",
+        "percent": 100
+      }
+    ]
+  }'
+```
+
+**Payment Tracking Fields:**
+- `payingAccountId`: ID of the account being paid (credit card, loan, etc.)
+- Filtered to show only credit cards and loans in UI
+- Used for debt reduction analytics on dashboard
+- Tracked in financial insights for payment pattern analysis
 
 ### Create Routing Rule
 

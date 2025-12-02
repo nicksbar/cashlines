@@ -22,6 +22,27 @@ export interface Account {
   principalBalance?: number | null
 }
 
+export interface Transaction {
+  id: string
+  amount: number
+  description: string
+  date: string
+  accountId: string
+  payingAccountId?: string | null
+  method: string
+}
+
+export interface PaymentAnalysis {
+  totalCreditCardPayments: number
+  totalLoanPayments: number
+  totalDebtPayments: number
+  paymentCount: number
+  avgPaymentAmount: number
+  paymentsByAccount: Record<string, { accountName: string; amount: number; count: number }>
+  debtReductionRate: number // % of expenses that are debt payments
+  paymentVelocity: number // payments per month
+}
+
 export interface FinancialInsight {
   type: 'opportunity' | 'warning' | 'info'
   title: string
@@ -167,6 +188,69 @@ export function calculateNetWorth(accounts: Account[]): NetWorthBreakdown {
 }
 
 /**
+ * Analyze debt payment patterns
+ */
+export function analyzePayments(
+  transactions: Transaction[],
+  accounts: Account[],
+  totalExpenses: number,
+  monthCount: number = 1
+): PaymentAnalysis {
+  // Filter transactions that are payments to accounts
+  const paymentTransactions = transactions.filter(t => t.payingAccountId)
+  
+  const accountMap = new Map(accounts.map(a => [a.id, a]))
+  const paymentsByAccount: Record<string, { accountName: string; amount: number; count: number }> = {}
+  
+  let totalCreditCardPayments = 0
+  let totalLoanPayments = 0
+  
+  paymentTransactions.forEach(tx => {
+    if (!tx.payingAccountId) return
+    
+    const payingAccount = accountMap.get(tx.payingAccountId)
+    if (!payingAccount) return
+    
+    // Initialize account entry if needed
+    if (!paymentsByAccount[tx.payingAccountId]) {
+      paymentsByAccount[tx.payingAccountId] = {
+        accountName: payingAccount.name,
+        amount: 0,
+        count: 0,
+      }
+    }
+    
+    // Aggregate payment data
+    paymentsByAccount[tx.payingAccountId].amount += tx.amount
+    paymentsByAccount[tx.payingAccountId].count += 1
+    
+    // Track by account type
+    if (payingAccount.type === 'credit_card') {
+      totalCreditCardPayments += tx.amount
+    } else if (payingAccount.type === 'loan') {
+      totalLoanPayments += tx.amount
+    }
+  })
+  
+  const totalDebtPayments = totalCreditCardPayments + totalLoanPayments
+  const paymentCount = paymentTransactions.length
+  const avgPaymentAmount = paymentCount > 0 ? totalDebtPayments / paymentCount : 0
+  const debtReductionRate = totalExpenses > 0 ? (totalDebtPayments / totalExpenses) * 100 : 0
+  const paymentVelocity = monthCount > 0 ? paymentCount / monthCount : 0
+  
+  return {
+    totalCreditCardPayments,
+    totalLoanPayments,
+    totalDebtPayments,
+    paymentCount,
+    avgPaymentAmount,
+    paymentsByAccount,
+    debtReductionRate,
+    paymentVelocity,
+  }
+}
+
+/**
  * Analyze monthly interest and fee impact
  */
 export function analyzeCashFlow(accounts: Account[], monthlySpending: number): CashFlowAnalysis {
@@ -235,9 +319,38 @@ export function generateInsights(
   creditCardAnalysis: CreditCardAnalysis,
   netWorth: NetWorthBreakdown,
   cashFlow: CashFlowAnalysis,
-  monthlySpending: number
+  monthlySpending: number,
+  paymentAnalysis?: PaymentAnalysis
 ): FinancialInsight[] {
   const insights: FinancialInsight[] = []
+  
+  // Payment insights - HIGH PRIORITY
+  if (paymentAnalysis && paymentAnalysis.totalDebtPayments > 0) {
+    insights.push({
+      type: 'info',
+      title: 'Debt Reduction Progress',
+      description: `You paid ${formatMoney(paymentAnalysis.totalDebtPayments)} toward debt (${paymentAnalysis.debtReductionRate.toFixed(1)}% of expenses). ${paymentAnalysis.paymentCount} payments made.`,
+      impact: 'high',
+      metric: `${formatMoney(paymentAnalysis.totalDebtPayments)}`,
+      action: 'Continue consistent debt payments',
+      priority: 9,
+    })
+    
+    // Identify highest payment account for recognition
+    const highestPayment = Object.entries(paymentAnalysis.paymentsByAccount)
+      .sort(([, a], [, b]) => b.amount - a.amount)[0]
+    
+    if (highestPayment && highestPayment[1].amount > 100) {
+      insights.push({
+        type: 'info',
+        title: `Top Payment: ${highestPayment[1].accountName}`,
+        description: `You paid ${formatMoney(highestPayment[1].amount)} to ${highestPayment[1].accountName} (${highestPayment[1].count} payments). Great progress!`,
+        impact: 'medium',
+        metric: `${formatMoney(highestPayment[1].amount)}`,
+        priority: 6,
+      })
+    }
+  }
 
   // Credit card utilization warning
   if (creditCardAnalysis.totalCreditLimit > 0 && creditCardAnalysis.utilizationRate > 30) {

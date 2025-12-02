@@ -8,11 +8,13 @@ import {
   calculateNetWorth,
   analyzeCashFlow,
   generateInsights,
+  analyzePayments,
   type CreditCardAnalysis,
   type NetWorthBreakdown,
   type CashFlowAnalysis,
   type FinancialInsight,
   type Account,
+  type PaymentAnalysis,
 } from '@/lib/financial-analysis'
 import { formatCurrency } from '@/lib/money'
 import {
@@ -30,6 +32,7 @@ interface InsightsData {
   creditCardAnalysis: CreditCardAnalysis
   netWorth: NetWorthBreakdown
   cashFlow: CashFlowAnalysis
+  paymentAnalysis: PaymentAnalysis
   insights: FinancialInsight[]
 }
 
@@ -70,13 +73,15 @@ export function FinancialInsightsWidget() {
       const ccAnalysis = analyzeCreditCards(accounts)
       const netWorth = calculateNetWorth(accounts)
       const cashFlow = analyzeCashFlow(accounts, monthlySpending)
-      const insights = generateInsights(accounts, ccAnalysis, netWorth, cashFlow, monthlySpending)
+      const paymentAnalysis = analyzePayments(transactions, accounts, monthlySpending, 1)
+      const insights = generateInsights(accounts, ccAnalysis, netWorth, cashFlow, monthlySpending, paymentAnalysis)
 
       setData({
         accounts,
         creditCardAnalysis: ccAnalysis,
         netWorth,
         cashFlow,
+        paymentAnalysis,
         insights,
       })
     } catch (error) {

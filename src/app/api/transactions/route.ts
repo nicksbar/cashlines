@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
       include: {
         account: true,
         person: true,
+        payingAccount: true,
         splits: true,
       },
     })
@@ -140,6 +141,7 @@ export async function POST(request: NextRequest) {
         userId: householdId,
         accountId: validated.accountId,
         personId: validated.personId,
+        payingAccountId: validated.payingAccountId,
         date: validated.date,
         amount: validated.amount,
         description: validated.description,
@@ -159,6 +161,7 @@ export async function POST(request: NextRequest) {
       },
       include: {
         account: true,
+        payingAccount: true,
         splits: true,
       },
     })

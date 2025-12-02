@@ -97,10 +97,11 @@ model Account {
   // Balance tracking
   balanceSnapshots BalanceSnapshot[]
   
-  incomes           Income[]
-  transactions      Transaction[]
-  templates         Template[] @relation("TemplateAccount")
-  recurringExpenses RecurringExpense[]
+  incomes            Income[]
+  transactions       Transaction[]
+  paymentsReceived   Transaction[] @relation("PaymentToAccount")
+  templates          Template[] @relation("TemplateAccount")
+  recurringExpenses  RecurringExpense[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -178,6 +179,10 @@ model Transaction {
   accountId   String
   account     Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
   
+  // Optional: If this transaction is a payment TO another account (e.g., paying off a credit card)
+  payingAccountId String?
+  payingAccount   Account? @relation("PaymentToAccount", fields: [payingAccountId], references: [id], onDelete: SetNull)
+  
   date        DateTime
   amount      Float
   description String
@@ -194,6 +199,7 @@ model Transaction {
   @@index([userId])
   @@index([personId])
   @@index([accountId])
+  @@index([payingAccountId])
   @@index([date])
   @@index([method])
 }

@@ -173,6 +173,7 @@ export const transactionCreateSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   accountId: z.string().min(1, 'Account is required'),
   personId: z.string().nullable().optional(),
+  payingAccountId: z.string().nullable().optional(), // Optional: account being paid (e.g., credit card payment)
   method: z.enum([
     TRANSACTION_METHODS.CREDIT_CARD,
     TRANSACTION_METHODS.CASH,
@@ -191,6 +192,7 @@ export const transactionUpdateSchema = z.object({
   description: z.string().min(1).optional(),
   accountId: z.string().min(1).optional(),
   personId: z.string().nullable().optional(),
+  payingAccountId: z.string().nullable().optional(), // Optional: account being paid (e.g., credit card payment)
   method: z.enum([
     TRANSACTION_METHODS.CREDIT_CARD,
     TRANSACTION_METHODS.CASH,

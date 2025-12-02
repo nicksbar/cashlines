@@ -4,19 +4,27 @@ Complete guide to using each feature in Cashlines.
 
 ## Dashboard
 
-The dashboard provides a monthly overview of your financial activity:
+The dashboard provides a comprehensive overview of your financial activity with date range filtering:
 
-- **YTD Summary**: Year-to-date totals for income and expenses
-- **Key Ratios**: Financial metrics and percentages
-- **Monthly Breakdown**: Income by source, spending by method, routing allocation
-- **Allocation Chart**: Visual breakdown of money split across categories
+- **Summary Cards**: Income, expenses, net balance, expense ratio, savings rate
+- **Debt Payments**: Track credit card and loan payments with debt reduction rate
+- **Date Range Selector**: Filter by week, month, quarter, half-year, year, or custom range
+- **Payment Methods**: Breakdown of spending by CC, ACH, cash, etc.
+- **Spending Categories**: Smart breakdown showing Need, Want, Debt, Tax, Savings allocations
+- **Charts**: Visual spending trends and category distributions
+- **Person Summaries**: Income and expense tracking by household member
 
 ### What You'll See
 
-- Total income (gross)
-- Total expenses (by payment method)
+- Total income (gross) with income count
+- Total expenses with transaction count
+- Net balance and savings rate
+- Debt payment analytics (when applicable):
+  - Credit card payments total
+  - Loan payments total
+  - Debt reduction rate (% of expenses toward debt)
+  - Payment breakdown by account
 - Money routing breakdown (Need/Want/Debt/Tax/Savings)
-- Average transaction/income amounts
 - Tax and deduction totals
 
 ## Accounts
@@ -88,11 +96,32 @@ Track all expenses and transfers with flexible split allocation.
    - **Date**: When the transaction occurred
    - **Method**: Payment method (Credit Card, Cash, ACH, Other)
    - **Account**: Which account was charged
+   - **Paying Account** (optional): For debt payments, select the account being paid
+   - **Person**: Assign to household member
    - **Notes**: Optional notes
    - **Tags**: Comma-separated tags for organization
 
 4. Define allocation (see Splits section)
 5. Save transaction
+
+### Debt Payment Tracking
+
+When making payments to credit cards or loans:
+
+1. Set **Paying Account** to the card/loan being paid
+2. The dashboard will track:
+   - Total payments to each account
+   - Debt reduction rate
+   - Payment velocity (payments per month)
+3. Financial insights will analyze your payment patterns
+4. Use this to monitor debt paydown progress
+
+**Example**: Paying $500 to Chase credit card from checking:
+- Description: "Chase CC Payment"
+- Amount: $500
+- Account: Checking
+- Paying Account: Chase Credit Card
+- Split: 100% Debt
 
 ### Splits (Money Allocation)
 

@@ -71,6 +71,7 @@ export function QuickExpenseEntry({
     description: '',
     personId: '',
     accountId: '',
+    payingAccountId: '',
     method: 'cc',
     notes: '',
   })
@@ -140,6 +141,7 @@ export function QuickExpenseEntry({
       description: expense.description,
       personId: expense.personId || '',
       accountId: expense.accountId || '',
+      payingAccountId: '',
       method: 'cc',
       notes: expense.notes || '',
     })
@@ -162,22 +164,18 @@ export function QuickExpenseEntry({
         headers['x-household-id'] = householdId
       }
 
-      // Parse splits from recurring expense, fallback to need/accountId
+      // Parse splits from recurring expense, fallback to need with empty target
       let splitsArray = []
       if (selectedExpense.splits) {
         try {
           splitsArray = JSON.parse(selectedExpense.splits)
         } catch (e) {
           // If splits can't be parsed, use default
-          splitsArray = formData.accountId 
-            ? [{ type: 'need', target: formData.accountId, percent: 100 }]
-            : [{ type: 'need', target: '', percent: 100 }]
+          splitsArray = [{ type: 'need', target: '', percent: 100 }]
         }
       } else {
         // No splits configured, use default
-        splitsArray = formData.accountId 
-          ? [{ type: 'need', target: formData.accountId, percent: 100 }]
-          : [{ type: 'need', target: '', percent: 100 }]
+        splitsArray = [{ type: 'need', target: '', percent: 100 }]
       }
 
       const response = await fetch('/api/transactions', {
@@ -190,6 +188,7 @@ export function QuickExpenseEntry({
           method: formData.method,
           personId: formData.personId || null,
           accountId: formData.accountId,
+          payingAccountId: formData.payingAccountId || null,
           notes: formData.notes ? `${formData.notes}\n[From recurring: ${selectedExpense.description}]` : `[From recurring: ${selectedExpense.description}]`,
           tags: ['recurring'],
           splits: splitsArray,
@@ -221,6 +220,7 @@ export function QuickExpenseEntry({
       description: '',
       personId: '',
       accountId: '',
+      payingAccountId: '',
       method: 'cc',
       notes: '',
     })
@@ -394,6 +394,28 @@ export function QuickExpenseEntry({
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <Label htmlFor="payingAccountId">Payment Account (Optional)</Label>
+                <select
+                  id="payingAccountId"
+                  value={formData.payingAccountId}
+                  onChange={(e) => setFormData({ ...formData, payingAccountId: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm"
+                >
+                  <option value="">None (regular expense)</option>
+                  {accounts
+                    .filter(acc => acc.isActive && ['credit_card', 'loan'].includes(acc.type))
+                    .map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.name}
+                      </option>
+                    ))}
+                </select>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Select if this expense pays down a credit card or loan
+                </p>
               </div>
 
               <div>

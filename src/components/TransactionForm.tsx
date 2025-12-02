@@ -43,6 +43,7 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
     date: new Date().toISOString().split('T')[0],
     accountId: initialData?.accountId || '',
     personId: initialData?.personId || '',
+    payingAccountId: '', // Account being paid (e.g., credit card)
     method: initialData?.method || 'cc',
     notes: initialData?.notes || '',
     websiteUrl: initialData?.websiteUrl || '',
@@ -97,6 +98,13 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
     )
   }
 
+  // Get accounts that can be paid (credit cards, loans)
+  const getPayableAccounts = () => {
+    return accounts.filter(
+      (account) => account.isActive && ['credit_card', 'loan'].includes(account.type)
+    )
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -109,6 +117,7 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
           date: formData.date,
           accountId: formData.accountId || 'default',
           personId: formData.personId || null,
+          payingAccountId: formData.payingAccountId || null,
           method: formData.method,
           notes: formData.notes,
           websiteUrl: formData.websiteUrl || null,
@@ -216,6 +225,27 @@ export default function TransactionForm({ onClose, onSuccess, initialData }: Tra
                 </option>
               ))}
             </select>
+          </div>
+          <div>
+            <Label htmlFor="payingAccount" className="text-slate-900 dark:text-slate-100">
+              Paying Account (Optional)
+            </Label>
+            <select
+              id="payingAccount"
+              value={formData.payingAccountId}
+              onChange={(e) => setFormData({ ...formData, payingAccountId: e.target.value })}
+              className="w-full h-10 px-3 py-2 rounded-md border border-slate-300 bg-white text-slate-900 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+            >
+              <option value="">None (regular expense)</option>
+              {getPayableAccounts().map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.name} ({account.type === 'credit_card' ? 'Credit Card' : 'Loan'})
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Select if this transaction is paying off a credit card or loan
+            </p>
           </div>
           <div>
             <Label htmlFor="notes" className="text-slate-900 dark:text-slate-100">Notes</Label>

@@ -82,6 +82,7 @@ export default function TransactionsPage() {
     method: 'cc',
     accountId: '',
     personId: '',
+    payingAccountId: '',
     notes: '',
     websiteUrl: '',
     tags: '',
@@ -162,6 +163,7 @@ export default function TransactionsPage() {
           amount: roundAmount(formData.amount),
           date: formData.date,
           personId: formData.personId || null,
+          payingAccountId: formData.payingAccountId || null,
           tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
           splits: formData.splits.filter(s => s.target),
         }),
@@ -180,6 +182,7 @@ export default function TransactionsPage() {
         method: 'cc',
         accountId: '',
         personId: '',
+        payingAccountId: '',
         notes: '',
         websiteUrl: '',
         tags: '',
@@ -206,6 +209,7 @@ export default function TransactionsPage() {
       method: tx.method,
       accountId: tx.accountId,
       personId: tx.personId || '',
+      payingAccountId: (tx as any).payingAccountId || '',
       notes: tx.notes || '',
       websiteUrl: (tx as any).websiteUrl || '',
       tags: typeof tx.tags === 'string' ? JSON.parse(tx.tags).join(', ') : (tx.tags as any).join(', '),
@@ -227,6 +231,7 @@ export default function TransactionsPage() {
       method: 'cc',
       accountId: '',
       personId: '',
+      payingAccountId: '',
       notes: '',
       websiteUrl: '',
       tags: '',
@@ -263,6 +268,7 @@ export default function TransactionsPage() {
       method: template.method || 'cc',
       accountId: template.accountId || '',
       personId: template.personId || '',
+      payingAccountId: '',
       notes: template.description || '',
       websiteUrl: template.websiteUrl || '',
       tags: '',
@@ -587,6 +593,26 @@ export default function TransactionsPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <Label htmlFor="payingAccountId">Paying Account (Optional)</Label>
+                <select
+                  id="payingAccountId"
+                  value={formData.payingAccountId}
+                  onChange={(e) => setFormData({ ...formData, payingAccountId: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">None (regular expense)</option>
+                  {accounts.filter(acc => acc.isActive && ['credit_card', 'loan'].includes(acc.type)).map((acc) => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.name} ({acc.type === 'credit_card' ? 'Credit Card' : 'Loan'})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Select if this transaction is paying off a credit card or loan
+                </p>
               </div>
 
               <div>
